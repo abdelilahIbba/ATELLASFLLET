@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 const IMAGES = [
   {
     id: 1,
-    url: 'https://images.unsplash.com/photo-1603584173870-7b299f58d192?auto=format&fit=crop&q=80&w=2000',
-    alt: 'Audi RS Performance',
+    url: 'https://images.unsplash.com/photo-1614200187524-dc411a4f01b3?auto=format&fit=crop&q=80&w=2000',
+    alt: 'Audi RS E-tron GT',
     title: 'Adrénaline Pure',
     subtitle: "Découvrez la puissance brute de l'ingénierie allemande."
   },
@@ -32,8 +32,8 @@ const HeroSlider: React.FC<{ isDark: boolean }> = ({ isDark }) => {
   const DARK_IMAGES = [
     {
       id: 1,
-      url: 'https://images.unsplash.com/photo-1603584173870-7b299f58d192?auto=format&fit=crop&q=80&w=2000',
-      alt: 'Audi RS Performance'
+      url: 'https://images.unsplash.com/photo-1614200187524-dc411a4f01b3?auto=format&fit=crop&q=80&w=2000',
+      alt: 'Audi RS E-tron GT'
     },
     {
       id: 2,

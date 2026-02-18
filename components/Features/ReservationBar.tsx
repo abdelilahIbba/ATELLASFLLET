@@ -24,10 +24,10 @@ const ReservationBar: React.FC<ReservationBarProps> = ({ onBook }) => {
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.8 }}
-        className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-30 -mt-16 sm:-mt-20 md:-mt-32 mb-16"
+        className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-30 -mt-24 md:-mt-32 mb-16"
     >
-      <div className="bg-white/90 dark:bg-[#0f172a]/80 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-3xl p-6 shadow-2xl shadow-brand-blue/10 ring-1 ring-black/5 dark:ring-white/10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
+      <div className="bg-white/90 dark:bg-[#0f172a]/80 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-3xl p-4 md:p-6 shadow-2xl shadow-brand-blue/10 ring-1 ring-black/5 dark:ring-white/10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-6 items-end">
             
             {/* Location */}
             <div className="lg:col-span-3 space-y-2">
@@ -102,10 +102,10 @@ const ReservationBar: React.FC<ReservationBarProps> = ({ onBook }) => {
             </div>
 
             {/* Action Button */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 mt-4 lg:mt-0">
                 <button 
                   onClick={handleSearch}
-                  className="w-full h-[56px] mt-auto bg-brand-red hover:bg-red-600 text-white font-bold text-lg rounded-xl shadow-lg shadow-brand-red/25 hover:shadow-brand-red/40 transition-all flex items-center justify-center gap-2 group transform hover:scale-[1.02]"
+                  className="w-full h-[56px] bg-brand-red hover:bg-red-600 text-white font-bold text-lg rounded-xl shadow-lg shadow-brand-red/25 hover:shadow-brand-red/40 transition-all flex items-center justify-center gap-2 group transform hover:scale-[1.02]"
                 >
                     <Search className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
                     <span>Rechercher</span>

@@ -260,11 +260,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-5xl bg-white dark:bg-[#0B1120] rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]"
+        className="relative w-full max-w-5xl bg-white dark:bg-[#0B1120] rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-full md:h-auto md:max-h-[90vh]"
       >
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors text-brand-navy dark:text-white"
+          className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors text-brand-navy dark:text-white"
         >
           <X className="w-5 h-5" />
         </button>
@@ -325,7 +325,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
         </div>
 
         {/* Right Panel - Form Steps */}
-        <div className="w-full md:w-2/3 p-8 overflow-y-auto relative">
+        <div className="w-full md:w-2/3 p-4 md:p-8 overflow-y-auto relative flex-1">
           <StepIndicator />
           
           <AnimatePresence mode="wait">

@@ -1,13 +1,15 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { CARS } from "../constants";
 
-let aiClient: GoogleGenAI | null = null;
+let aiClient: GoogleGenerativeAI | null = null;
 
 const getClient = () => {
   if (!aiClient) {
-    const apiKey = process.env.API_KEY;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (apiKey) {
-      aiClient = new GoogleGenAI({ apiKey });
+      aiClient = new GoogleGenerativeAI(apiKey);
+    } else {
+      console.warn("VITE_GEMINI_API_KEY is not defined");
     }
   }
   return aiClient;
@@ -16,37 +18,38 @@ const getClient = () => {
 export const getCarRecommendation = async (userQuery: string): Promise<string> => {
   const client = getClient();
   if (!client) {
-    return "I'm currently offline (API Key missing). Please explore our fleet manually!";
+    return "Je suis actuellement hors ligne (Clé API manquante). Veuillez explorer notre flotte manuellement !";
   }
 
   const carContext = CARS.map(c => 
-    `${c.name} (${c.category}): $${c.pricePerDay}/day. Features: ${c.features.join(', ')}. Range: ${c.range}.`
+    `${c.name} (${c.category}): $${c.pricePerDay}/jour. Caractéristiques: ${c.features.join(', ')}. Autonomie: ${c.range}.`
   ).join('\n');
 
   const systemInstruction = `
-    You are Aero, an AI assistant for a futuristic car rental agency called Atellas Fleet.
-    Here is our current fleet:
+    Vous êtes Aero, un assistant IA pour une agence de location de voitures futuriste appelée Atellas Fleet.
+    Voici notre flotte actuelle :
     ${carContext}
 
-    Rules:
-    1. Recommend the best car based on the user's needs.
-    2. Be concise, futuristic, and professional.
-    3. Use a tone that implies high-tech luxury (e.g., "Processing request", "Optimal choice identified").
-    4. If the user asks about something unrelated, politely steer them back to cars.
-    5. Do not use markdown formatting like bold or italics, just plain text.
+    Règles :
+    1. Recommandez la meilleure voiture en fonction des besoins de l'utilisateur.
+    2. Soyez concis, futuriste et professionnel.
+    3. Utilisez un ton qui implique le luxe high-tech (par exemple, "Traitement de la demande", "Choix optimal identifié").
+    4. Si l'utilisateur pose une question sans rapport, ramenez-le poliment vers les voitures.
+    5. N'utilisez pas de formatage markdown comme le gras ou l'italique, juste du texte brut.
+    6. Répondez toujours en français.
   `;
 
   try {
-    const response = await client.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: userQuery,
-      config: {
-        systemInstruction: systemInstruction,
-      }
+    const model = client.getGenerativeModel({ 
+        model: 'gemini-1.5-flash',
+        systemInstruction: systemInstruction 
     });
-    return response.text || "I'm processing a vast amount of data... try again in a moment.";
+    
+    const result = await model.generateContent(userQuery);
+    const response = await result.response;
+    return response.text() || "Je traite une grande quantité de données... réessayez dans un instant.";
   } catch (error) {
-    console.error("Gemini API Error:", error);
-    return "Communication systems disrupted. Please try again later.";
+    console.error("Gemini API Error Details:", error);
+    return "Systèmes de communication perturbés. Veuillez réessayer plus tard.";
   }
 };

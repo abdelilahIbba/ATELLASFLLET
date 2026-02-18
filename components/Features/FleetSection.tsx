@@ -21,8 +21,8 @@ const FleetSection: React.FC<FleetSectionProps> = ({ onBook }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-          <div>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+          <div className="text-left w-full md:w-auto">
             <span className="text-brand-teal font-bold tracking-widest text-xs uppercase mb-2 block">Notre Collection</span>
             <h2 className="text-4xl md:text-6xl font-bold text-brand-navy dark:text-white font-space leading-none transition-colors duration-700">
               Arrivées <br /><span className="text-brand-blue">En Vedette</span>
@@ -30,7 +30,7 @@ const FleetSection: React.FC<FleetSectionProps> = ({ onBook }) => {
           </div>
           
           {/* Filters */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 justify-start md:justify-end w-full md:w-auto">
             {categories.map((cat) => (
               <button
                 key={cat}
