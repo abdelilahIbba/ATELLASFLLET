@@ -26,7 +26,7 @@ const ReservationBar: React.FC<ReservationBarProps> = ({ onBook }) => {
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.8 }}
-        className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-40 -mt-20 md:-mt-20 lg:-mt-20 mb-16 pointer-events-auto"
+      className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-40 mt-0 mb-16 pointer-events-auto"
     >
       <div className="bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-3xl p-4 md:p-6 shadow-2xl shadow-brand-blue/10 ring-1 ring-black/5 dark:ring-white/10 dark:shadow-brand-blue/5">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-6 items-end">

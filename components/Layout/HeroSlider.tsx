@@ -1,15 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CARS } from '../../constants';
 
 const HeroSlider: React.FC<{ isDark: boolean }> = ({ isDark }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const images = CARS.map((car, index) => ({
-    id: index + 1,
-    url: car.image,
-    alt: `${car.name} - atellaFleet`
-  }));
+  const images = [
+    {
+      id: 1,
+      url: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      alt: 'SUV Honda blanc'
+    },
+    {
+      id: 2,
+      url: 'https://plus.unsplash.com/premium_photo-1661288451211-b61d32db1d11?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      alt: 'Voiture premium 1'
+    },
+    {
+      id: 3,
+      url: 'https://plus.unsplash.com/premium_photo-1661277774967-7e1ed4df6c3d?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      alt: 'Voiture premium 2'
+    },
+    {
+      id: 4,
+      url: 'https://plus.unsplash.com/premium_photo-1682097377171-08dcb78ec4c5?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      alt: 'Voiture premium 3'
+    }
+  ];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,13 +49,13 @@ const HeroSlider: React.FC<{ isDark: boolean }> = ({ isDark }) => {
             src={images[currentIndex].url}
             alt={images[currentIndex].alt}
             loading="eager"
-            className={`w-full h-full object-cover transition-opacity duration-700 ${isDark ? 'opacity-60' : 'opacity-90'}`} 
+            className={`w-full h-full object-cover object-center transition-opacity duration-700 ${isDark ? 'opacity-72' : 'opacity-96'}`} 
           />
           {/* Overlay Gradient - Adapted for mode */}
           <div className={`absolute inset-0 bg-gradient-to-t transition-colors duration-700 ${
               isDark 
-              ? 'from-brand-navy via-brand-navy/50 to-transparent opacity-90' 
-              : 'from-white via-white/60 to-transparent opacity-80'
+              ? 'from-brand-navy/80 via-brand-navy/35 to-transparent opacity-78' 
+              : 'from-white/30 via-white/12 to-transparent opacity-45'
           }`} />
         </motion.div>
       </AnimatePresence>

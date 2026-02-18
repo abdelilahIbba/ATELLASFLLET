@@ -192,8 +192,8 @@ const App: React.FC = () => {
 
             <section className="relative h-screen w-full overflow-hidden transition-colors duration-700 bg-gray-50 dark:bg-brand-navy">
               {/* Subtle gradient for depth, but clearer in center for the car */}
-              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/80 to-transparent dark:from-black/40 dark:to-transparent z-[1] pointer-events-none"></div>
-              <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-gray-50 via-gray-50/50 to-transparent dark:from-brand-navy dark:via-brand-navy/80 dark:to-transparent z-[1] pointer-events-none"></div>
+              <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-white/30 to-transparent dark:from-black/20 dark:to-transparent z-[1] pointer-events-none"></div>
+              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-gray-50/25 via-gray-50/12 to-transparent dark:from-brand-navy/55 dark:via-brand-navy/28 dark:to-transparent z-[1] pointer-events-none"></div>
               
               <div className="absolute inset-0 z-0">
                  <HeroSlider isDark={isDark} />
@@ -202,8 +202,7 @@ const App: React.FC = () => {
             </section>
 
             <main className="relative z-10 transition-colors duration-700 bg-brand-light dark:bg-brand-navy">
-              {/* Modern Spacer for Reservation Bar */}
-                <div className="pt-16 md:pt-10 lg:pt-8">
+              <div className="mt-16 md:mt-20 lg:mt-24">
                   <ReservationBar onBook={handleBookNow} />
               </div>
 

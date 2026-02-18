@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
 import { X, Calendar, MapPin, ChevronRight, CreditCard, CheckCircle, ArrowLeft, Clock, Loader2, AlertCircle, Crosshair, ScanLine, Camera, Upload, UserCheck, FileCheck, RefreshCw, Image as ImageIcon, Smartphone, Key } from 'lucide-react';
 import { Car, Booking } from '../../types';
 import { CARS } from '../../constants';
+import 'leaflet/dist/leaflet.css';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -17,11 +19,24 @@ interface BookingModalProps {
   onBookingSuccess?: (booking: Booking) => void;
 }
 
+const RecenterMap: React.FC<{ center: [number, number] }> = ({ center }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    map.setView(center, map.getZoom(), { animate: true });
+  }, [center, map]);
+
+  return null;
+};
+
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialData, onBookingSuccess }) => {
   const [step, setStep] = useState(1);
   const [selectedCar, setSelectedCar] = useState<Car | null>(initialData?.car || null);
   const [isValidating, setIsValidating] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState('');
+  const [pickupCoords, setPickupCoords] = useState<[number, number]>([34.0209, -6.8416]); // Rabat centre by default
+  const [autoLocateAttempted, setAutoLocateAttempted] = useState(false);
   const [generatedBookingId, setGeneratedBookingId] = useState('');
   const [generatedAccessKey, setGeneratedAccessKey] = useState('');
   
@@ -37,7 +52,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    location: initialData?.location || 'Los Angeles (LAX)',
+    location: initialData?.location || 'Position en attente de géolocalisation',
     pickupDate: initialData?.pickupDate || '',
     returnDate: initialData?.returnDate || '',
     firstName: '',
@@ -60,14 +75,15 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
       }));
       setSelectedCar(initialData?.car || null);
       setIsValidating(false);
+      setLocationError('');
+      setPickupCoords([34.0209, -6.8416]);
+      setAutoLocateAttempted(false);
       setDocImages({ id: '', license: '', face: '' });
       setActiveCamera(null);
       setGeneratedBookingId('');
       setGeneratedAccessKey('');
     }
   }, [isOpen, initialData]);
-
-  if (!isOpen) return null;
 
   const handleNext = () => setStep(prev => prev + 1);
   const handleBack = () => setStep(prev => prev - 1);
@@ -116,14 +132,63 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
     }, 2000);
   };
 
-  const handleUseCurrentLocation = () => {
+  const handleUseCurrentLocation = (silent = false) => {
+    setLocationError('');
+
+    const isLocalHost =
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1';
+
+    if (!window.isSecureContext && !isLocalHost) {
+      if (!silent) {
+        setLocationError('La géolocalisation nécessite HTTPS (ou localhost). Ouvrez le site en sécurisé pour utiliser votre position réelle.');
+      }
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      if (!silent) {
+        setLocationError('La géolocalisation n’est pas disponible sur ce navigateur.');
+      }
+      return;
+    }
+
     setIsLocating(true);
-    // Simulate Geolocation API
-    setTimeout(() => {
-        setFormData(prev => ({ ...prev, location: 'Current GPS Location (Lat: 34.05, Long: -118.25)' }));
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = Number(position.coords.latitude.toFixed(6));
+        const lng = Number(position.coords.longitude.toFixed(6));
+
+        setPickupCoords([lat, lng]);
+        setFormData(prev => ({
+          ...prev,
+          location: `Position GPS Actuelle (Lat: ${lat}, Long: ${lng})`
+        }));
         setIsLocating(false);
-    }, 1500);
+      },
+      () => {
+        if (!silent) {
+          setLocationError('Impossible d’obtenir votre position. Autorisez la localisation puis réessayez.');
+        }
+        setIsLocating(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
   };
+
+  useEffect(() => {
+    if (isOpen && step === 4 && !autoLocateAttempted) {
+      setAutoLocateAttempted(true);
+      handleUseCurrentLocation(true);
+    }
+  }, [isOpen, step, autoLocateAttempted]);
+
+  if (!isOpen) return null;
 
   // --- Document Scanning Logic ---
 
@@ -671,41 +736,59 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
 
                 <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-1 border border-slate-200 dark:border-white/10 mb-8 overflow-hidden">
                     <div className="relative h-64 w-full rounded-lg overflow-hidden">
-                        <div className="absolute inset-0 bg-[#050A14] dark:bg-[#050A14]">
-                            <svg className="w-full h-full opacity-30 dark:opacity-20" width="100%" height="100%">
-                                <pattern id="grid-modal" width="40" height="40" patternUnits="userSpaceOnUse">
-                                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-slate-400"/>
-                                </pattern>
-                                <rect width="100%" height="100%" fill="url(#grid-modal)" />
-                                <path d="M 0 100 Q 150 150 300 100 T 600 100" fill="none" stroke="currentColor" strokeWidth="12" className="text-slate-600" />
-                                <path d="M 200 0 L 200 400" fill="none" stroke="currentColor" strokeWidth="8" className="text-slate-600" />
-                            </svg>
-                        </div>
+                        <MapContainer
+                          center={pickupCoords}
+                          zoom={15}
+                          scrollWheelZoom={true}
+                          className="h-full w-full"
+                          zoomControl={false}
+                        >
+                          <RecenterMap center={pickupCoords} />
+                          <TileLayer
+                            attribution='&copy; OpenStreetMap contributors'
+                            url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                          />
+
+                          <CircleMarker
+                            center={pickupCoords}
+                            radius={10}
+                            pathOptions={{ color: '#dc2626', fillColor: '#dc2626', fillOpacity: 0.95 }}
+                          >
+                            <Popup>
+                              <div className="text-xs font-semibold">Point de prise en charge confirmé</div>
+                              <div className="text-[11px]">Lat: {pickupCoords[0]} • Long: {pickupCoords[1]}</div>
+                            </Popup>
+                          </CircleMarker>
+                        </MapContainer>
+
                         <div className="absolute inset-0 bg-gradient-to-t from-brand-blue/10 to-transparent pointer-events-none"></div>
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                             <div className="relative">
-                                <div className="w-4 h-4 bg-brand-red rounded-full border-2 border-white shadow-lg relative z-10"></div>
-                                <div className="absolute inset-0 bg-brand-red rounded-full animate-ping opacity-75"></div>
-                             </div>
-                             <div className="mt-2 bg-white dark:bg-black/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 shadow-xl max-w-[200px] text-center">
-                                <p className="text-[10px] font-bold text-slate-500 uppercase mb-0.5">Point de Prise en Charge</p>
-                                <p className="text-xs font-bold text-brand-navy dark:text-white truncate px-1">{formData.location}</p>
-                             </div>
+
+                        <div className="absolute top-3 left-3 bg-white/95 dark:bg-black/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 shadow-xl max-w-[300px] text-left z-20">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase mb-0.5">Point de Prise en Charge</p>
+                          <p className="text-xs font-bold text-brand-navy dark:text-white truncate">{formData.location}</p>
                         </div>
+
                         <button 
                            onClick={handleUseCurrentLocation}
                            disabled={isLocating}
-                           className="absolute bottom-4 right-4 bg-white dark:bg-brand-navy text-brand-navy dark:text-white px-3 py-2 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10 z-20"
+                          className="absolute top-3 right-3 bg-white dark:bg-brand-navy text-brand-navy dark:text-white px-3 py-2 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10 z-[500]"
                         >
                            {isLocating ? (
                                <Loader2 className="w-3 h-3 animate-spin" />
                            ) : (
                                <Crosshair className="w-3 h-3 text-brand-blue" />
                            )}
-                           Utiliser Ma Position
+                             Utiliser ma position GPS
                         </button>
                     </div>
                 </div>
+
+                {locationError && (
+                  <div className="mb-5 flex items-center gap-2 text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg px-3 py-2">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{locationError}</span>
+                  </div>
+                )}
 
                 <button 
                   onClick={handleFinalizeLocation}
@@ -721,6 +804,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
                       Vérifier & Finaliser Réservation <CheckCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
                     </>
                   )}
+                </button>
+
+                <button
+                  onClick={handleBack}
+                  disabled={isValidating}
+                  className="w-full mt-3 py-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-brand-navy dark:text-white rounded-xl font-semibold text-sm uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-white/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  Retour à l'étape précédente
                 </button>
                 
                 <p className="text-center text-[10px] text-slate-400 mt-4">
