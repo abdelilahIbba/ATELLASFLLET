@@ -7,12 +7,14 @@ interface ReservationBarProps {
 }
 
 const ReservationBar: React.FC<ReservationBarProps> = ({ onBook }) => {
-  const [location, setLocation] = useState('Los Angeles (LAX)');
+  const [category, setCategory] = useState('Citadine');
+  const [location, setLocation] = useState('Rabat Centre');
   const [pickupDate, setPickupDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
 
   const handleSearch = () => {
     onBook({
+      category,
       location,
       pickupDate,
       returnDate
@@ -24,27 +26,28 @@ const ReservationBar: React.FC<ReservationBarProps> = ({ onBook }) => {
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.8 }}
-        className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-30 -mt-24 md:-mt-32 mb-16"
+        className="w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-40 -mt-20 md:-mt-20 lg:-mt-20 mb-16 pointer-events-auto"
     >
-      <div className="bg-white/90 dark:bg-[#0f172a]/80 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-3xl p-4 md:p-6 shadow-2xl shadow-brand-blue/10 ring-1 ring-black/5 dark:ring-white/10">
+      <div className="bg-white/90 dark:bg-[#0f172a]/95 backdrop-blur-2xl border border-white/20 dark:border-white/10 rounded-3xl p-4 md:p-6 shadow-2xl shadow-brand-blue/10 ring-1 ring-black/5 dark:ring-white/10 dark:shadow-brand-blue/5">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 lg:gap-6 items-end">
             
-            {/* Location */}
+            {/* Category */}
             <div className="lg:col-span-3 space-y-2">
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Lieu de Prise en Charge</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Catégorie</label>
                 <div className="relative group transistion-all duration-300">
                     <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                        <MapPin className="h-5 w-5 text-brand-red group-hover:scale-110 transition-transform" />
+                  <Car className="h-5 w-5 text-brand-red group-hover:scale-110 transition-transform" />
                     </div>
                     <select 
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
                       className="block w-full pl-10 pr-10 py-4 text-base font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-white/5 border-0 rounded-xl focus:ring-2 focus:ring-brand-red transition-all cursor-pointer appearance-none hover:bg-slate-100 dark:hover:bg-white/10"
                     >
-                        <option>Los Angeles (LAX)</option>
-                        <option>New York (JFK)</option>
-                        <option>Miami (MIA)</option>
-                        <option>Londres (LHR)</option>
+                  <option>Citadine</option>
+                  <option>SUV</option>
+                  <option>Berline</option>
+                  <option>Utilitaire</option>
+                  <option>Automatique</option>
                     </select>
                 </div>
             </div>
@@ -85,18 +88,20 @@ const ReservationBar: React.FC<ReservationBarProps> = ({ onBook }) => {
                 </div>
             </div>
 
-            {/* Car Type */}
+            {/* Pickup Location */}
             <div className="lg:col-span-3 space-y-2">
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Type de Véhicule</label>
+              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Lieu de Prise en Charge</label>
                 <div className="relative group">
                     <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                        <Car className="h-5 w-5 text-brand-red group-hover:scale-110 transition-transform" />
+                  <MapPin className="h-5 w-5 text-brand-red group-hover:scale-110 transition-transform" />
                     </div>
-                    <select className="block w-full pl-10 pr-10 py-4 text-base font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-white/5 border-0 rounded-xl focus:ring-2 focus:ring-brand-red transition-all cursor-pointer appearance-none hover:bg-slate-100 dark:hover:bg-white/10">
-                        <option>Toutes Catégories</option>
-                        <option>Hyper Sport</option>
-                        <option>SUV de Luxe</option>
-                        <option>Berline Exécutive</option>
+                <select
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="block w-full pl-10 pr-10 py-4 text-base font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-white/5 border-0 rounded-xl focus:ring-2 focus:ring-brand-red transition-all cursor-pointer appearance-none hover:bg-slate-100 dark:hover:bg-white/10"
+                >
+                  <option>Rabat Centre</option>
+                  <option>Rabat-Salé Aéroport</option>
                     </select>
                 </div>
             </div>

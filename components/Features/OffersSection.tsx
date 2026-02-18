@@ -8,11 +8,11 @@ interface OffersSectionProps {
 
 const OffersSection: React.FC<OffersSectionProps> = ({ onBook }) => {
   return (
-    <section className="py-20 bg-brand-light dark:bg-brand-navy transition-colors duration-700">
+    <section id="offers" className="py-20 bg-brand-light dark:bg-brand-navy transition-colors duration-700">
       <div className="max-w-7xl mx-auto px-6">
          <div className="flex items-center justify-between mb-10">
             <h3 className="text-2xl md:text-3xl font-bold text-brand-navy dark:text-white font-space">
-                Offres <span className="text-brand-red">Exclusives</span>
+                Offres <span className="text-brand-red">Spéciales</span>
             </h3>
             <a href="#" className="text-sm font-bold text-brand-navy dark:text-white hover:text-brand-blue flex items-center gap-2">
                 Tout Voir <ArrowRight className="w-4 h-4" />
@@ -36,7 +36,7 @@ const OffersSection: React.FC<OffersSectionProps> = ({ onBook }) => {
                         <h4 className="text-2xl font-bold text-white mb-2 font-space">{offer.title}</h4>
                         <p className="text-slate-300 text-sm mb-6 max-w-xs">{offer.description}</p>
                         <button className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2 group-hover:gap-4 transition-all">
-                            Profiter de l'Offre <ArrowRight className="w-4 h-4 text-brand-teal" />
+                          Voir l'offre <ArrowRight className="w-4 h-4 text-brand-teal" />
                         </button>
                     </div>
 

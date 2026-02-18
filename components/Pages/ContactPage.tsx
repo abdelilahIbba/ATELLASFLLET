@@ -4,15 +4,18 @@ import Footer from '../Layout/Footer';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, MessageSquare, Globe, ArrowRight, CheckCircle2, Building2 } from 'lucide-react';
 import { LOCATIONS } from '../../constants';
+import { UserInfo } from '../../types';
 
 interface ContactPageProps {
   isDark: boolean;
   toggleTheme: () => void;
   onLoginClick: () => void;
   onNavigate: (path: string) => void;
+  onLogout?: () => void;
+  currentUser?: UserInfo | null;
 }
 
-const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginClick, onNavigate }) => {
+const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginClick, onNavigate, onLogout, currentUser }) => {
   const [formState, setFormState] = useState({
     name: '',
     email: '',
@@ -38,11 +41,12 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
         toggleTheme={toggleTheme} 
         onLoginClick={onLoginClick}
         onNavigate={onNavigate} 
+        currentUser={currentUser}
+        onLogout={onLogout}
       />
 
-      <div className="flex-grow pt-32 pb-20 px-4 sm:px-6 relative">
-         {/* Background Ambience */}
-         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-brand-blue/5 rounded-full blur-[120px] pointer-events-none"></div>
+      <section className="pt-32 pb-24 px-6 relative mt-16 md:mt-20">
+         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-blue/5 rounded-full blur-[100px] pointer-events-none"></div>
          <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-brand-teal/5 rounded-full blur-[100px] pointer-events-none"></div>
 
          <div className="max-w-7xl mx-auto relative z-10">
@@ -253,7 +257,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
 
             </div>
          </div>
-      </div>
+      </section>
 
       <Footer onNavigate={onNavigate} />
     </div>

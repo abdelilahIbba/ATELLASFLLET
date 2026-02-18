@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, X, ChevronRight, User, Sun, Moon, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Menu, X, ChevronRight, User, Sun, Moon, LayoutDashboard, ShieldCheck, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserInfo } from '../../types';
 
@@ -8,12 +8,25 @@ interface NavbarProps {
   toggleTheme: () => void;
   onLoginClick: () => void;
   onNavigate?: (path: string) => void;
+  onLogout?: () => void;
   currentUser?: UserInfo | null;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ isDark, toggleTheme, onLoginClick, onNavigate, currentUser }) => {
+const Navbar: React.FC<NavbarProps> = ({ isDark, toggleTheme, onLoginClick, onNavigate, onLogout, currentUser }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     let ticking = false;
@@ -40,11 +53,11 @@ const Navbar: React.FC<NavbarProps> = ({ isDark, toggleTheme, onLoginClick, onNa
   };
 
   const navLinks = [
-    { name: 'Flotte', href: '#fleet' },
+    { name: 'Flotte', href: 'flotte' },
     { name: 'Services', href: '#services' },
     { name: 'Suivi', href: 'tracking' },
     { name: 'Contact', href: 'contact' },
-    { name: 'À propos', href: '#about' },
+    { name: 'Agence', href: '#agency' },
   ];
 
   // Conditionally add Admin link if user is authorized
@@ -129,23 +142,74 @@ const Navbar: React.FC<NavbarProps> = ({ isDark, toggleTheme, onLoginClick, onNa
                </button>
 
                {currentUser ? (
-                 <div className="flex items-center gap-3 pl-2 cursor-pointer group" onClick={onLoginClick}>
-                    <div className="text-right hidden lg:block">
-                        <p className="text-xs font-bold text-brand-navy dark:text-white leading-none">{currentUser.firstName} {currentUser.lastName.charAt(0)}.</p>
-                        <p className={`text-[10px] font-bold uppercase tracking-wider ${currentUser.role === 'admin' ? 'text-brand-red' : 'text-brand-teal'}`}>
-                            {currentUser.role === 'admin' ? 'System Admin' : 'Elite Member'}
-                        </p>
-                    </div>
-                    <div className={`w-10 h-10 rounded-full border-2 overflow-hidden relative group-hover:border-opacity-100 transition-colors shadow-lg ${currentUser.role === 'admin' ? 'border-brand-red/50 group-hover:border-brand-red' : 'border-brand-teal/50 group-hover:border-brand-teal'}`}>
-                        {currentUser.photo ? (
-                            <img src={currentUser.photo} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="w-full h-full bg-brand-navy flex items-center justify-center text-white font-bold">
-                                {currentUser.firstName.charAt(0)}
-                            </div>
-                        )}
-                        <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-                    </div>
+                 <div className="relative" ref={dropdownRef}>
+                   <div 
+                      className="flex items-center gap-3 pl-2 cursor-pointer group" 
+                      onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                   >
+                      <div className="text-right hidden lg:block">
+                          <p className="text-xs font-bold text-brand-navy dark:text-white leading-none">{currentUser.firstName} {currentUser.lastName.charAt(0)}.</p>
+                          <p className={`text-[10px] font-bold uppercase tracking-wider ${currentUser.role === 'admin' ? 'text-brand-red' : 'text-brand-teal'}`}>
+                              {currentUser.role === 'admin' ? 'System Admin' : 'Elite Member'}
+                          </p>
+                      </div>
+                      <div className={`w-10 h-10 rounded-full border-2 overflow-hidden relative group-hover:border-opacity-100 transition-colors shadow-lg ${currentUser.role === 'admin' ? 'border-brand-red/50 group-hover:border-brand-red' : 'border-brand-teal/50 group-hover:border-brand-teal'}`}>
+                          {currentUser.photo ? (
+                              <img src={currentUser.photo} alt="Profile" className="w-full h-full object-cover" />
+                          ) : (
+                              <div className="w-full h-full bg-brand-navy flex items-center justify-center text-white font-bold">
+                                  {currentUser.firstName.charAt(0)}
+                              </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                      </div>
+                   </div>
+
+                   <AnimatePresence>
+                      {profileDropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-brand-navy border border-gray-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-[60]"
+                        >
+                          <div className="p-3 border-b border-gray-100 dark:border-white/5">
+                            <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
+                              {currentUser.firstName} {currentUser.lastName}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                              {currentUser.email}
+                            </p>
+                          </div>
+                          
+                          <div className="p-1">
+                            <button
+                               onClick={() => {
+                                 setProfileDropdownOpen(false);
+                                 onLoginClick(); // Navigate to Dashboard
+                               }}
+                               className="w-full text-left px-3 py-2 text-sm font-medium text-slate-700 dark:text-gray-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors flex items-center gap-2"
+                            >
+                               <User className="w-4 h-4" />
+                               Dashboard
+                            </button>
+                            {onLogout && (
+                              <button
+                                onClick={() => {
+                                   setProfileDropdownOpen(false);
+                                   onLogout();
+                                }}
+                                className="w-full text-left px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-2 mt-1"
+                              >
+                                 <LogOut className="w-4 h-4" />
+                                 Déconnexion
+                              </button>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                   </AnimatePresence>
                  </div>
                ) : (
                  <button 

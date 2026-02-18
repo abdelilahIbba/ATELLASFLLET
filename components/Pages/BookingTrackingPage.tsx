@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../Layout/Navbar';
 import Footer from '../Layout/Footer';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MapContainer, TileLayer, CircleMarker, Polyline, Popup } from 'react-leaflet';
 import { 
   Navigation, 
   Clock, 
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import { CARS } from '../../constants';
 import { Booking, UserInfo } from '../../types';
+import 'leaflet/dist/leaflet.css';
 
 interface BookingTrackingPageProps {
   isDark: boolean;
@@ -26,15 +28,17 @@ interface BookingTrackingPageProps {
   onNavigate: (path: string) => void;
   booking?: Booking | null;
   currentUser?: UserInfo | null;
+  onLogout?: () => void;
 }
 
 const BookingTrackingPage: React.FC<BookingTrackingPageProps> = ({ 
   isDark, 
   toggleTheme, 
-  onLoginClick, 
-  onNavigate, 
-  booking, 
-  currentUser 
+  onLoginClick,
+  onNavigate,
+  booking,
+  currentUser,
+  onLogout
 }) => {
   const [systemState, setSystemState] = useState<'initializing' | 'locating' | 'locked'>('initializing');
   const [now, setNow] = useState(new Date());
@@ -76,6 +80,24 @@ const BookingTrackingPage: React.FC<BookingTrackingPageProps> = ({
   };
 
   const car = booking?.car || CARS[0];
+    const pickupPoint: [number, number] = [34.0209, -6.8416]; // Rabat Centre (Hassan)
+    const destinationPoint: [number, number] = [33.9985, -6.8510]; // Agdal / Hay Riad side
+    const routePath: [number, number][] = [
+        pickupPoint,
+        [34.0178, -6.8359],
+        [34.0129, -6.8388],
+        [34.0084, -6.8427],
+        [34.0042, -6.8466],
+        [34.0013, -6.8493],
+        destinationPoint,
+    ];
+
+    const progress = Math.min(1, Math.max(0, 1 - deliveryTimer / (12 * 60)));
+    const carPosition: [number, number] = [
+        pickupPoint[0] + (destinationPoint[0] - pickupPoint[0]) * progress,
+        pickupPoint[1] + (destinationPoint[1] - pickupPoint[1]) * progress,
+    ];
+
   const driver = {
       name: 'James C.',
       rating: 4.98,
@@ -91,17 +113,15 @@ const BookingTrackingPage: React.FC<BookingTrackingPageProps> = ({
         onLoginClick={onLoginClick} 
         onNavigate={onNavigate}
         currentUser={currentUser} 
-      />
-      
-      {/* Main Container - Fills space between Nav and Footer */}
-      <main className="flex-grow relative w-full h-[85vh] lg:h-[80vh] bg-slate-50 dark:bg-[#050A14] overflow-hidden transition-colors duration-700">
-          
-          {/* --- TOP HUD OVERLAY --- */}
-          <div className="absolute top-28 left-0 right-0 z-30 px-6 pointer-events-none">
-              <div className="max-w-7xl mx-auto flex justify-between items-start">
+        onLogout={onLogout}
+            />
+
+              <main className="relative flex-1 min-h-[calc(100vh-84px)] overflow-hidden pt-28 pb-10">
+                  <div className="relative z-30 px-4 sm:px-6 pointer-events-none">
+                      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-start">
                   
                   {/* Status Badge */}
-                  <div className="bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md border border-slate-200 dark:border-white/10 px-4 py-2 rounded-full flex items-center gap-4 shadow-lg transition-colors">
+                  <div className="bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md border border-slate-200 dark:border-white/10 px-4 py-2 rounded-full flex items-center gap-3 sm:gap-4 shadow-lg transition-colors">
                       <div className="flex items-center gap-2">
                           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                           <span className="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-500">Télémétrie en Direct</span>
@@ -114,69 +134,73 @@ const BookingTrackingPage: React.FC<BookingTrackingPageProps> = ({
                   </div>
 
                   {/* ETA Badge */}
-                  <div className="bg-brand-red/90 backdrop-blur-md text-white px-6 py-2 rounded-full shadow-lg shadow-brand-red/20 animate-pulse">
+                  <div className="bg-brand-red/90 backdrop-blur-md text-white px-5 py-2 rounded-full shadow-lg shadow-brand-red/20 animate-pulse">
                       <span className="text-xs font-bold uppercase tracking-widest">Arrivée: {formatTimer(deliveryTimer)}</span>
                   </div>
               </div>
           </div>
 
-          {/* --- MAP BACKGROUND LAYER --- */}
-          <div className="absolute inset-0 bg-slate-100 dark:bg-[#050A14] z-0 transition-colors duration-700">
-             {/* Grid Pattern */}
-             <div className="absolute inset-0 opacity-20" 
-                  style={{ 
-                      backgroundImage: isDark 
-                        ? 'radial-gradient(#1e293b 1px, transparent 1px)' 
-                        : 'radial-gradient(#cbd5e1 1px, transparent 1px)',
-                      backgroundSize: '32px 32px' 
-                  }}>
-             </div>
-             
-             {/* Abstract Map Path */}
-             <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40">
-                 <path d="M 0 600 Q 400 400 800 600 T 1600 400" fill="none" stroke="#0D9488" strokeWidth="2" strokeDasharray="8 4" />
-                 <defs>
-                    <radialGradient id="grad1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                        <stop offset="0%" style={{stopColor:'#0D9488', stopOpacity:0.5}} />
-                        <stop offset="100%" style={{stopColor: isDark ? '#050A14' : '#F1F5F9', stopOpacity:0}} />
-                    </radialGradient>
-                 </defs>
-                 <circle cx="800" cy="600" r="300" fill="url(#grad1)" fillOpacity="0.2" />
-             </svg>
+                    {/* --- REAL MAP BACKGROUND LAYER --- */}
+                    <div className="absolute inset-0 z-0 transition-colors duration-700">
+                        <MapContainer
+                            center={carPosition}
+                            zoom={12}
+                            scrollWheelZoom={true}
+                            className="h-full w-full"
+                            zoomControl={false}
+                        >
+                            <TileLayer
+                                attribution='&copy; OpenStreetMap contributors &copy; CARTO'
+                                url={
+                                    isDark
+                                        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                                        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                                }
+                            />
 
-             {/* Live User Location Pin */}
-             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                 <div className="w-4 h-4 bg-brand-blue dark:bg-white rounded-full shadow-[0_0_20px_rgba(37,99,235,0.8)] dark:shadow-[0_0_20px_rgba(255,255,255,0.8)] animate-pulse relative z-10 transition-colors"></div>
-                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 border border-brand-blue/20 dark:border-white/20 rounded-full animate-ping"></div>
-                 <div className="absolute top-8 left-1/2 -translate-x-1/2 bg-brand-navy dark:bg-white text-white dark:text-brand-navy px-2 py-1 rounded text-[10px] font-bold">VOUS</div>
-             </div>
-             
-             {/* Moving Car Icon */}
-             <motion.div 
-                initial={{ x: -400, y: 150 }}
-                animate={{ x: 0, y: 0 }}
-                transition={{ duration: 30, ease: "linear" }}
-                className="absolute top-1/2 left-1/2 z-20"
-             >
-                 <div className="relative">
-                    <div className="bg-white dark:bg-brand-blue p-2.5 rounded-xl shadow-[0_0_30px_rgba(37,99,235,0.4)] dark:shadow-[0_0_30px_rgba(37,99,235,0.6)] transform -translate-x-1/2 -translate-y-1/2 border border-slate-200 dark:border-white/20 transition-colors">
-                        <Car className="w-6 h-6 text-brand-blue dark:text-white" />
-                    </div>
-                    {/* Headlights effect */}
-                    <div className="absolute top-1/2 left-full w-32 h-10 -translate-y-1/2 bg-gradient-to-r from-brand-blue/20 dark:from-white/30 to-transparent blur-md transform rotate-12 origin-left transition-colors"></div>
-                 </div>
-             </motion.div>
+                            <Polyline
+                                positions={routePath}
+                                pathOptions={{ color: isDark ? '#2dd4bf' : '#0D9488', weight: 5, opacity: 0.8 }}
+                            />
+
+                            <CircleMarker
+                                center={pickupPoint}
+                                radius={8}
+                                pathOptions={{ color: '#2563eb', fillColor: '#2563eb', fillOpacity: 0.9 }}
+                            >
+                                <Popup>Rabat Centre • Point de départ</Popup>
+                            </CircleMarker>
+
+                            <CircleMarker
+                                center={destinationPoint}
+                                radius={8}
+                                pathOptions={{ color: '#dc2626', fillColor: '#dc2626', fillOpacity: 0.9 }}
+                            >
+                                <Popup>Destination • Rabat (Agdal)</Popup>
+                            </CircleMarker>
+
+                            <CircleMarker
+                                center={carPosition}
+                                radius={10}
+                                pathOptions={{ color: '#0D9488', fillColor: '#0D9488', fillOpacity: 1 }}
+                            >
+                                <Popup>{car.name} • En route</Popup>
+                            </CircleMarker>
+                        </MapContainer>
+
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20 pointer-events-none" />
           </div>
 
           {/* --- CONTENT PANELS LAYER --- */}
-          <div className="absolute inset-0 z-10 pointer-events-none p-6 pt-32 flex flex-col justify-end lg:flex-row lg:justify-between lg:items-end max-w-7xl mx-auto">
+          <div className="relative z-10 pointer-events-none px-4 sm:px-6 mt-8">
+              <div className="max-w-7xl mx-auto min-h-[calc(100vh-280px)] flex flex-col justify-end lg:flex-row lg:justify-between lg:items-end gap-4 lg:gap-6">
               
               {/* Left Panel: Vehicle Stats */}
               <motion.div 
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="pointer-events-auto w-full lg:w-96 bg-white/90 dark:bg-[#0B1120]/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-6 mb-4 lg:mb-0 shadow-2xl transition-colors"
+                className="pointer-events-auto w-full lg:w-96 bg-white/90 dark:bg-[#0B1120]/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xl transition-colors"
               >
                   <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-3">
@@ -222,7 +246,7 @@ const BookingTrackingPage: React.FC<BookingTrackingPageProps> = ({
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.7 }}
-                className="pointer-events-auto w-full lg:w-96 bg-white/90 dark:bg-[#0B1120]/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-2xl transition-colors"
+                className="pointer-events-auto w-full lg:w-96 bg-white/90 dark:bg-[#0B1120]/90 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xl transition-colors"
               >
                   <div className="flex items-center gap-4 mb-6">
                       <div className="relative">
@@ -251,6 +275,7 @@ const BookingTrackingPage: React.FC<BookingTrackingPageProps> = ({
                   </div>
               </motion.div>
 
+              </div>
           </div>
 
           {/* Center Loading State (Initial) */}

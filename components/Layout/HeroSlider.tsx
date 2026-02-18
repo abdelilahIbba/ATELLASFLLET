@@ -1,72 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const IMAGES = [
-  {
-    id: 1,
-    url: 'https://images.unsplash.com/photo-1603584173870-7b299f589389?auto=format&fit=crop&q=80&w=2000',
-    alt: 'Audi RS E-tron GT',
-    title: 'Adrénaline Pure',
-    subtitle: "Découvrez la puissance brute de l'ingénierie allemande."
-  },
-  {
-    id: 2,
-    url: 'https://images.unsplash.com/photo-1541348263662-e068662d82af?auto=format&fit=crop&q=80&w=2000',
-    alt: 'Audi RS Dark',
-    title: 'Coureur Nocturne',
-    subtitle: 'Dominez les rues avec furtivité et précision.'
-  },
-  {
-    id: 3,
-    url: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&q=80&w=2000',
-    alt: 'Audi RS Luxury',
-    title: 'Luxe Sans Compromis',
-    subtitle: 'Là où la performance rencontre un confort inégalé.'
-  }
-];
+import { CARS } from '../../constants';
 
 const HeroSlider: React.FC<{ isDark: boolean }> = ({ isDark }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Dark mode images (the ones we set up)
-  const DARK_IMAGES = [
-    {
-      id: 1,
-      url: 'https://images.unsplash.com/photo-1603584173870-7b299f589389?auto=format&fit=crop&q=80&w=2000',
-      alt: 'Audi RS E-tron GT'
-    },
-    {
-      id: 2,
-      url: 'https://images.unsplash.com/photo-1541348263662-e068662d82af?auto=format&fit=crop&q=80&w=2000',
-      alt: 'Audi RS Dark'
-    },
-    {
-      id: 3,
-      url: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&q=80&w=2000',
-      alt: 'Audi RS Luxury'
-    }
-  ];
-
-  // Light mode images (NEW: brighter, daylight, clean)
-  const LIGHT_IMAGES = [
-    {
-       id: 1,
-       url: 'https://images.unsplash.com/photo-1614200179396-2bdb77ebf81b?q=80&w=2000&auto=format&fit=crop', // Audi Silver/White
-       alt: 'Audi RS Daylight'
-    },
-    {
-       id: 2,
-       url: 'https://images.unsplash.com/photo-1606152421811-aa911307c696?q=80&w=2000&auto=format&fit=crop', // Clean studio or road
-       alt: 'Audi RS Motion'
-    },
-    {
-       id: 3,
-       url: 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?q=80&w=2000&auto=format&fit=crop', // Interior or detail light
-       alt: 'Audi RS Detail'
-    }
-  ];
-
-  const images = isDark ? DARK_IMAGES : LIGHT_IMAGES;
+  const images = CARS.map((car, index) => ({
+    id: index + 1,
+    url: car.image,
+    alt: `${car.name} - atellaFleet`
+  }));
 
   useEffect(() => {
     const timer = setInterval(() => {

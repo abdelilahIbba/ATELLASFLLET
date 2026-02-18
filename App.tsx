@@ -8,11 +8,9 @@ import FleetSection from './components/Features/FleetSection';
 import ServicesSection from './components/Features/ServicesSection';
 import OffersSection from './components/Features/OffersSection';
 import LoyaltySection from './components/Features/LoyaltySection';
-import GallerySection from './components/Features/GallerySection';
 import WhyChooseUs from './components/Features/WhyChooseUs';
+import TestimonialsSection from './components/Features/TestimonialsSection';
 import LocationsSection from './components/Features/LocationsSection';
-import AboutSection from './components/Features/AboutSection';
-import BlogSection from './components/Features/BlogSection';
 import Footer from './components/Layout/Footer';
 import AssistantModal from './components/AI/AssistantModal';
 import BookingModal from './components/Booking/BookingModal';
@@ -110,7 +108,7 @@ const App: React.FC = () => {
   const handleAuthLogin = (email: string, password: string, role: 'client' | 'admin') => {
     if (role === 'admin') {
         // Check credentials
-        if (email !== 'demo@devnapp.com' || password !== 'demo@devnapp.com') {
+        if (email !== 'contact@devnapp.com' || password !== 'devnapp@123') {
             // alert('Identifiants admin invalides. Accès refusé.'); // Removed alert
             return false; // Return failure
         }
@@ -141,11 +139,17 @@ const App: React.FC = () => {
     return true; // Return success
   };
 
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setCurrentView('home');
+    localStorage.removeItem('currentUser');
+  };
+
   const handleNavigation = (path: string) => {
     if (path === 'home') {
       setCurrentView('home');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (path === 'fleet') {
+    } else if (path === 'fleet' || path === 'flotte') {
       setCurrentView('fleet');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (path === 'tracking') {
@@ -182,6 +186,7 @@ const App: React.FC = () => {
               toggleTheme={toggleTheme} 
               onLoginClick={handleLoginClick} 
               onNavigate={handleNavigation}
+              onLogout={handleLogout}
               currentUser={currentUser}
             />
 
@@ -198,19 +203,22 @@ const App: React.FC = () => {
 
             <main className="relative z-10 transition-colors duration-700 bg-brand-light dark:bg-brand-navy">
               {/* Modern Spacer for Reservation Bar */}
-              <div className="pt-12 md:pt-0">
+                <div className="pt-16 md:pt-10 lg:pt-8">
                   <ReservationBar onBook={handleBookNow} />
               </div>
 
               <ServicesSection />
-              <FleetSection onBook={handleBookNow} />
-              <OffersSection onBook={handleBookNow} />
+              <FleetSection 
+                onBook={handleBookNow} 
+                maxVisible={6}
+                showViewAll={true}
+                onViewAll={() => handleNavigation('flotte')}
+              />
               <LoyaltySection />
-              <GallerySection />
+              <OffersSection onBook={handleBookNow} />
               <WhyChooseUs />
+              <TestimonialsSection />
               <LocationsSection />
-              <AboutSection />
-              <BlogSection />
             </main>
 
             <Footer onNavigate={handleNavigation} />
@@ -223,7 +231,9 @@ const App: React.FC = () => {
             toggleTheme={toggleTheme}
             onLoginClick={handleLoginClick}
             onBook={handleBookNow}
-            onNavigateHome={() => handleNavigation('home')}
+            onNavigate={handleNavigation}
+            onLogout={handleLogout}
+            currentUser={currentUser}
           />
         )}
 
@@ -235,6 +245,7 @@ const App: React.FC = () => {
             onNavigate={handleNavigation}
             booking={currentBooking}
             currentUser={currentUser}
+            onLogout={handleLogout}
           />
         )}
 
@@ -244,6 +255,8 @@ const App: React.FC = () => {
             toggleTheme={toggleTheme}
             onLoginClick={handleLoginClick}
             onNavigate={handleNavigation}
+            currentUser={currentUser}
+            onLogout={handleLogout}
           />
         )}
 
@@ -252,6 +265,8 @@ const App: React.FC = () => {
             isDark={isDark}
             toggleTheme={toggleTheme}
             onNavigate={handleNavigation}
+            onLogout={handleLogout}
+            currentUser={currentUser}
           />
         )}
 

@@ -10,6 +10,7 @@ import ReviewManagement from '../Admin/Reviews/ReviewManagement';
 import DashboardOverview from '../Admin/Overview/DashboardOverview';
 import AnalyticsManagement from '../Admin/Analytics/AnalyticsManagement';
 import GPSManagement from '../Admin/Tracking/GPSManagement';
+import { UserInfo } from '../../types';
 import { 
   Bell,
   LayoutDashboard, 
@@ -83,6 +84,8 @@ interface AdminDashboardProps {
   isDark: boolean;
   toggleTheme: () => void;
   onNavigate: (path: string) => void;
+  onLogout?: () => void;
+  currentUser?: UserInfo | null;
 }
 
 // --- TYPES & INTERFACES ---
@@ -347,7 +350,7 @@ const ModalContainer: React.FC<ModalContainerProps> = ({ title, children, onClos
     </div>
 );
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, onNavigate }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, onNavigate, onLogout, currentUser }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'fleet' | 'clients' | 'bookings' | 'gps' | 'reviews' | 'blog' | 'messages' | 'settings' | 'analytics'>('overview');
   const [selectedItem, setSelectedItem] = useState<any | null>(null); 
   const [modalType, setModalType] = useState<string | null>(null);
@@ -450,7 +453,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
       return hasExpiring ? acc + 1 : acc;
   }, 0);
 
-  const handleLogout = () => onNavigate('home');
+  const handleLogout = () => {
+    if (onLogout) {
+      onLogout();
+    } else {
+      onNavigate('home');
+    }
+  };
 
   const openModal = (type: string, item: any) => {
     setModalType(type);

@@ -1,7 +1,7 @@
 export interface Car {
   id: string;
   name: string;
-  category: 'Hyper' | 'SUV' | 'Sedan' | 'Convertible';
+  category: 'Hyper' | 'SUV' | 'Sedan' | 'Convertible' | 'Citadine' | 'Berline' | 'Utilitaire' | 'Premium';
   pricePerDay: number;
   speed: string; // e.g., "0-60 in 1.9s"
   range: string; // e.g., "600 mi"

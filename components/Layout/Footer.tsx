@@ -22,42 +22,42 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 </span>
             </div>
             <p className="text-slate-400 dark:text-neutral-500 text-sm leading-relaxed">
-              Location de Voitures Premium et solutions de gestion de flotte. Élever le standard de la mobilité de luxe depuis 2024.
+              Location de voitures à Rabat pour particuliers et entreprises. Service premium, réservation rapide et suivi professionnel.
             </p>
           </div>
           
           <div>
             <h4 className="text-white font-bold mb-6 text-xs tracking-widest uppercase">Découvrir</h4>
             <ul className="space-y-3 text-slate-400 dark:text-neutral-500 text-sm">
-              <li onClick={() => handleNav('fleet')} className="hover:text-indigo-400 dark:hover:text-white cursor-pointer transition-colors">Notre Flotte</li>
-              <li onClick={() => handleNav('#locations')} className="hover:text-indigo-400 dark:hover:text-white cursor-pointer transition-colors">Lieux</li>
-              <li onClick={() => handleNav('#services')} className="hover:text-indigo-400 dark:hover:text-white cursor-pointer transition-colors">Services</li>
-              <li onClick={() => handleNav('#offers')} className="hover:text-indigo-400 dark:hover:text-white cursor-pointer transition-colors">Offres Spéciales</li>
+              <li onClick={() => handleNav('fleet')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Notre Flotte</li>
+              <li onClick={() => handleNav('#agency')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Agence à Rabat</li>
+              <li onClick={() => handleNav('#services')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Services</li>
+              <li onClick={() => handleNav('#offers')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Offres Spéciales</li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-white font-bold mb-6 text-xs tracking-widest uppercase">Entreprise</h4>
             <ul className="space-y-3 text-slate-400 dark:text-neutral-500 text-sm">
-              <li onClick={() => handleNav('#about')} className="hover:text-indigo-400 dark:hover:text-white cursor-pointer transition-colors">À Propos</li>
-              <li onClick={() => handleNav('contact')} className="hover:text-indigo-400 dark:hover:text-white cursor-pointer transition-colors">Comptes Entreprise</li>
-              <li onClick={() => handleNav('contact')} className="hover:text-indigo-400 dark:hover:text-white cursor-pointer transition-colors">Carrières</li>
-              <li onClick={() => handleNav('contact')} className="hover:text-indigo-400 dark:hover:text-white cursor-pointer transition-colors">Contact</li>
+              <li onClick={() => handleNav('contact')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Comptes Entreprise</li>
+              <li onClick={() => handleNav('tracking')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Suivi Location</li>
+              <li onClick={() => handleNav('contact')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Demande Devis</li>
+              <li onClick={() => handleNav('contact')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Contact</li>
             </ul>
           </div>
 
           <div>
              <h4 className="text-white font-bold mb-6 text-xs tracking-widest uppercase">Newsletter</h4>
-             <p className="text-slate-400 dark:text-neutral-500 text-sm mb-4">Rejoignez notre liste de diffusion exclusive.</p>
+             <p className="text-slate-400 dark:text-neutral-500 text-sm mb-4">Recevez nos offres de location à Rabat et nos disponibilités en priorité.</p>
              <div className="flex">
-                <input type="email" placeholder="Adresse E-mail" className="bg-slate-800 dark:bg-neutral-800 border-none rounded-l-md px-4 py-3 text-sm text-white focus:ring-1 focus:ring-indigo-500 w-full placeholder:text-slate-500 dark:placeholder:text-neutral-600" />
-                <button className="bg-indigo-600 hover:bg-indigo-500 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-black px-5 py-3 rounded-r-md text-xs font-bold transition-colors uppercase tracking-wider">OK</button>
+               <input type="email" placeholder="Adresse E-mail" className="bg-slate-800 dark:bg-neutral-800 border-none rounded-l-md px-4 py-3 text-sm text-white focus:ring-1 focus:ring-brand-blue w-full placeholder:text-slate-500 dark:placeholder:text-neutral-600" />
+               <button className="bg-brand-blue hover:bg-blue-600 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-black px-5 py-3 rounded-r-md text-xs font-bold transition-colors uppercase tracking-wider">OK</button>
              </div>
           </div>
         </div>
 
         <div className="border-t border-slate-800 dark:border-neutral-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-slate-500 dark:text-neutral-600 text-xs">© 2024 Atellas Fleet Inc. Tous droits réservés.</p>
+            <p className="text-slate-500 dark:text-neutral-600 text-xs">© 2026 atellaFleet Rabat. Tous droits réservés.</p>
             <div className="flex space-x-8 mt-4 md:mt-0">
                 <span className="text-slate-500 hover:text-white cursor-pointer text-xs">Conditions d'Utilisation</span>
                 <span className="text-slate-500 hover:text-white cursor-pointer text-xs">Politique de Confidentialité</span>

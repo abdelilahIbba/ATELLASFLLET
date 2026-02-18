@@ -1,17 +1,17 @@
 import React from 'react';
-import { Crown, Star, Key, ShieldCheck } from 'lucide-react';
+import { CreditCard, Radio, Building2, Receipt, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const LoyaltySection: React.FC = () => {
   const benefits = [
-    { icon: Crown, title: "Accès Prioritaire", desc: "Accès en avant-première aux nouveautés et éditions limitées." },
-    { icon: Star, title: "Multiplicateur de Points", desc: "Gagnez 2x plus de points à chaque kilomètre parcouru." },
-    { icon: Key, title: "Accès Sans Clé", desc: "Déverrouillez n'importe quelle voiture via l'application mobile Atellas." },
-    { icon: ShieldCheck, title: "Couverture Complète", desc: "Assurance premium incluse gratuitement." }
+        { icon: Radio, title: 'Réservation via Badge NFC', desc: 'Accès rapide aux réservations pour vos équipes autorisées.' },
+        { icon: Building2, title: 'Suivi Flotte Entreprise', desc: 'Vision centralisée des véhicules, conducteurs et statuts en temps réel.' },
+        { icon: Receipt, title: 'Facturation Centralisée', desc: 'Une facturation mensuelle claire pour simplifier votre gestion interne.' },
+        { icon: ShieldCheck, title: 'Accès Prioritaire', desc: 'Priorité sur la disponibilité des véhicules pour vos missions business.' }
   ];
 
   return (
-    <section className="py-24 bg-[#050A14] relative overflow-hidden">
+        <section className="py-24 bg-[#050A14] relative overflow-hidden">
         {/* Background Elements */}
         <div className="absolute top-0 right-0 w-1/2 h-full bg-brand-blue/5 blur-[100px] rounded-full pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-1/3 h-full bg-brand-red/5 blur-[80px] rounded-full pointer-events-none"></div>
@@ -21,17 +21,17 @@ const LoyaltySection: React.FC = () => {
                 
                 {/* Content */}
                 <div>
-                    <span className="text-brand-red font-bold tracking-widest text-xs uppercase mb-2 block flex items-center gap-2">
-                        <Crown className="w-4 h-4" />
-                        Club Aero Elite
+                    <span className="text-brand-red font-bold tracking-widest text-xs uppercase mb-2 flex items-center gap-2">
+                        <CreditCard className="w-4 h-4" />
+                        Carte NFC Business atellaFleet
                     </span>
                     <h2 className="text-4xl md:text-5xl font-bold text-white font-space mb-6 leading-tight">
-                        Débloquez les Privilèges <br/> 
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-brand-teal">de Conduite Ultimes</span>
+                        Une Solution Corporate <br/> 
+                        <span className="text-brand-teal">simple et professionnelle</span>
                     </h2>
                     <p className="text-slate-400 mb-8 leading-relaxed max-w-md">
-                        Rejoignez notre programme d'adhésion exclusif conçu pour le conducteur exigeant. 
-                        Profitez de réservations fluides, de surclassements gratuits et d'invitations à des événements lifestyle exclusifs.
+                        Conçue pour les entreprises à Rabat, la carte NFC Business facilite la réservation, 
+                        le suivi des déplacements et la gestion administrative de votre flotte louée.
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10">
@@ -49,7 +49,7 @@ const LoyaltySection: React.FC = () => {
                     </div>
 
                     <button className="px-8 py-3 bg-brand-teal text-white font-bold text-sm uppercase tracking-wider rounded-lg hover:bg-teal-500 transition-colors shadow-lg shadow-brand-teal/20">
-                        Rejoindre Aero Elite
+                        Demander une démo entreprise
                     </button>
                 </div>
 
@@ -67,8 +67,8 @@ const LoyaltySection: React.FC = () => {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-brand-blue/20 blur-[60px] rounded-full"></div>
 
                         <div className="relative z-10 flex justify-between items-start">
-                             <div className="text-2xl font-bold font-space text-white tracking-widest">ATELLAS</div>
-                             <div className="text-xs font-bold text-brand-teal uppercase border border-brand-teal/30 px-2 py-1 rounded">Membre Elite</div>
+                                <div className="text-2xl font-bold font-space text-white tracking-widest">ATELLAFLEET</div>
+                                <div className="text-xs font-bold text-brand-teal uppercase border border-brand-teal/30 px-2 py-1 rounded">NFC BUSINESS</div>
                         </div>
 
                         <div className="relative z-10">
@@ -76,16 +76,16 @@ const LoyaltySection: React.FC = () => {
                                 <div className="w-12 h-8 bg-brand-red/20 rounded flex items-center justify-center border border-white/10">
                                     <div className="w-6 h-4 border border-brand-red/50 rounded-sm"></div>
                                 </div>
-                                <div className="text-white/50 text-xl tracking-[0.2em] font-mono">•••• •••• •••• 8821</div>
+                                <div className="text-white/50 text-xl tracking-[0.2em] font-mono">•••• •••• •••• 2401</div>
                             </div>
                             <div className="flex justify-between items-end mt-4">
                                 <div>
-                                    <div className="text-[10px] text-slate-400 uppercase mb-1">Titulaire de la carte</div>
-                                    <div className="text-sm text-white font-bold tracking-wider">ALEXANDER PIERCE</div>
+                                    <div className="text-[10px] text-slate-400 uppercase mb-1">Compte entreprise</div>
+                                    <div className="text-sm text-white font-bold tracking-wider">SOCIÉTÉ RABAT BUSINESS</div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-[10px] text-slate-400 uppercase mb-1">Valide jusqu'au</div>
-                                    <div className="text-sm text-white font-bold">12/28</div>
+                                    <div className="text-[10px] text-slate-400 uppercase mb-1">Support dédié</div>
+                                    <div className="text-sm text-white font-bold">24/7</div>
                                 </div>
                             </div>
                         </div>

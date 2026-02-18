@@ -50,15 +50,15 @@ const ServicesSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="mb-16 border-l-2 border-brand-teal pl-6">
-           <h3 className="text-3xl font-bold text-brand-navy dark:text-white font-space mb-2 transition-colors">Services de Conciergerie</h3>
-           <p className="text-slate-500 dark:text-neutral-500 text-sm">Bien plus qu'une location. Une solution de gestion de style de vie.</p>
+            <h3 className="text-3xl font-bold text-brand-navy dark:text-white font-space mb-2 transition-colors">Nos Services</h3>
+            <p className="text-slate-500 dark:text-neutral-500 text-sm">Des solutions de location adaptées au marché marocain, pour particuliers et entreprises.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[280px]">
           <BentoCard service={SERVICES[0]} index={0} className="md:col-span-2 md:row-span-1" />
           <BentoCard service={SERVICES[1]} index={1} className="md:col-span-1" />
           <BentoCard service={SERVICES[2]} index={2} className="md:col-span-1" />
-          <BentoCard service={SERVICES[3]} index={3} className="md:col-span-4 bg-gradient-to-r from-white to-slate-50 dark:from-[#0B1120] dark:to-[#0F172A]" />
+          <BentoCard service={SERVICES[3]} index={3} className="md:col-span-4" />
         </div>
       </div>
     </section>
