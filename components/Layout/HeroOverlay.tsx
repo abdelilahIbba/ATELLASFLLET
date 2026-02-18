@@ -1,6 +1,6 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Play, Battery, Zap, Gauge } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Play, Battery, Zap, Gauge, X } from 'lucide-react';
 
 interface HeroOverlayProps {
   isDark: boolean;
@@ -8,7 +8,10 @@ interface HeroOverlayProps {
 }
 
 const HeroOverlay: React.FC<HeroOverlayProps> = ({ isDark, onViewFleet }) => {
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
+
   return (
+    <>
     <div className="relative z-10 w-full h-full pointer-events-none flex flex-col justify-between pt-24 md:pt-32 pb-4 px-4 sm:px-6 md:px-12">
       
       {/* Top Section: Brand Statement - Floating Top Left */}
@@ -62,6 +65,7 @@ const HeroOverlay: React.FC<HeroOverlayProps> = ({ isDark, onViewFleet }) => {
               </button>
               
               <button 
+                onClick={() => setIsVideoOpen(true)}
                 className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-slate-900/20 dark:border-white/20 bg-white/10 dark:bg-black/20 backdrop-blur-md flex items-center justify-center group hover:bg-white/20 transition-all"
               >
                 <Play className="w-5 h-5 text-slate-900 dark:text-white fill-current opacity-80 group-hover:scale-110 transition-transform" />
@@ -110,6 +114,45 @@ const HeroOverlay: React.FC<HeroOverlayProps> = ({ isDark, onViewFleet }) => {
 
       </div>
     </div>
+
+    <AnimatePresence>
+      {isVideoOpen && (
+        <motion.div
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           exit={{ opacity: 0 }}
+           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 md:p-10 pointer-events-auto"
+           onClick={() => setIsVideoOpen(false)}
+        >
+          <button 
+            className="absolute top-4 right-4 md:top-8 md:right-8 text-white/50 hover:text-white transition-colors"
+            onClick={() => setIsVideoOpen(false)}
+          >
+            <X className="w-8 h-8 md:w-10 md:h-10" />
+          </button>
+          
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <iframe 
+              width="100%" 
+              height="100%" 
+              src="https://www.youtube.com/embed/tSGW7Hb3X3s?si=3gwZaAFWjV3dULAQ&autoplay=1" 
+              title="YouTube video player" 
+              frameBorder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              referrerPolicy="strict-origin-when-cross-origin" 
+              allowFullScreen
+            ></iframe>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 };
 

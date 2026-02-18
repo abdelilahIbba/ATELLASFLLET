@@ -183,14 +183,14 @@ const Navbar: React.FC<NavbarProps> = ({ isDark, toggleTheme, onLoginClick, onNa
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-40 bg-brand-light dark:bg-brand-navy flex flex-col pt-32 px-6 pb-12 overflow-hidden"
+            className="fixed inset-0 z-40 bg-brand-light dark:bg-brand-navy flex flex-col pt-32 px-6 pb-12 overflow-y-auto custom-scrollbar"
           >
-             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-blue/20 dark:bg-brand-blue/10 rounded-full blur-[120px] pointer-events-none translate-x-1/2 -translate-y-1/2"></div>
-             <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-brand-teal/20 dark:bg-brand-teal/10 rounded-full blur-[120px] pointer-events-none -translate-x-1/2 translate-y-1/2"></div>
+             <div className="fixed top-0 right-0 w-[500px] h-[500px] bg-brand-blue/20 dark:bg-brand-blue/10 rounded-full blur-[120px] pointer-events-none translate-x-1/2 -translate-y-1/2"></div>
+             <div className="fixed bottom-0 left-0 w-[500px] h-[500px] bg-brand-teal/20 dark:bg-brand-teal/10 rounded-full blur-[120px] pointer-events-none -translate-x-1/2 translate-y-1/2"></div>
 
              <div className="flex flex-col space-y-2 relative z-10">
                
-               {currentUser && (
+               {currentUser ? (
                    <div className="flex items-center gap-4 mb-8 p-4 bg-white/5 rounded-xl border border-white/10 shadow-xl">
                         <div className={`w-16 h-16 rounded-full overflow-hidden border-2 ${currentUser.role === 'admin' ? 'border-brand-red' : 'border-brand-teal'}`}>
                             {currentUser.photo ? (
@@ -208,6 +208,20 @@ const Navbar: React.FC<NavbarProps> = ({ isDark, toggleTheme, onLoginClick, onNa
                             </p>
                         </div>
                    </div>
+               ) : (
+                  <motion.button
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onLoginClick();
+                    }}
+                    className="w-full py-4 bg-brand-blue text-white rounded-xl font-bold text-lg mb-8 shadow-lg shadow-brand-blue/20 hover:bg-brand-blue/90 transition-all flex items-center justify-center gap-2"
+                  >
+                    <User className="w-5 h-5" />
+                    Se Connecter
+                  </motion.button>
                )}
 
                {navLinks.map((link, idx) => (
