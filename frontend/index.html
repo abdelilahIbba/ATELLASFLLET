@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Atellas | Flotte Premium</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              space: ['Space Grotesk', 'sans-serif'],
+            },
+            colors: {
+              brand: {
+                red: '#DC2626',      // Primary CTA (Red-600)
+                navy: '#0F172A',     // Dark Mode BG / Light Mode Text (Slate-900)
+                blue: '#2563EB',     // Headers (Blue-600)
+                teal: '#0D9488',     // Accents (Teal-600)
+                light: '#FFFFFF',    // Light mode BG
+                dark: '#020617'      // Deep Navy for Dark mode BG
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #334155;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "framer-motion": "https://esm.sh/framer-motion@^12.34.0?external=react,react-dom",
+    "@react-three/fiber": "https://esm.sh/@react-three/fiber@^9.5.0?external=react,react-dom,three",
+    "three": "https://esm.sh/three@^0.182.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0?external=react",
+    "@react-three/drei": "https://esm.sh/@react-three/drei@^10.7.7?external=react,react-dom,three,@react-three/fiber"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
