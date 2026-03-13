@@ -1,0 +1,118 @@
+/* Import Inter Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+    /* Glassmorphism Effect */
+    .glass-morphism {
+        @apply bg-slate-800/40 backdrop-blur-xl border border-slate-700/50;
+    }
+
+    /* Neon Glow Effect */
+    .neon-glow {
+        @apply shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-shadow duration-300;
+    }
+
+    /* Cyber Grid Background */
+    .cyber-grid {
+        background-image: 
+            linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+
+    /* Gradient Text */
+    .gradient-text {
+        @apply bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent;
+    }
+
+    /* Gradient Button */
+    .btn-gradient {
+        @apply px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 text-white font-semibold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all duration-300;
+    }
+
+    /* Stats Card */
+    .stats-card {
+        @apply glass-morphism rounded-2xl p-6 hover:bg-slate-800/60 transition-all duration-300;
+    }
+
+    /* Modern Table */
+    .modern-table {
+        @apply w-full glass-morphism rounded-2xl overflow-hidden;
+    }
+
+    .modern-table thead {
+        @apply bg-slate-900/50 border-b border-slate-800;
+    }
+
+    .modern-table th {
+        @apply px-6 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider;
+    }
+
+    .modern-table tbody {
+        @apply divide-y divide-slate-800/50;
+    }
+
+    .modern-table tr {
+        @apply hover:bg-slate-800/30 transition-colors;
+    }
+
+    .modern-table td {
+        @apply px-6 py-4 text-sm text-slate-300;
+    }
+}
+
+@layer utilities {
+    /* Pulse Animation */
+    .pulse-animation {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+
+    /* Slide In Animation */
+    .slide-in {
+        animation: slideIn 0.3s ease-out forwards;
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    @keyframes slideIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Line Clamp Utilities */
+    .line-clamp-1 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+    }
+
+    .line-clamp-2 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .line-clamp-3 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 3;
+    }
+}

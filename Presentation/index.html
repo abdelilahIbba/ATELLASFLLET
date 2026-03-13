@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presentation Client | Atellas Fleet</title>
+  <meta name="description" content="Présentation commerciale de la plateforme Atellas Fleet pour le site web client et le tableau de bord de gestion.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <aside class="rail">
+      <div class="brand-block">
+        <p class="eyebrow" id="brand-eyebrow">Presentation commerciale</p>
+        <h1 id="brand-title">Atellas Fleet</h1>
+        <p class="brand-copy" id="brand-copy">Une plateforme pensée pour convertir les visiteurs, structurer l'exploitation et rassurer la direction.</p>
+      </div>
+
+      <div class="language-switch" aria-label="Options de langue d'affichage">
+        <button id="lang-fr" class="lang-btn active" type="button">FR</button>
+        <button id="lang-ar" class="lang-btn" type="button">AR</button>
+      </div>
+
+      <nav class="slide-nav" aria-label="Navigation des slides">
+        <button class="nav-item active" data-target="slide-1" id="nav-slide-1">01. Vision</button>
+        <button class="nav-item" data-target="slide-2" id="nav-slide-2">02. Site web</button>
+        <button class="nav-item" data-target="slide-3" id="nav-slide-3">03. Dashboard</button>
+        <button class="nav-item" data-target="slide-4" id="nav-slide-4">04. Marché marocain</button>
+        <button class="nav-item" data-target="slide-5" id="nav-slide-5">05. Positionnement prix</button>
+        <button class="nav-item" data-target="slide-6" id="nav-slide-6">06. Packages</button>
+        <button class="nav-item" data-target="slide-7" id="nav-slide-7">07. Déploiement</button>
+        <button class="nav-item" data-target="slide-8" id="nav-slide-8">08. ROI</button>
+        <button class="nav-item" data-target="slide-9" id="nav-slide-9">09. Décision</button>
+        <button class="nav-item" data-target="slide-10" id="nav-slide-10">10. Sources</button>
+      </nav>
+
+      <div class="rail-actions">
+        <button id="download-pdf" class="action-btn primary">Télécharger en PDF</button>
+        <button id="download-pptx" class="action-btn secondary">Télécharger en PPTX</button>
+        <button id="print-deck" class="action-btn tertiary">Version impression</button>
+        <p id="export-status" class="status-text" aria-live="polite">Exports prêts depuis cette page.</p>
+      </div>
+    </aside>
+
+    <main class="deck" id="deck">
+      <section class="slide hero-slide" id="slide-1" data-title="Vision">
+        <div class="slide-head">
+          <span class="slide-number">01</span>
+          <span class="slide-tag" id="tag-slide-1">Vision & valeur</span>
+        </div>
+        <div class="hero-grid">
+          <div id="slide-1-main">
+            <p class="eyebrow">Proposition client</p>
+            <h2>Une plateforme unique pour vendre, gérer et développer une activité de location automobile au Maroc.</h2>
+            <p class="lead">Atellas Fleet combine un site web orienté conversion et un tableau de bord d'exploitation. L'intérêt client est immédiat: moins de dispersion, plus de contrôle, meilleure image de marque et capacité de pilotage au quotidien.</p>
+          </div>
+          <div class="hero-panel">
+            <div class="metric-card" id="metric-1">
+              <span class="metric-value">2 faces</span>
+              <span class="metric-label">Un front-office commercial + un back-office opérationnel</span>
+            </div>
+            <div class="metric-card" id="metric-2">
+              <span class="metric-value">1 flux</span>
+              <span class="metric-label">La réservation alimente directement la gestion interne</span>
+            </div>
+            <div class="metric-card" id="metric-3">
+              <span class="metric-value">0 angle mort</span>
+              <span class="metric-label">Suivi des véhicules, clients, réservations, messages, documents et performance</span>
+            </div>
+          </div>
+        </div>
+        <div class="pill-row" id="slide-1-pills">
+          <span class="pill">Image premium</span>
+          <span class="pill">Réservation structurée</span>
+          <span class="pill">Pilotage centralisé</span>
+          <span class="pill">Adapté au contexte marocain</span>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-2" data-title="Site web">
+        <div class="slide-head">
+          <span class="slide-number">02</span>
+          <span class="slide-tag" id="tag-slide-2">Ce que voit le client final</span>
+        </div>
+        <h2 id="slide-2-title">Le site web est pensé comme un commercial digital qui travaille en continu.</h2>
+        <div class="columns two">
+          <article class="content-card" id="slide-2-card-1">
+            <h3>Parcours commercial mis en avant</h3>
+            <ul>
+              <li>Hero visuel fort pour positionner la marque et orienter immédiatement vers la flotte ou la réservation.</li>
+              <li>Présentation de la flotte, des offres, de la fidélisation, des avantages et des localisations.</li>
+              <li>Page contact et points de confiance pour capter le lead même quand la réservation n'est pas immédiate.</li>
+              <li>Expérience responsive pour mobile, essentielle sur un marché où une part majoritaire du trafic provient du smartphone.</li>
+            </ul>
+          </article>
+          <article class="content-card accent" id="slide-2-card-2">
+            <h3>Réservation digitalisée</h3>
+            <ul>
+              <li>Choix du véhicule, des dates et du point de prise en charge.</li>
+              <li>Vérification d'identité avec documents et workflow guidé.</li>
+              <li>Calcul du coût avant confirmation pour réduire les frictions.</li>
+              <li>Suivi de réservation pour rassurer le client après validation.</li>
+            </ul>
+          </article>
+        </div>
+        <div class="highlight-strip" id="slide-2-highlight">
+          <div>
+            <strong>Objectif business</strong>
+            <p>Transformer la visite en demande de devis, réservation ou prise de contact, sans dépendre uniquement de WhatsApp ou des réseaux sociaux.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-3" data-title="Dashboard">
+        <div class="slide-head">
+          <span class="slide-number">03</span>
+          <span class="slide-tag" id="tag-slide-3">Ce que pilote l'équipe</span>
+        </div>
+        <h2 id="slide-3-title">Le dashboard répond aux besoins concrets d'une agence ou d'une flotte en croissance.</h2>
+        <div class="dashboard-grid">
+          <article class="feature-box" id="slide-3-box-1">
+            <h3>Exploitation</h3>
+            <p>Réservations, planning, statuts, paiements, conflits de disponibilité, contrats et historique client.</p>
+          </article>
+          <article class="feature-box" id="slide-3-box-2">
+            <h3>Flotte</h3>
+            <p>Inventaire des véhicules, plaques, documents, état, kilométrage, carburant, maintenance et infractions.</p>
+          </article>
+          <article class="feature-box" id="slide-3-box-3">
+            <h3>Clients</h3>
+            <p>Base clients, KYC, pièces justificatives, segmentation, statut VIP ou blacklist, dépenses cumulées.</p>
+          </article>
+          <article class="feature-box" id="slide-3-box-4">
+            <h3>Suivi GPS</h3>
+            <p>Vue opérationnelle pour la localisation et la supervision, utile aux structures qui veulent plus de contrôle terrain.</p>
+          </article>
+          <article class="feature-box" id="slide-3-box-5">
+            <h3>Communication</h3>
+            <p>Messages centralisés, gestion des demandes, modération des avis et contenu éditorial.</p>
+          </article>
+          <article class="feature-box" id="slide-3-box-6">
+            <h3>Direction</h3>
+            <p>KPIs, analytics, évolution du chiffre, indicateurs de flotte et vision consolidée de l'activité.</p>
+          </article>
+        </div>
+        <div class="quote-box" id="slide-3-quote">
+          <p>Le vrai gain n'est pas seulement technologique. Il est organisationnel: l'équipe travaille dans une seule interface, avec une information cohérente et exploitable.</p>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-4" data-title="Marché marocain">
+        <div class="slide-head">
+          <span class="slide-number">04</span>
+          <span class="slide-tag" id="tag-slide-4">Lecture du marché marocain</span>
+        </div>
+        <h2 id="slide-4-title">Pourquoi cette offre est pertinente dans le contexte marocain.</h2>
+        <div class="columns three">
+          <article class="content-card" id="slide-4-card-1">
+            <h3>1. Le web reste le socle de crédibilité</h3>
+            <p>Les acteurs locaux du marché rappellent qu'un site professionnel reste indispensable pour rassurer, référencer et capter la demande au-delà des réseaux sociaux.</p>
+          </article>
+          <article class="content-card" id="slide-4-card-2">
+            <h3>2. Les outils de gestion se marocanisent</h3>
+            <p>Les solutions comme GestiSuite, Nizam ou ManagePro mettent en avant conformité locale, support FR/AR, facturation, stock, CRM et reporting. Le besoin d'un back-office structuré est clairement installé.</p>
+          </article>
+          <article class="content-card" id="slide-4-card-3">
+            <h3>3. Le client veut du concret</h3>
+            <p>Sur le marché, les offres trop basses sont souvent associées à des templates génériques. La valeur perçue augmente dès qu'on ajoute design, SEO, sécurité, formation et modules métier.</p>
+          </article>
+        </div>
+        <div class="market-badges" id="slide-4-badges">
+          <span>Responsive mobile</span>
+          <span>Support local</span>
+          <span>CNDP / sécurité</span>
+          <span>Flux réservation</span>
+          <span>Pilotage centralisé</span>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-5" data-title="Positionnement prix">
+        <div class="slide-head">
+          <span class="slide-number">05</span>
+          <span class="slide-tag" id="tag-slide-5">Analyse prix & logique d'offre</span>
+        </div>
+        <h2 id="slide-5-title">Nos tarifs sont lisibles, crédibles et placés au bon niveau pour convaincre sans surcharger le budget du client.</h2>
+        <div class="pricing-study enhanced">
+          <article class="study-card graph-card" id="slide-5-card-1">
+            <h3>Repère visuel du marché</h3>
+            <div class="chart-block">
+              <div class="chart-axis">
+                <span>Standard</span>
+                <span>Intermédiaire</span>
+                <span>Premium</span>
+              </div>
+              <div class="bar-chart">
+                <div class="bar-row">
+                  <span class="bar-label">Site vitrine standard</span>
+                  <div class="bar-track"><span class="bar-fill soft" style="width: 36%;"></span></div>
+                  <strong>3 990 à 4 500 MAD</strong>
+                </div>
+                <div class="bar-row">
+                  <span class="bar-label">Notre Pack 1</span>
+                  <div class="bar-track"><span class="bar-fill" style="width: 48%;"></span></div>
+                  <strong>6 000 MAD</strong>
+                </div>
+                <div class="bar-row">
+                  <span class="bar-label">Notre Pack 2</span>
+                  <div class="bar-track"><span class="bar-fill" style="width: 64%;"></span></div>
+                  <strong>8 000 MAD</strong>
+                </div>
+                <div class="bar-row emphasis">
+                  <span class="bar-label">Notre Pack 3</span>
+                  <div class="bar-track"><span class="bar-fill premium" style="width: 80%;"></span></div>
+                  <strong>10 000 MAD</strong>
+                </div>
+                <div class="bar-row">
+                  <span class="bar-label">Offres premium observées</span>
+                  <div class="bar-track"><span class="bar-fill dark" style="width: 96%;"></span></div>
+                  <strong>12 000 MAD et plus</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+          <article class="study-card accent graph-card" id="slide-5-card-2">
+            <h3>Ce que le client comprend immédiatement</h3>
+            <div class="benefit-curve">
+              <div class="curve-step">
+                <span class="curve-price">6 000</span>
+                <p>Une base sérieuse pour être visible et commencer à vendre.</p>
+              </div>
+              <div class="curve-step">
+                <span class="curve-price">8 000</span>
+                <p>Plus de confort de gestion et une meilleure image côté client.</p>
+              </div>
+              <div class="curve-step best">
+                <span class="curve-price">10 000</span>
+                <p>La solution la plus rassurante: tout est inclus dès le départ, sans retour en arrière.</p>
+              </div>
+            </div>
+            <p class="study-note">En clair: le client perçoit un saut de valeur à chaque palier, tout en restant en dessous d'un vrai projet sur mesure lourd.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide packages-slide" id="slide-6" data-title="Packages">
+        <div class="slide-head">
+          <span class="slide-number">06</span>
+          <span class="slide-tag" id="tag-slide-6">Packs recommandés</span>
+        </div>
+        <h2 id="slide-6-title">Trois packs simples à comparer, avec des avantages très clairs pour faciliter la décision.</h2>
+        <div class="common-benefits-banner" id="slide-6-banner">
+          <strong>Tous les packs incluent</strong>
+          <span>Abonnement 1 an</span>
+          <span>Maintenance 24/7</span>
+          <span>Support 24/7</span>
+        </div>
+        <div class="package-grid">
+          <article class="package-card" id="slide-6-pack-1">
+            <div class="package-top">
+              <span class="package-name">Pack 1</span>
+              <strong class="package-price">6 000 MAD</strong>
+            </div>
+            <p class="package-summary">Le pack idéal pour démarrer avec une image professionnelle et un outil de travail fiable.</p>
+            <div class="package-advantage">Avantages</div>
+            <ul>
+              <li>Site vitrine clair et rassurant pour présenter l'entreprise et la flotte.</li>
+              <li>Réservation et prise de contact simplifiées pour capter plus facilement les demandes.</li>
+              <li>Espace de gestion pour suivre les véhicules, réservations, clients et messages.</li>
+              <li>Mise en route rapide avec accompagnement de départ.</li>
+            </ul>
+            <div class="package-footer-note">Inclus: abonnement 1 an + maintenance et support 24/7.</div>
+            <p class="package-fit">Parfait pour: une structure qui veut lancer une base solide sans dépasser son budget.</p>
+          </article>
+
+          <article class="package-card" id="slide-6-pack-2">
+            <div class="package-top">
+              <span class="package-name">Pack 2</span>
+              <strong class="package-price">8 000 MAD</strong>
+            </div>
+            <p class="package-summary">Le pack le plus équilibré pour mieux vendre et mieux gérer au quotidien.</p>
+            <div class="package-advantage">Avantages</div>
+            <ul>
+              <li>Tout le Pack 1 avec une expérience plus complète pour le client et pour l'équipe.</li>
+              <li>Gestion des documents clients et parcours de validation plus rassurant.</li>
+              <li>Tableaux de suivi, avis clients et contenus pour renforcer la confiance.</li>
+              <li>Suivi plus poussé de la flotte et de l'activité pour mieux piloter.</li>
+              <li>Accompagnement renforcé au lancement.</li>
+            </ul>
+            <div class="package-footer-note">Inclus: abonnement 1 an + maintenance et support 24/7.</div>
+            <p class="package-fit">Parfait pour: un client qui veut une vraie montée en gamme sans aller au pack complet.</p>
+          </article>
+
+          <article class="package-card featured premium" id="slide-6-pack-3">
+            <div class="package-badge">Meilleure option</div>
+            <div class="package-top">
+              <span class="package-name">Pack 3</span>
+              <strong class="package-price">10 000 MAD</strong>
+            </div>
+            <p class="package-summary">Le choix le plus convaincant: toutes les fonctionnalités sont incluses, avec la meilleure tranquillité pour le client.</p>
+            <div class="package-advantage">Avantages</div>
+            <ul>
+              <li>Inclut tous les avantages des Packs 1 et 2.</li>
+              <li>Toutes les fonctionnalités de la plateforme sont activées dès le départ.</li>
+              <li>Suivi avancé de l'activité, de la flotte, de la maintenance et du contrôle opérationnel.</li>
+              <li>Vision complète pour la direction avec tous les outils de supervision.</li>
+              <li>Aucun manque fonctionnel à court terme, donc aucune frustration après lancement.</li>
+            </ul>
+            <div class="package-footer-note strong">Inclus: abonnement 1 an + maintenance et support 24/7.</div>
+            <p class="package-fit">Parfait pour: un client qui veut prendre la meilleure décision dès maintenant et tout avoir dans une seule offre.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-7" data-title="Déploiement">
+        <div class="slide-head">
+          <span class="slide-number">07</span>
+          <span class="slide-tag" id="tag-slide-7">Plan de mise en oeuvre</span>
+        </div>
+        <h2 id="slide-7-title">Un déploiement court, lisible et orienté adoption.</h2>
+        <div class="timeline">
+          <article class="timeline-step" id="slide-7-step-1">
+            <span>Étape 1</span>
+            <h3>Cadrage</h3>
+            <p>Validation des contenus, du branding, des accès, des agences, de la flotte et des règles de réservation.</p>
+          </article>
+          <article class="timeline-step" id="slide-7-step-2">
+            <span>Étape 2</span>
+            <h3>Paramétrage</h3>
+            <p>Personnalisation du site, chargement des véhicules, configuration des utilisateurs et des statuts métier.</p>
+          </article>
+          <article class="timeline-step" id="slide-7-step-3">
+            <span>Étape 3</span>
+            <h3>Recette</h3>
+            <p>Tests du parcours client, du back-office, des documents et des scénarios critiques avant ouverture.</p>
+          </article>
+          <article class="timeline-step" id="slide-7-step-4">
+            <span>Étape 4</span>
+            <h3>Go-live</h3>
+            <p>Mise en ligne, formation équipe, support de démarrage et ajustements rapides pour sécuriser l'adoption.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide" id="slide-8" data-title="ROI">
+        <div class="slide-head">
+          <span class="slide-number">08</span>
+          <span class="slide-tag" id="tag-slide-8">Retour sur investissement</span>
+        </div>
+        <h2 id="slide-8-title">La valeur n'est pas seulement dans le site. Elle est dans la discipline opérationnelle qu'il installe.</h2>
+        <div class="columns two">
+          <article class="content-card" id="slide-8-card-1">
+            <h3>Gains attendus</h3>
+            <ul>
+              <li>Meilleure conversion des visiteurs en demandes ou réservations.</li>
+              <li>Diminution des échanges dispersés et des erreurs de suivi.</li>
+              <li>Vision claire sur la flotte, les clients et les périodes de tension.</li>
+              <li>Capacité à faire monter l'image perçue sans multiplier les outils.</li>
+            </ul>
+          </article>
+          <article class="content-card accent" id="slide-8-card-2">
+            <h3>Lecture direction</h3>
+            <p>Une seule réservation supplémentaire de quelques jours sur un véhicule rentable peut déjà absorber une part significative de l'investissement initial. Le vrai ROI se construit ensuite sur la répétition, la visibilité et la fluidité d'exploitation.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide final-slide" id="slide-9" data-title="Décision">
+        <div class="slide-head">
+          <span class="slide-number">09</span>
+          <span class="slide-tag" id="tag-slide-9">Recommandation</span>
+        </div>
+        <h2 id="slide-9-title">Recommandation: retenir le Pack Business à 8 000 MAD ou sécuriser directement la version complète à 10 000 MAD.</h2>
+        <div class="final-grid">
+          <article class="final-card" id="slide-9-card-1">
+            <h3>Si l'objectif est de démarrer proprement</h3>
+            <p>Le Pack Business offre le meilleur rapport impact / budget pour une exploitation sérieuse et visible dès le lancement.</p>
+          </article>
+          <article class="final-card" id="slide-9-card-2">
+            <h3>Si l'objectif est d'éviter une deuxième phase</h3>
+            <p>Le Pack Direction 360 à 10 000 MAD est le plus convaincant: toutes les fonctionnalités sont activées, sans arbitrage bloquant.</p>
+          </article>
+        </div>
+        <div class="decision-banner" id="slide-9-banner">
+          <strong>Message au client</strong>
+          <p>Vous n'achetez pas simplement un site. Vous mettez en place une base digitale capable de soutenir la croissance commerciale et de structurer l'exploitation au quotidien.</p>
+        </div>
+      </section>
+
+      <section class="slide sources-slide" id="slide-10" data-title="Sources">
+        <div class="slide-head">
+          <span class="slide-number">10</span>
+          <span class="slide-tag" id="tag-slide-10">Base d'étude</span>
+        </div>
+        <h2 id="slide-10-title">Sources utilisées pour calibrer les offres.</h2>
+        <div class="columns two">
+          <article class="content-card compact" id="slide-10-card-1">
+            <h3>Tarification web au Maroc</h3>
+            <ul>
+              <li>WebSuccess: packs affichés à 4 500 / 9 000 / 12 000 MAD.</li>
+              <li>Vala: site vitrine pro entre 6 000 et 15 000 MAD, e-commerce entre 15 000 et 45 000 MAD.</li>
+              <li>Site-vitrine.ma: vitrine 3 990 MAD, catalogue 4 990 MAD, e-commerce 5 990 MAD.</li>
+            </ul>
+          </article>
+          <article class="content-card compact" id="slide-10-card-2">
+            <h3>Références outils de gestion marocains</h3>
+            <ul>
+              <li>GestiSuite: tableau de bord, ventes, stocks, rapports, pré-comptabilité, prix 299 MAD et 799 MAD par mois.</li>
+              <li>Nizam: CRM, facturation, inventaire, rendez-vous, rapports, support FR/AR, conformité marocaine.</li>
+              <li>ManagePro: stock, ventes, relation client, trésorerie, devis, factures et tickets.</li>
+            </ul>
+          </article>
+        </div>
+        <p class="sources-note" id="slide-10-note">Interprétation retenue: le marché distingue clairement les offres vitrines standardisées des solutions métier plus structurées. La proposition Atellas Fleet se positionne au-dessus du low-cost et en dessous du sur-mesure complet, ce qui rend les trois packages défendables commercialement.</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmSjsnDzF4N8u8b6M1Qe4s46HoPazTA/gkGEXLMaLLq5yRvCNrI6VOGGAaHo9dZYkTfLZNVVRFl1FdYzf+w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

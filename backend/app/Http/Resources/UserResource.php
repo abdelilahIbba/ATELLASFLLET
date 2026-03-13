@@ -1,0 +1,35 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class UserResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id'                         => $this->id,
+            'name'                       => $this->name,
+            'email'                      => $this->email,
+            'phone'                      => $this->phone,
+            'national_id'                => $this->national_id,
+            'driver_license_number'      => $this->driver_license_number,
+            'driver_license_expiry_date' => $this->driver_license_expiry_date,
+            'role'                       => $this->role,
+            // KYC fields
+            'status'                     => $this->status ?? 'Active',
+            'kyc_status'                 => $this->kyc_status ?? 'Missing',
+            'avatar'      => $this->avatar      ? '/storage/' . $this->avatar      : null,
+            'doc_id_front'=> $this->doc_id_front? '/storage/' . $this->doc_id_front: null,
+            'doc_id_back' => $this->doc_id_back ? '/storage/' . $this->doc_id_back : null,
+            'doc_license' => $this->doc_license ? '/storage/' . $this->doc_license : null,
+            // Stats
+            'total_spent'                => (float) ($this->bookings?->where('status', 'confirmed')->sum('amount') ?? 0),
+            'email_verified_at'          => $this->email_verified_at,
+            'created_at'                 => $this->created_at?->toISOString(),
+            'updated_at'                 => $this->updated_at?->toISOString(),
+        ];
+    }
+}

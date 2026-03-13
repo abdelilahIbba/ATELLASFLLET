@@ -1,0 +1,71 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+README.md
+CHANGELOG.md
+LICENSE
+
+# Node modules (built in Docker)
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Vendor (installed in Docker)
+vendor
+
+# Environment files (mounted separately)
+.env
+.env.*
+!.env.example
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test and CI files
+.phpunit.result.cache
+phpunit.xml
+.pest
+tests
+.github
+
+# Development files
+docker-compose.override.yml
+docker-compose.dev.yml
+
+# Build artifacts
+public/build
+public/hot
+public/storage
+
+# Storage (mounted as volume)
+storage/app/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+!storage/.gitkeep
+!storage/app/.gitkeep
+!storage/app/public/.gitkeep
+
+# Bootstrap cache
+bootstrap/cache/*
+!bootstrap/cache/.gitkeep
+
+# Composer cache
+.composer
+
+# NPM/Yarn cache
+.npm
+.yarn

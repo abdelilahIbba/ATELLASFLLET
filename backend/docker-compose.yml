@@ -1,0 +1,184 @@
+# Docker Compose configuration for Laravel Car Rental System
+# This orchestrates the application, database, and optional services
+
+services:
+  # PHP Application with Nginx
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: carrent-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      # Laravel Application Settings
+      APP_NAME: "${APP_NAME:-Car Rental System}"
+      APP_ENV: "${APP_ENV:-production}"
+      APP_KEY: "${APP_KEY}"
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      APP_URL: "${APP_URL:-http://localhost:8080}"
+      
+      # Database Connection
+      DB_CONNECTION: "${DB_CONNECTION:-mysql}"
+      DB_HOST: db
+      DB_PORT: "${DB_PORT:-3306}"
+      DB_DATABASE: "${DB_DATABASE:-car_rental_system_db}"
+      DB_USERNAME: "${DB_USERNAME:-carrent_user}"
+      DB_PASSWORD: "${DB_PASSWORD:-secret}"
+      
+      # Cache & Session
+      CACHE_STORE: "${CACHE_STORE:-redis}"
+      SESSION_DRIVER: "${SESSION_DRIVER:-redis}"
+      QUEUE_CONNECTION: "${QUEUE_CONNECTION:-redis}"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      
+      # Mail Configuration
+      MAIL_MAILER: "${MAIL_MAILER:-smtp}"
+      MAIL_HOST: "${MAIL_HOST}"
+      MAIL_PORT: "${MAIL_PORT:-587}"
+      MAIL_USERNAME: "${MAIL_USERNAME}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD}"
+      MAIL_ENCRYPTION: "${MAIL_ENCRYPTION:-tls}"
+      MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS}"
+      MAIL_FROM_NAME: "${MAIL_FROM_NAME}"
+    volumes:
+      # Mount storage for uploaded files/logs (persistent data)
+      - ./storage:/var/www/html/storage
+      # Mount .env for local development overrides
+      - ./.env:/var/www/html/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - carrent-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: carrent-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: "${DB_DATABASE:-car_rental_system_db}"
+      MYSQL_USER: "${DB_USERNAME:-carrent_user}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-secret}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-rootsecret}"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+    ports:
+      - "${DB_EXTERNAL_PORT:-3307}:3306"
+    volumes:
+      # Persistent database storage
+      - mysql-data:/var/lib/mysql
+      # Optional: Custom MySQL configuration
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - carrent-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootsecret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: carrent-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_EXTERNAL_PORT:-6380}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - carrent-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+
+  # Optional: PostgreSQL (alternative to MySQL)
+  # Uncomment if you prefer PostgreSQL
+  # postgres:
+  #   image: postgres:16-alpine
+  #   container_name: carrent-postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: "${DB_DATABASE:-car_rental_system_db}"
+  #     POSTGRES_USER: "${DB_USERNAME:-carrent_user}"
+  #     POSTGRES_PASSWORD: "${DB_PASSWORD:-secret}"
+  #   ports:
+  #     - "${DB_EXTERNAL_PORT:-5433}:5432"
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/data
+  #   networks:
+  #     - carrent-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-carrent_user}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+  # Optional: Queue Worker (if using queues)
+  # Uncomment to run Laravel queue workers
+  # queue:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: carrent-queue
+  #   restart: unless-stopped
+  #   command: php artisan queue:work --tries=3 --timeout=90
+  #   environment:
+  #     APP_ENV: "${APP_ENV:-production}"
+  #     DB_HOST: db
+  #     REDIS_HOST: redis
+  #   volumes:
+  #     - ./storage:/var/www/html/storage
+  #     - ./.env:/var/www/html/.env
+  #   depends_on:
+  #     - app
+  #     - db
+  #     - redis
+  #   networks:
+  #     - carrent-network
+
+  # Optional: Scheduler (for Laravel scheduled tasks)
+  # scheduler:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: carrent-scheduler
+  #   restart: unless-stopped
+  #   command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction & sleep 60; done"
+  #   environment:
+  #     APP_ENV: "${APP_ENV:-production}"
+  #     DB_HOST: db
+  #   volumes:
+  #     - ./storage:/var/www/html/storage
+  #     - ./.env:/var/www/html/.env
+  #   depends_on:
+  #     - app
+  #     - db
+  #   networks:
+  #     - carrent-network
+
+networks:
+  carrent-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+  # postgres-data:
+  #   driver: local
+  redis-data:
+    driver: local

@@ -1,0 +1,39 @@
+# ── Node / Frontend ──────────────────────────────────────────────────────────
+node_modules/
+dist/
+frontend/dist/
+frontend/node_modules/
+frontend/.env
+frontend/.env.*
+.vite/
+
+# ── Laravel / Backend ────────────────────────────────────────────────────────
+backend/vendor/
+backend/.env
+backend/.env.*
+backend/storage/logs/*.log
+backend/storage/*.key
+backend/storage/pail/
+backend/public/build/
+backend/public/hot
+backend/public/storage
+backend/.phpunit.result.cache
+backend/.phpunit.cache
+backend/auth.json
+backend/bootstrap/cache/*.php
+
+# ── Docker ──────────────────────────────────────────────────────────────────
+docker-compose.override.yml
+.env.local
+.env.*.local
+
+# ── OS / Editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

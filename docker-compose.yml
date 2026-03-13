@@ -1,0 +1,148 @@
+# Root-level Docker Compose — Full Stack (Backend + Frontend + Nginx + DB + Redis)
+#
+# Route:
+#   http://localhost/        → React SPA  (frontend container)
+#   http://localhost/api/*   → Laravel API (backend container)
+#   http://localhost/storage → Laravel public storage
+#
+# Usage:
+#   docker compose up -d --build
+#   docker compose exec backend php artisan migrate --seed
+#   docker compose exec backend php artisan storage:link
+
+services:
+
+  # ── Nginx Reverse Proxy ──────────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: atellasfleet-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-80}:80"
+      - "${NGINX_SSL_PORT:-443}:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/generate-ssl.sh:/docker-entrypoint.d/10-generate-ssl.sh:ro
+      - nginx_ssl:/etc/nginx/ssl
+      - backend_storage:/var/www/backend/storage/app/public:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - atellasfleet-network
+
+  # ── Laravel Backend ──────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: atellasfleet-backend
+    restart: unless-stopped
+    expose:
+      - "9000"   # PHP-FPM listens on this internally
+    environment:
+      APP_NAME: "${APP_NAME:-Atellas Fleet}"
+      APP_ENV: "${APP_ENV:-production}"
+      APP_KEY: "${APP_KEY}"
+      APP_DEBUG: "${APP_DEBUG:-false}"
+      APP_URL: "${APP_URL:-http://localhost}"
+
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: "${DB_DATABASE:-atellasfleet_db}"
+      DB_USERNAME: "${DB_USERNAME:-fleet_user}"
+      DB_PASSWORD: "${DB_PASSWORD:-secret}"
+
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      MAIL_MAILER: "${MAIL_MAILER:-smtp}"
+      MAIL_HOST: "${MAIL_HOST:-}"
+      MAIL_PORT: "${MAIL_PORT:-587}"
+      MAIL_USERNAME: "${MAIL_USERNAME:-}"
+      MAIL_PASSWORD: "${MAIL_PASSWORD:-}"
+      MAIL_ENCRYPTION: "${MAIL_ENCRYPTION:-tls}"
+      MAIL_FROM_ADDRESS: "${MAIL_FROM_ADDRESS:-no-reply@atellasfleet.ma}"
+      MAIL_FROM_NAME: "Atellas Fleet"
+    volumes:
+      - backend_storage:/var/www/html/storage
+      - ./.env:/var/www/html/.env:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - atellasfleet-network
+
+  # ── React Frontend ───────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: atellasfleet-frontend
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      # Vite env — the backend is reachable at /api from the browser
+      VITE_API_BASE_URL: "${VITE_API_BASE_URL:-/api}"
+      VITE_GEMINI_API_KEY: "${VITE_GEMINI_API_KEY:-}"
+    networks:
+      - atellasfleet-network
+
+  # ── MySQL Database ───────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: atellasfleet-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: "${DB_DATABASE:-atellasfleet_db}"
+      MYSQL_USER: "${DB_USERNAME:-fleet_user}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-secret}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-rootsecret}"
+    ports:
+      - "${DB_EXTERNAL_PORT:-3307}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    networks:
+      - atellasfleet-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootsecret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: atellasfleet-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_EXTERNAL_PORT:-6380}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - atellasfleet-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+# ── Named Volumes ─────────────────────────────────────────────────────
+volumes:
+  mysql_data:
+  redis_data:
+  backend_storage:
+  nginx_ssl:        # persists the self-signed cert across container restarts
+
+# ── Network ───────────────────────────────────────────────────────────
+networks:
+  atellasfleet-network:
+    driver: bridge
