@@ -46,7 +46,7 @@ interface DemoAccount {
 }
 
 interface SettingsManagementProps {
-  activeTab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles';
+  activeTab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points';
   onTabChange: (tab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points') => void;
 }
 
@@ -56,11 +56,11 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
 
   // ─── Notification / email settings ─────────────────────────────────────
   const [notifSettings, setNotifSettings] = useState({
-    notifications_reply_email_enabled:      true,
+    notifications_reply_email_enabled:      '1' as string,
     notifications_mail_from_address:        'contact@atellasfleet.ma',
     notifications_mail_from_name:           'Atellas Fleet',
-    notifications_new_contact_admin_alert:  true,
-    notifications_new_booking_alert:        true,
+    notifications_new_contact_admin_alert:  '1' as string,
+    notifications_new_booking_alert:        '1' as string,
   });
   const [notifLoading, setNotifLoading]   = useState(false);
   const [notifSaving,  setNotifSaving]    = useState(false);
@@ -107,7 +107,7 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
 
   // ─── Generic settings toggle helper ────────────────────────────────────
   const toggleNotif = (key: keyof typeof notifSettings) => {
-    setNotifSettings(prev => ({ ...prev, [key]: !prev[key] }));
+    setNotifSettings(prev => ({ ...prev, [key]: prev[key] === '1' ? '0' : '1' }));
   };
   
   // --- TEAM STATE ---

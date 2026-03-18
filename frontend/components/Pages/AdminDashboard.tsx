@@ -196,6 +196,11 @@ interface BlogPost {
   date: string;
   image: string;
   excerpt: string;
+  readTime: string;
+  author: {
+    name: string;
+    avatar: string;
+  };
 }
 
 interface Fine {
@@ -280,7 +285,9 @@ const BLOG_DATA: BlogPost[] = [
       status: 'Published', 
       date: 'Oct 15, 2024',
       image: 'https://images.unsplash.com/photo-1539020140153-e479b8c22e70?auto=format&fit=crop&q=80&w=800',
-      excerpt: 'Discover the Atlas Mountains and beyond with our curated routes for the adventurous driver.'
+      excerpt: 'Discover the Atlas Mountains and beyond with our curated routes for the adventurous driver.',
+      readTime: '5 min read',
+      author: { name: 'Admin', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100' },
   },
   { 
       id: 'P-2', 
@@ -290,7 +297,9 @@ const BLOG_DATA: BlogPost[] = [
       status: 'Published', 
       date: 'Oct 10, 2024',
       image: 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&q=80&w=800',
-      excerpt: 'Stay informed about the latest traffic regulations updates coming into effect next year.'
+      excerpt: 'Stay informed about the latest traffic regulations updates coming into effect next year.',
+      readTime: '4 min read',
+      author: { name: 'Admin', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100' },
   },
   { 
       id: 'P-3', 
@@ -300,7 +309,9 @@ const BLOG_DATA: BlogPost[] = [
       status: 'Draft', 
       date: 'Oct 28, 2024',
       image: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&q=80&w=800',
-      excerpt: 'How EVs are redefining the standard of luxury transport in Northern Africa.'
+      excerpt: 'How EVs are redefining the standard of luxury transport in Northern Africa.',
+      readTime: '6 min read',
+      author: { name: 'Admin', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100' },
   },
 ];
 
