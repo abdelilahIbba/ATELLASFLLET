@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Play, Battery, Gauge, X } from 'lucide-react';
+import { ArrowRight, Play, Battery, Gauge } from 'lucide-react';
+import VideoAdPlayer from '../UI/VideoAdPlayer';
 
 interface HeroOverlayProps {
   isDark: boolean;
@@ -106,39 +107,13 @@ const HeroOverlay: React.FC<HeroOverlayProps> = ({ isDark, onViewFleet }) => {
 
     <AnimatePresence>
       {isVideoOpen && (
-        <motion.div
-           initial={{ opacity: 0 }}
-           animate={{ opacity: 1 }}
-           exit={{ opacity: 0 }}
-           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 md:p-10 pointer-events-auto"
-           onClick={() => setIsVideoOpen(false)}
-        >
-          <button 
-            className="absolute top-4 right-4 md:top-8 md:right-8 text-white/50 hover:text-white transition-colors"
-            onClick={() => setIsVideoOpen(false)}
-          >
-            <X className="w-8 h-8 md:w-10 md:h-10" />
-          </button>
-          
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <iframe 
-              width="100%" 
-              height="100%" 
-              src="https://www.youtube.com/embed/tSGW7Hb3X3s?si=3gwZaAFWjV3dULAQ&autoplay=1" 
-              title="YouTube video player" 
-              frameBorder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-              referrerPolicy="strict-origin-when-cross-origin" 
-              allowFullScreen
-            ></iframe>
-          </motion.div>
-        </motion.div>
+        <VideoAdPlayer
+          adVideoId="tSGW7Hb3X3s"
+          adTitle="Atellas Fleet — Publicité"
+          adDuration={60}
+          skipAfterSeconds={5}
+          onClose={() => setIsVideoOpen(false)}
+        />
       )}
     </AnimatePresence>
     </>
