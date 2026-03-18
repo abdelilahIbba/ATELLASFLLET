@@ -6,6 +6,7 @@ import { X, Calendar, MapPin, ChevronRight, CreditCard, CheckCircle, ArrowLeft, 
 import { Car, Booking, UserInfo } from '../../types';
 import { CARS } from '../../constants';
 import { bookingsApi, carsApi, CostBreakdown, ApiError, getToken, pickupPointsApi, PickupPoint } from '../../services/api';
+import { extractDocumentData } from '../../services/ocrUtils';
 import DocumentScanner, { DocumentScanResult } from './DocumentScanner';
 import AvailabilityCalendar from '../UI/AvailabilityCalendar';
 import 'leaflet/dist/leaflet.css';
@@ -118,6 +119,22 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
       .finally(() => setApiCarsLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  // After API cars load, reconcile selectedCar — if it came from the CARS constant
+  // (IDs like 'c1', 'c2') swap it for the real API car that has the DB integer ID.
+  // Without this, finalizeReservation sends car_id='c1' → backend Car::findOrFail fails.
+  useEffect(() => {
+    if (apiCars.length === 0 || !selectedCar) return;
+    const alreadyFromApi = apiCars.some(c => c.id === selectedCar.id);
+    if (alreadyFromApi) return;
+    const matched = apiCars.find(c =>
+      c.name.toLowerCase() === selectedCar.name.toLowerCase() ||
+      c.name.toLowerCase().includes(selectedCar.name.toLowerCase()) ||
+      selectedCar.name.toLowerCase().includes(c.name.toLowerCase())
+    );
+    if (matched) setSelectedCar(matched);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiCars]);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -1433,7 +1450,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
                         </div>
 
                         <button 
-                           onClick={handleUseCurrentLocation}
+                           onClick={() => handleUseCurrentLocation()}
                            disabled={isLocating}
                           className="absolute top-3 right-3 bg-white dark:bg-brand-navy text-brand-navy dark:text-white px-3 py-2 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10 z-[500]"
                         >
