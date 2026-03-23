@@ -4,13 +4,16 @@ namespace Database\Seeders;
 
 use App\Models\PickupPoint;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class PickupPointSeeder extends Seeder
 {
     public function run(): void
     {
-        // Truncate first so re-running the seeder stays idempotent
+        // Disable FK checks so TRUNCATE works even when bookings table references pickup_points
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
         PickupPoint::truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
 
         $airports = [
             [

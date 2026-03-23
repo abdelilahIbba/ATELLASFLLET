@@ -239,7 +239,7 @@ const AnalyticsManagement: React.FC = () => {
              </div>
              
              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={300} minWidth={0}>
                     <ComposedChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
                         <XAxis dataKey="name" stroke="#64748b" fileName='month' tick={{fontSize: 12}} />
@@ -290,7 +290,7 @@ const AnalyticsManagement: React.FC = () => {
              
              <div className="flex flex-col md:flex-row items-center justify-between h-[300px]">
                 <div className="w-full md:w-1/2 h-full">
-                   <ResponsiveContainer width="100%" height="100%">
+                   <ResponsiveContainer width="100%" height={300} minWidth={0}>
                       <PieChart>
                          <Pie
                            data={CLIENT_SEGMENTS}
@@ -339,7 +339,7 @@ const AnalyticsManagement: React.FC = () => {
              </div>
              
              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={300} minWidth={0}>
                     <BarChart
                       layout="vertical"
                       data={VEHICLE_PERFORMANCE}
@@ -366,7 +366,7 @@ const AnalyticsManagement: React.FC = () => {
                 </div>
              </div>
              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={300} minWidth={0}>
                     <AreaChart data={data}>
                         <defs>
                             <linearGradient id="colorUtil" x1="0" y1="0" x2="0" y2="1">
@@ -404,7 +404,7 @@ const AnalyticsManagement: React.FC = () => {
                 </div>
              </div>
              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={300} minWidth={0}>
                     <BarChart data={data}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                         <XAxis dataKey="name" stroke="#64748b" tick={{fontSize: 12}} />

@@ -55,6 +55,25 @@ function translateRegisterError(msg: string): string {
   return msg;
 }
 
+function buildUserInfo(user: {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string | null;
+}): UserInfo {
+  const parts = (user.name ?? '').trim().split(' ').filter(Boolean);
+
+  return {
+    firstName: parts[0] || 'User',
+    lastName: parts.slice(1).join(' '),
+    role: user.role as 'client' | 'admin',
+    email: user.email,
+    photo: user.avatar ?? undefined,
+    accessKey: `ID-${user.id}`,
+  };
+}
+
 const App: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,9 +82,17 @@ const App: React.FC = () => {
   // User / Auth State
   const [currentUser, setCurrentUser] = useState<UserInfo | null>(() => {
     const savedUser = localStorage.getItem('currentUser');
-    return savedUser ? JSON.parse(savedUser) : null;
+    if (!savedUser) return null;
+
+    try {
+      return JSON.parse(savedUser) as UserInfo;
+    } catch {
+      localStorage.removeItem('currentUser');
+      return null;
+    }
   });
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   // Persist user to localStorage
   useEffect(() => {
@@ -76,12 +103,45 @@ const App: React.FC = () => {
     }
   }, [currentUser]);
 
+  useEffect(() => {
+    const token = getToken();
+
+    if (!token) {
+      setIsAuthReady(true);
+      return;
+    }
+
+    let isMounted = true;
+
+    authApi.me()
+      .then((resp) => {
+        if (!isMounted || !resp?.user) return;
+        setCurrentUser(buildUserInfo(resp.user));
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        clearToken();
+        setCurrentUser(null);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsAuthReady(true);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Guard: redirect unauthenticated users away from /admin
   useEffect(() => {
+    if (!isAuthReady) return;
+
     if (location.pathname.startsWith('/admin') && (!currentUser || currentUser.role !== 'admin')) {
       navigate('/', { replace: true });
     }
-  }, [location.pathname, currentUser]);
+  }, [isAuthReady, location.pathname, currentUser, navigate]);
 
   // Booking State
   const [isBookingOpen, setIsBookingOpen] = useState(false);
@@ -162,18 +222,9 @@ const App: React.FC = () => {
 
       setToken(resp.token);
 
-      const parts     = (resp.user.name ?? '').trim().split(' ');
-      const firstName = parts[0] || 'User';
-      const lastName  = parts.slice(1).join(' ');
-
-      setCurrentUser({
-        firstName,
-        lastName,
-        role: resp.user.role as 'client' | 'admin',
-        email: resp.user.email,
-        photo: resp.user.avatar ?? undefined,
-        accessKey: `ID-${resp.user.id}`,
-      });
+      const userInfo = buildUserInfo(resp.user);
+      localStorage.setItem('currentUser', JSON.stringify(userInfo));
+      setCurrentUser(userInfo);
 
       if (resp.user.role === 'admin') {
         navigate('/admin');
@@ -365,7 +416,9 @@ const App: React.FC = () => {
               key={adminPath}
               path={adminPath}
               element={
-                currentUser?.role === 'admin'
+                !isAuthReady
+                  ? null
+                  : currentUser?.role === 'admin'
                   ? <AdminDashboard
                       isDark={isDark}
                       toggleTheme={toggleTheme}

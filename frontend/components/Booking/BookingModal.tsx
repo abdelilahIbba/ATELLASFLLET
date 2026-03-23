@@ -139,7 +139,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
-      setStep(selectedCar ? 2 : 1);
+      setStep(initialData?.car ? 2 : 1);
       setFormData(prev => ({
         ...prev,
         location: initialData?.location || prev.location,
@@ -179,18 +179,49 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
     return `${parseInt(d)} ${mths[parseInt(m) - 1]} ${y}`;
   };
 
+  /**
+   * Always resolve the selected car to a valid backend DB id.
+   * - Preferred: exact match in apiCars (already loaded from backend)
+   * - Fallback: name match against apiCars
+   * - Last fallback: constants ids c1..cN -> "1".."N" (seeded default order)
+   */
+  const getSelectedCarDbId = (): string | null => {
+    if (!selectedCar) return null;
+
+    if (/^\d+$/.test(String(selectedCar.id))) {
+      return String(selectedCar.id);
+    }
+
+    const exact = apiCars.find(c => String(c.id) === String(selectedCar.id));
+    if (exact) return String(exact.id);
+
+    const byName = apiCars.find(c =>
+      c.name.toLowerCase() === selectedCar.name.toLowerCase() ||
+      c.name.toLowerCase().includes(selectedCar.name.toLowerCase()) ||
+      selectedCar.name.toLowerCase().includes(c.name.toLowerCase())
+    );
+    if (byName) return String(byName.id);
+
+    const m = String(selectedCar.id).match(/^c(\d+)$/i);
+    if (m) return m[1];
+
+    return null;
+  };
+
   /** Selecting a car in the grid: just update selectedCar; booked periods are fetched by useEffect below */
   const handleCarSelect = (car: Car) => setSelectedCar(car);
 
   /** Fetch booked periods whenever a car is selected (drives detail view) */
   useEffect(() => {
     if (!selectedCar) { setCarBookedPeriods(null); setCarAvailability(null); return; }
+    const carId = getSelectedCarDbId();
+    if (!carId) { setCarBookedPeriods({ total_units: 1, booked_periods: [] }); setCarAvailability(null); return; }
     setCarBookedPeriods(null); setCarAvailability(null);
-    carsApi.bookedPeriods(selectedCar.id)
+    carsApi.bookedPeriods(carId)
       .then(data => setCarBookedPeriods(data))
       .catch(() => setCarBookedPeriods({ total_units: 1, booked_periods: [] }));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCar?.id]);
+  }, [selectedCar?.id, apiCars]);
 
   /** Recompute availability whenever dates or booked periods change */
   useEffect(() => {
@@ -285,8 +316,13 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
       // Pre-fetch cost breakdown for Step 3
       if (selectedCar && formData.pickupDate && formData.returnDate) {
         try {
+          const carId = getSelectedCarDbId();
+          if (!carId) {
+            setApiError('Véhicule introuvable. Veuillez sélectionner à nouveau votre véhicule.');
+            return;
+          }
           const cost = await bookingsApi.calculateCost({
-            car_id:     selectedCar.id,
+            car_id:     carId,
             start_date: formData.pickupDate,
             end_date:   formData.returnDate,
           });
@@ -310,8 +346,10 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
    */
   useEffect(() => {
     if (step === 4 && !costBreakdown && selectedCar && formData.pickupDate && formData.returnDate) {
+      const carId = getSelectedCarDbId();
+      if (!carId) return;
       bookingsApi.calculateCost({
-        car_id:     selectedCar.id,
+        car_id:     carId,
         start_date: formData.pickupDate,
         end_date:   formData.returnDate,
       }).then(setCostBreakdown).catch(() => {});
@@ -333,8 +371,15 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
     }
 
     try {
+      const carId = getSelectedCarDbId();
+      if (!carId) {
+        setApiError('Véhicule introuvable. Veuillez revenir à l’étape 1 et re-sélectionner le véhicule.');
+        setIsValidating(false);
+        return;
+      }
+
       const result = await bookingsApi.finalizeReservation({
-        car_id:           selectedCar!.id,
+        car_id:           carId,
         start_date:       formData.pickupDate,
         end_date:         formData.returnDate,
         pickup_latitude:  pickupCoords[0],

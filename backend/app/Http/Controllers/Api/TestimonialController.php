@@ -28,6 +28,16 @@ class TestimonialController extends Controller
     }
 
     /**
+     * GET /api/admin/testimonials  (admin — all testimonials including inactive)
+     */
+    public function adminIndex(Request $request): AnonymousResourceCollection
+    {
+        return TestimonialResource::collection(
+            Testimonial::latest()->paginate($request->get('per_page', 15))
+        );
+    }
+
+    /**
      * GET /api/testimonials/{testimonial}
      */
     public function show(Testimonial $testimonial): TestimonialResource

@@ -55,6 +55,23 @@ class BlogController extends Controller
     }
 
     /**
+     * GET /api/admin/blogs  (admin — all posts, published or not)
+     */
+    public function adminIndex(Request $request): AnonymousResourceCollection
+    {
+        $query = Blog::with('author');
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(fn ($q) => $q->where('title', 'like', "%{$s}%")->orWhere('content', 'like', "%{$s}%"));
+        }
+
+        return BlogResource::collection(
+            $query->latest('created_at')->paginate($request->get('per_page', 15))
+        );
+    }
+
+    /**
      * POST /api/blogs  (admin)
      */
     public function store(Request $request): JsonResponse

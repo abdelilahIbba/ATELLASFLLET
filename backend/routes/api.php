@@ -36,7 +36,7 @@ Route::get('/cars/{car}/booked-periods', [CarController::class, 'bookedPeriods']
 Route::post('/cars/check-availability', [CarController::class, 'checkAvailability']);
 
 Route::get('/blogs',          [BlogController::class, 'index']);
-Route::get('/blogs/{slug}',   [BlogController::class, 'showBySlug']);
+Route::get('/blogs/{slug}',   [BlogController::class, 'show']);
 
 Route::get('/testimonials',   [TestimonialController::class, 'index']);
 

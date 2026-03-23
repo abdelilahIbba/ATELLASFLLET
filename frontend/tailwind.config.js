@@ -15,16 +15,19 @@ export default {
     extend: {
       colors: {
         brand: {
-          navy: '#0f172a',    // Slate 900
-          blue: '#1e40af',    // Blue 800
-          teal: '#0f766e',    // Teal 700
+          red: '#DC2626',      // Primary CTA (Red-600)
+          navy: '#0F172A',     // Dark Mode BG / Light Mode Text (Slate-900)
+          blue: '#2563EB',     // Headers (Blue-600)
+          teal: '#0D9488',     // Accents (Teal-600)
           gold: '#b45309',    // Amber 700
-          light: '#f8fafc',   // Slate 50
+          light: '#FFFFFF',    // Light mode BG
+          dark: '#020617'      // Deep Navy for Dark mode BG
         }
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Playfair Display', 'serif'],
+        space: ['Space Grotesk', 'sans-serif'],
       },
     },
   },
