@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CarController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DemoController;
 use App\Http\Controllers\Api\FineController;
 use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\PickupPointController;
@@ -27,8 +28,10 @@ use App\Http\Controllers\Api\TestimonialController;
 */
 
 // ─── Public (no auth) ────────────────────────────────────────────────
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login',    [AuthController::class, 'login']);
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login',    [AuthController::class, 'login']);
+});
 
 Route::get('/cars',           [CarController::class, 'index']);
 Route::get('/cars/{car}',     [CarController::class, 'show']);
@@ -79,7 +82,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // ─── Admin-only ──────────────────────────────────────────────────────
-Route::middleware(['auth:sanctum', 'api.role:admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum', 'api.role:admin,demo_admin'])->prefix('admin')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -152,6 +155,12 @@ Route::middleware(['auth:sanctum', 'api.role:admin'])->prefix('admin')->group(fu
     // Settings
     Route::get('/settings',  [SettingController::class, 'index']);
     Route::put('/settings',  [SettingController::class, 'update']);
+
+    // Demo accounts
+    Route::get('/demo',                [DemoController::class, 'index']);
+    Route::post('/demo',               [DemoController::class, 'store']);
+    Route::post('/demo/{demo}/resend', [DemoController::class, 'resend']);
+    Route::delete('/demo/{demo}',      [DemoController::class, 'destroy']);
 
     // Pickup / drop-off points CRUD
     Route::get('/pickup-points',                              [PickupPointController::class, 'adminIndex']);

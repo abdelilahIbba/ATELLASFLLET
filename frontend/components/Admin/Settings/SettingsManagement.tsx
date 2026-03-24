@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import RoleManagement from './RoleManagement';
 import PickupPointsManager from './PickupPointsManager';
-import { adminSettingsApi } from '../../../services/api';
+import { adminSettingsApi, adminDemoApi, DemoAccountResource } from '../../../services/api';
 import { 
   Save, 
   Bell, 
@@ -25,6 +25,8 @@ import {
   Send,
   CheckCircle2,
   MapPin,
+  RefreshCw,
+  ClipboardCheck,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -36,10 +38,10 @@ interface TeamMember {
 }
 
 interface DemoAccount {
-  id: string;
+  id: number | string;
   clientName: string;
   email: string;
-  plan: '2 Weeks' | '1 Month' | 'Custom';
+  plan: string;
   expiresAt: string;
   status: 'Active' | 'Expired';
   accessKey: string;
@@ -120,11 +122,27 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
   const [newMember, setNewMember] = useState({ name: '', email: '', role: 'Support Agent' });
 
   // --- DEMO ACCOUNTS STATE ---
-  const [demoAccounts, setDemoAccounts] = useState<DemoAccount[]>([
-    { id: 'D-101', clientName: 'Luxury Tours Inc.', email: 'contact@luxurytours.ma', plan: '2 Weeks', expiresAt: '2024-11-15', status: 'Active', accessKey: 'demo_8x92nm' },
-  ]);
-  const [showDemoForm, setShowDemoForm] = useState(false);
-  const [newDemo, setNewDemo] = useState({ clientName: '', email: '', duration: '14' }); // 14 days default
+  const [demoAccounts,  setDemoAccounts]  = useState<DemoAccount[]>([]);
+  const [demoLoading,   setDemoLoading]   = useState(false);
+  const [demoError,     setDemoError]     = useState<string | null>(null);
+  const [demoCreating,  setDemoCreating]  = useState(false);
+  const [demoSuccess,   setDemoSuccess]   = useState<string | null>(null);
+  const [resendingId,   setResendingId]   = useState<number | string | null>(null);
+  const [copiedId,      setCopiedId]      = useState<number | string | null>(null);
+  const [showDemoForm,  setShowDemoForm]  = useState(false);
+  const [newDemo,       setNewDemo]       = useState({ clientName: '', email: '', duration: '14' });
+
+  // Load demo accounts when tab becomes active
+  useEffect(() => {
+    if (activeTab !== 'demo') return;
+    setDemoLoading(true);
+    setDemoError(null);
+    adminDemoApi.list()
+      .then((res: any) => setDemoAccounts(res.data ?? []))
+      .catch(() => setDemoError('Impossible de charger les comptes démo.'))
+      .finally(() => setDemoLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const handleSave = () => {
     setLoading(true);
@@ -145,37 +163,79 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
     setShowInviteForm(false);
   };
 
-  const handleCreateDemo = (e: React.FormEvent) => {
+  const handleCreateDemo = async (e: React.FormEvent) => {
     e.preventDefault();
-    const days = parseInt(newDemo.duration);
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + days);
-    
-    const demo: DemoAccount = {
-      id: `D-${Math.floor(Math.random() * 1000)}`,
-      clientName: newDemo.clientName,
-      email: newDemo.email,
-      plan: days === 14 ? '2 Weeks' : days === 30 ? '1 Month' : 'Custom',
-      expiresAt: expiryDate.toISOString().split('T')[0],
-      status: 'Active',
-      accessKey: `demo_${Math.random().toString(36).substr(2, 6)}`
-    };
-    setDemoAccounts([demo, ...demoAccounts]);
-    setNewDemo({ clientName: '', email: '', duration: '14' });
-    setShowDemoForm(false);
+    setDemoCreating(true);
+    setDemoError(null);
+    setDemoSuccess(null);
+    try {
+      const res: any = await adminDemoApi.create({
+        client_name: newDemo.clientName,
+        email:       newDemo.email,
+        duration:    parseInt(newDemo.duration),
+      });
+      setDemoAccounts(prev => [res.data, ...prev]);
+      setNewDemo({ clientName: '', email: '', duration: '14' });
+      setShowDemoForm(false);
+      setDemoSuccess('Compte démo créé — identifiants envoyés par email ✓');
+      setTimeout(() => setDemoSuccess(null), 5000);
+    } catch (err: any) {
+      setDemoError(err?.message ?? 'Erreur lors de la création du compte démo.');
+    } finally {
+      setDemoCreating(false);
+    }
+  };
+
+  const handleDeleteDemo = async (id: number | string) => {
+    try {
+      await adminDemoApi.delete(id);
+      setDemoAccounts(prev => prev.filter(d => d.id !== id));
+    } catch {
+      setDemoError('Impossible de supprimer ce compte démo.');
+    }
+  };
+
+  const handleResendDemo = async (id: number | string) => {
+    setResendingId(id);
+    try {
+      await adminDemoApi.resend(id);
+      setDemoSuccess('Email renvoyé avec succès ✓');
+      setTimeout(() => setDemoSuccess(null), 4000);
+    } catch {
+      setDemoError('Erreur lors du renvoi de l\'email.');
+    } finally {
+      setResendingId(null);
+    }
   };
 
   const handleDeleteMember = (id: string) => {
     setTeamMembers(teamMembers.filter(m => m.id !== id));
   };
 
-  const handleDeleteDemo = (id: string) => {
-    setDemoAccounts(demoAccounts.filter(d => d.id !== id));
-  };
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    // Could add toast here
+  };
+
+  const copyDemoCredentials = (account: DemoAccount) => {
+    const text = [
+      `Bonjour ${account.clientName},`,
+      ``,
+      `Voici votre accès démo au tableau de bord AtellasFleet :`,
+      ``,
+      `  URL            : ${window.location.origin}/login`,
+      `  Onglet login   : Admin / Gérant`,
+      `  Email          : ${account.email}`,
+      `  Mot de passe   : ${account.accessKey}`,
+      ``,
+      `Plan : ${account.plan}  |  Expire le : ${account.expiresAt}`,
+      ``,
+      `⚠️ Important : sur la page de connexion, sélectionnez l'onglet « Admin / Gérant » avant de saisir vos identifiants.`,
+      ``,
+      `Cordialement,`,
+    ].join('\n');
+    navigator.clipboard.writeText(text);
+    setCopiedId(account.id);
+    setTimeout(() => setCopiedId(null), 3000);
   };
 
   return (
@@ -537,12 +597,28 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
                 <div className="flex justify-between items-center bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-6 rounded-2xl">
                   <div>
                     <h3 className="text-xl font-bold text-brand-navy dark:text-white">Comptes Démo</h3>
-                    <p className="text-xs text-slate-500 mt-1">Générer un accès temporaire pour les clients potentiels.</p>
+                    <p className="text-xs text-slate-500 mt-1">Générer un accès temporaire au tableau de bord pour des agences de location prospects. Les identifiants sont envoyés automatiquement par email.</p>
                   </div>
                   <button onClick={() => setShowDemoForm(!showDemoForm)} className="px-4 py-2 bg-brand-navy dark:bg-white text-white dark:text-brand-navy rounded-lg text-sm font-bold uppercase flex items-center gap-2 hover:opacity-90 transition-opacity">
                     <Clock className="w-4 h-4" /> {showDemoForm ? 'Annuler' : 'Créer Démo'}
                   </button>
                 </div>
+
+                {/* Success banner */}
+                {demoSuccess && (
+                  <div className="flex items-center gap-3 bg-green-50 border border-green-200 text-green-700 rounded-xl px-5 py-3 text-sm font-medium">
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                    {demoSuccess}
+                  </div>
+                )}
+
+                {/* Error banner */}
+                {demoError && (
+                  <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-5 py-3 text-sm font-medium">
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                    {demoError}
+                  </div>
+                )}
 
                 {showDemoForm && (
                   <form onSubmit={handleCreateDemo} className="bg-brand-blue/5 border border-brand-blue/20 p-6 rounded-xl mb-6">
@@ -566,11 +642,32 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
                       </div>
                     </div>
                     <div className="flex justify-end">
-                      <button type="submit" className="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-bold uppercase hover:bg-blue-600 transition-colors flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4" /> Générer Compte
+                      <button type="submit" disabled={demoCreating} className="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-bold uppercase hover:bg-blue-600 transition-colors flex items-center gap-2 disabled:opacity-60">
+                        {demoCreating ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                        {demoCreating ? 'Envoi en cours…' : 'Générer & Envoyer'}
                       </button>
                     </div>
                   </form>
+                )}
+
+                {/* Loading state */}
+                {demoLoading && (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-brand-blue" />
+                    <span className="ml-2 text-sm text-slate-500">Chargement des comptes démo…</span>
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {!demoLoading && demoAccounts.length === 0 && (
+                  <div className="text-center py-12 text-slate-400">
+                    <Clock className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">Aucun compte démo créé pour l'instant.</p>
+                  </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -602,12 +699,45 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
                           </div>
                         </div>
 
-                        <div className="bg-slate-50 dark:bg-black/20 p-3 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between group-hover:border-brand-blue/30 transition-colors cursor-pointer" onClick={() => copyToClipboard(account.accessKey)}>
+                        <div className="bg-slate-50 dark:bg-black/20 p-3 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between group-hover:border-brand-blue/30 transition-colors cursor-pointer mb-3" onClick={() => copyToClipboard(account.accessKey)}>
                           <div>
                             <p className="text-[10px] text-slate-400 uppercase mb-1 font-bold">Clé d'Accès</p>
                             <code className="text-brand-blue font-bold font-mono">{account.accessKey}</code>
                           </div>
                           <Copy className="w-4 h-4 text-slate-400 group-hover:text-brand-blue transition-colors" />
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex gap-2">
+                          {/* Copy credentials */}
+                          <button
+                            onClick={() => copyDemoCredentials(account)}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-bold uppercase transition-colors ${
+                              copiedId === account.id
+                                ? 'border-green-400 text-green-600 bg-green-50'
+                                : 'border-slate-300 dark:border-white/20 text-slate-600 dark:text-slate-300 hover:border-brand-blue/50 hover:text-brand-blue'
+                            }`}
+                          >
+                            {copiedId === account.id ? (
+                              <><ClipboardCheck className="w-3 h-3" /> Copié !</>
+                            ) : (
+                              <><Copy className="w-3 h-3" /> Copier Identifiants</>
+                            )}
+                          </button>
+
+                          {/* Resend email */}
+                          <button
+                            onClick={() => handleResendDemo(account.id)}
+                            disabled={resendingId === account.id}
+                            title="Renvoyer par email"
+                            className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-brand-blue/30 text-brand-blue text-xs font-bold uppercase hover:bg-brand-blue/5 transition-colors disabled:opacity-50"
+                          >
+                            {resendingId === account.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-3 h-3" />
+                            )}
+                          </button>
                         </div>
                       </div>
                     );

@@ -38,11 +38,15 @@ class SettingController extends Controller
      */
     public function update(Request $request): JsonResponse
     {
-        $request->validate([
-            '*' => 'nullable',
-        ]);
+        $allowedKeys = [
+            'currency', 'tax_rate', 'security_deposit_rate', 'booking_deposit',
+            'company_name', 'company_address', 'company_phone', 'company_email',
+            'default_language', 'timezone', 'date_format',
+        ];
 
-        foreach ($request->all() as $key => $value) {
+        $data = collect($request->all())->only($allowedKeys);
+
+        foreach ($data as $key => $value) {
             $existing = Setting::where('key', $key)->first();
             if ($existing) {
                 $existing->update([

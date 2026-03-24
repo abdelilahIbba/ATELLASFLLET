@@ -30,7 +30,13 @@ class Blog extends Model
         
         static::creating(function ($blog) {
             if (empty($blog->slug)) {
-                $blog->slug = Str::slug($blog->title);
+                $slug = Str::slug($blog->title);
+                $originalSlug = $slug;
+                $counter = 1;
+                while (static::where('slug', $slug)->exists()) {
+                    $slug = $originalSlug . '-' . $counter++;
+                }
+                $blog->slug = $slug;
             }
         });
     }

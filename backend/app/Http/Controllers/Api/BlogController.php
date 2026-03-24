@@ -85,7 +85,13 @@ class BlogController extends Controller
         ]);
 
         $validated['author_id'] = Auth::id();
-        $validated['slug']      = Str::slug($request->title);
+        $slug = Str::slug($request->title);
+        $originalSlug = $slug;
+        $counter = 1;
+        while (Blog::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter++;
+        }
+        $validated['slug'] = $slug;
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('blogs', 'public');
@@ -117,7 +123,13 @@ class BlogController extends Controller
         ]);
 
         if ($request->has('title')) {
-            $validated['slug'] = Str::slug($request->title);
+            $slug = Str::slug($request->title);
+            $originalSlug = $slug;
+            $counter = 1;
+            while (Blog::where('slug', $slug)->where('id', '!=', $blog->id)->exists()) {
+                $slug = $originalSlug . '-' . $counter++;
+            }
+            $validated['slug'] = $slug;
         }
         if ($request->hasFile('image')) {
             if ($blog->image) Storage::disk('public')->delete($blog->image);

@@ -32,6 +32,7 @@ class User extends Authenticatable
         'doc_id_front',
         'doc_id_back',
         'doc_license',
+        // 'role' is intentionally excluded to prevent mass assignment of roles
     ];
     /**
      * The attributes that should be hidden for serialization.

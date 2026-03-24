@@ -391,6 +391,32 @@ export const adminSettingsApi = {
 };
 
 // ---------------------------------------------------------------------------
+// Admin — Demo Accounts
+// ---------------------------------------------------------------------------
+export interface DemoAccountResource {
+  id: number;
+  clientName: string;
+  email: string;
+  plan: string;
+  expiresAt: string;
+  accessKey: string;
+  status: 'Active' | 'Expired';
+}
+
+export const adminDemoApi = {
+  /** GET /api/admin/demo — list all demo accounts */
+  list: () => api.get<{ data: DemoAccountResource[] }>('/admin/demo'),
+  /** POST /api/admin/demo — create + auto-send credentials email */
+  create: (payload: { client_name: string; email: string; duration: number }) =>
+    api.post<{ message: string; data: DemoAccountResource }>('/admin/demo', payload),
+  /** POST /api/admin/demo/{id}/resend — resend credentials email */
+  resend: (id: number | string) =>
+    api.post<{ message: string }>(`/admin/demo/${id}/resend`, {}),
+  /** DELETE /api/admin/demo/{id} */
+  delete: (id: number | string) => api.delete<void>(`/admin/demo/${id}`),
+};
+
+// ---------------------------------------------------------------------------
 // Admin — Analytics
 // ---------------------------------------------------------------------------
 export const adminAnalyticsApi = {

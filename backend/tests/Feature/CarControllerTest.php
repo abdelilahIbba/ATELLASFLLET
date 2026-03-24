@@ -14,6 +14,7 @@ function carAdmin(): User
 
 // ── Public: list available cars ──────────────────────────────────────
 test('public can list available cars', function () {
+    /** @var \Tests\TestCase $this */
     Car::factory()->count(3)->create(['availability' => 'available']);
     Car::factory()->create(['availability' => 'unavailable']);
 
@@ -24,6 +25,7 @@ test('public can list available cars', function () {
 
 // ── Public: show car detail ──────────────────────────────────────────
 test('public can view a car', function () {
+    /** @var \Tests\TestCase $this */
     $car = Car::factory()->create(['availability' => 'available']);
 
     $this->getJson("/api/cars/{$car->id}")
@@ -33,6 +35,7 @@ test('public can view a car', function () {
 
 // ── Public: check availability ───────────────────────────────────────
 test('public can check car availability', function () {
+    /** @var \Tests\TestCase $this */
     $car = Car::factory()->create(['availability' => 'available', 'quantity' => 2, 'daily_price' => 300]);
 
     $payload = [
@@ -49,6 +52,7 @@ test('public can check car availability', function () {
 
 // ── Public: booked periods ───────────────────────────────────────────
 test('public can get booked periods for a car', function () {
+    /** @var \Tests\TestCase $this */
     $car = Car::factory()->create(['availability' => 'available', 'quantity' => 1]);
     Booking::factory()->create([
         'car_id'     => $car->id,
@@ -64,6 +68,7 @@ test('public can get booked periods for a car', function () {
 
 // ── Admin: create car ────────────────────────────────────────────────
 test('admin can create a car', function () {
+    /** @var \Tests\TestCase $this */
     $admin = carAdmin();
 
     $payload = [
@@ -85,6 +90,7 @@ test('admin can create a car', function () {
 
 // ── Admin: update car ────────────────────────────────────────────────
 test('admin can update a car', function () {
+    /** @var \Tests\TestCase $this */
     $admin = carAdmin();
     $car   = Car::factory()->create(['daily_price' => 300]);
 
@@ -97,6 +103,7 @@ test('admin can update a car', function () {
 
 // ── Admin: delete car ────────────────────────────────────────────────
 test('admin can delete a car', function () {
+    /** @var \Tests\TestCase $this */
     $admin = carAdmin();
     $car   = Car::factory()->create();
 
@@ -108,6 +115,7 @@ test('admin can delete a car', function () {
 
 // ── Client cannot access admin car routes ────────────────────────────
 test('client cannot access admin car routes', function () {
+    /** @var \Tests\TestCase $this */
     $client = User::factory()->create(['role' => 'client']);
     $car    = Car::factory()->create();
 
@@ -118,6 +126,7 @@ test('client cannot access admin car routes', function () {
 
 // ── Admin: list all cars including unavailable ───────────────────────
 test('admin can see unavailable cars in listing', function () {
+    /** @var \Tests\TestCase $this */
     $admin = carAdmin();
     Car::factory()->count(2)->create(['availability' => 'available']);
     Car::factory()->create(['availability' => 'unavailable']);

@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 
 class AuthController extends Controller
@@ -25,6 +26,7 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            Log::warning('Failed login attempt', ['email' => $request->email, 'ip' => $request->ip()]);
             return response()->json([
                 'message' => 'The provided credentials are incorrect.',
             ], 401);
@@ -62,8 +64,9 @@ class AuthController extends Controller
             'driver_license_number'      => $request->driver_license_number,
             'driver_license_expiry_date' => $request->driver_license_expiry_date,
             'password'                   => Hash::make($request->password),
-            'role'                       => 'client',
         ]);
+        $user->role = 'client';
+        $user->save();
 
         $token = $user->createToken('api-token')->plainTextToken;
 

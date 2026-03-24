@@ -34,8 +34,10 @@ class CarController extends Controller
         if ($request->filled('min_price')) $query->where('daily_price', '>=', $request->min_price);
         if ($request->filled('max_price')) $query->where('daily_price', '<=', $request->max_price);
 
-        $sortBy  = $request->get('sort_by', 'created_at');
-        $sortDir = $request->get('sort_dir', 'desc');
+        $allowedSortColumns = ['created_at', 'daily_price', 'year', 'make', 'model'];
+        $sortBy  = in_array($request->get('sort_by'), $allowedSortColumns) ? $request->get('sort_by') : 'created_at';
+        $rawDir  = strtolower($request->get('sort_dir', 'desc'));
+        $sortDir = in_array($rawDir, ['asc', 'desc']) ? $rawDir : 'desc';
         $query->orderBy($sortBy, $sortDir);
 
         return CarResource::collection($query->paginate($request->get('per_page', 15)));

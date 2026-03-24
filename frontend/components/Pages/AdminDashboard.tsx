@@ -905,30 +905,45 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   };
 
   // --- CONTRACT HANDLERS ---
+  const escapeHtml = (str: string): string => {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  };
+
   const generateContractTemplate = (booking: Booking) => {
     const today = new Date().toLocaleDateString();
+    const safe = {
+      id: escapeHtml(String(booking.id)),
+      clientName: escapeHtml(booking.clientName),
+      vehicleName: escapeHtml(booking.vehicleName),
+      startDate: escapeHtml(booking.startDate),
+      endDate: escapeHtml(booking.endDate),
+      amount: escapeHtml(booking.amount.toLocaleString()),
+      paymentStatus: escapeHtml(booking.paymentStatus),
+    };
     return `
       <div style="font-family: serif; color: black; line-height: 1.6;">
         <div style="text-align: center; margin-bottom: 2rem;">
           <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 0.5rem;">Contrat de Location de Véhicule</h1>
-          <p style="font-size: 14px; color: #666;">Contrat N°: ${booking.id} | Date: ${today}</p>
+          <p style="font-size: 14px; color: #666;">Contrat N°: ${safe.id} | Date: ${escapeHtml(today)}</p>
         </div>
         <div style="margin-bottom: 2rem;">
           <h3 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; margin-bottom: 1rem;">1. LES PARTIES</h3>
           <p><strong>Loueur:</strong> Atellas Fleet S.A.R.L, Casablanca, Maroc.</p>
-          <p><strong>Locataire:</strong> ${booking.clientName}</p>
+          <p><strong>Locataire:</strong> ${safe.clientName}</p>
         </div>
         <div style="margin-bottom: 2rem;">
           <h3 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; margin-bottom: 1rem;">2. LE VÉHICULE</h3>
-          <p><strong>Marque/Modèle:</strong> ${booking.vehicleName}</p>
+          <p><strong>Marque/Modèle:</strong> ${safe.vehicleName}</p>
           <p>Le Loueur loue par la présente le véhicule décrit ci-dessus au Locataire pour la période indiquée ci-dessous.</p>
         </div>
         <div style="margin-bottom: 2rem;">
           <h3 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; margin-bottom: 1rem;">3. PÉRIODE DE LOCATION ET FRAIS</h3>
-          <p><strong>Date de Début:</strong> ${booking.startDate}</p>
-          <p><strong>Date de Fin:</strong> ${booking.endDate}</p>
-          <p><strong>Montant Total:</strong> ${booking.amount.toLocaleString()} MAD</p>
-          <p><strong>Statut de Paiement:</strong> ${booking.paymentStatus}</p>
+          <p><strong>Date de Début:</strong> ${safe.startDate}</p>
+          <p><strong>Date de Fin:</strong> ${safe.endDate}</p>
+          <p><strong>Montant Total:</strong> ${safe.amount} MAD</p>
+          <p><strong>Statut de Paiement:</strong> ${safe.paymentStatus}</p>
         </div>
         <div style="margin-bottom: 2rem;">
           <h3 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; margin-bottom: 1rem;">4. CONDITIONS GÉNÉRALES</h3>

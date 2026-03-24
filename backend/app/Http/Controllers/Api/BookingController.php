@@ -15,7 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 
 class BookingController extends Controller
 {
@@ -449,6 +448,24 @@ class BookingController extends Controller
             'payment_status' => 'sometimes|in:Paid,Deposit Only,Unpaid',
             'notes'          => 'nullable|string',
         ]);
+
+        // Enforce valid status transitions
+        $allowedTransitions = [
+            'pending'   => ['confirmed', 'cancelled'],
+            'confirmed' => ['active', 'cancelled'],
+            'active'    => ['completed', 'cancelled'],
+            'completed' => [],
+            'cancelled' => [],
+        ];
+
+        $currentStatus = $booking->status;
+        $newStatus = $validated['status'];
+
+        if ($currentStatus !== $newStatus && !in_array($newStatus, $allowedTransitions[$currentStatus] ?? [])) {
+            return response()->json([
+                'message' => "Cannot transition from '{$currentStatus}' to '{$newStatus}'.",
+            ], 422);
+        }
 
         $booking->update(['status' => $validated['status']]);
         $booking->load(['car', 'user']);

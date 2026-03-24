@@ -598,9 +598,9 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
                         onChange={e => setNewSubject(e.target.value)}
                         className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue transition-all appearance-none cursor-pointer"
                       >
-                        <option>Demande de RÃ©servation</option>
+                        <option>Demande de Réservation</option>
                         <option>Comptes Entreprise</option>
-                        <option>Presse &amp; MÃ©dia</option>
+                        <option>Presse &amp; Média</option>
                         <option>Support &amp; Assistance</option>
                         <option>Urgence</option>
                       </select>
@@ -684,9 +684,9 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
                           className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue transition-all appearance-none cursor-pointer"
                           value={formState.subject}
                           onChange={e => setFormState({ ...formState, subject: e.target.value })}>
-                          <option>Demande de RÃ©servation</option>
+                          <option>Demande de Réservation</option>
                           <option>Comptes Entreprise</option>
-                          <option>Presse &amp; MÃ©dia</option>
+                          <option>Presse &amp; Média</option>
                           <option>Support &amp; Assistance</option>
                         </select>
                       </div>
