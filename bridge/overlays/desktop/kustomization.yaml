@@ -1,0 +1,19 @@
+#! kustomization.yaml
+# Generated code, do not edit
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+    - ../../base
+patches:
+    - path: backend-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\.env-persistentVolumeClaim.yaml
+    - path: backend-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\backend\storage-persistentVolumeClaim.yaml
+    - path: db-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\backend\docker\mysql\my.cnf-persistentVolumeClaim.yaml
+    - path: db-mysql_data-persistentVolumeClaim.yaml
+    - path: db-service.yaml
+    - path: nginx-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\backend\storage-persistentVolumeClaim.yaml
+    - path: nginx-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\nginx\default.conf-persistentVolumeClaim.yaml
+    - path: nginx-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\nginx\generate-ssl.sh-persistentVolumeClaim.yaml
+    - path: nginx-nginx_ssl-persistentVolumeClaim.yaml
+    - path: nginx-service.yaml
+    - path: redis-redis_data-persistentVolumeClaim.yaml
+    - path: redis-service.yaml

@@ -1,0 +1,18 @@
+#! backend-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\backend\storage-persistentVolumeClaim.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: backend-c--users-t490s-ha-desktop-projects-atellasfleetfullvers-backend-storage
+    namespace: atellasfleetfullvers
+    labels:
+        com.docker.compose.service: backend
+        com.docker.compose.volume: C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\backend\storage
+spec:
+    accessModes:
+        # TODO would need to check which services use this volume
+        - ReadWriteOnce
+    volumeMode: Filesystem
+    resources:
+        requests:
+            storage: 100Mi

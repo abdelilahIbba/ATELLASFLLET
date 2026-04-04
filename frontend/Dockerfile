@@ -25,4 +25,5 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 3000
 
 # Serve the React SPA – fallback to index.html for client-side routing
-CMD ["serve", "-s", "dist", "-l", "3000"]
+# Listen on 0.0.0.0 so other containers (nginx) can reach this service
+CMD ["serve", "-s", "dist", "-l", "tcp://0.0.0.0:3000"]

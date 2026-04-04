@@ -1,0 +1,9 @@
+#! nginx-nginx_ssl-persistentVolumeClaim.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: nginx-nginx-ssl
+    namespace: atellasfleetfullvers
+spec:
+    storageClassName: "hostpath" # see docker/desktop-storage-provisioner

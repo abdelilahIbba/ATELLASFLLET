@@ -1,0 +1,9 @@
+#! backend-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\backend\storage-persistentVolumeClaim.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: backend-c--users-t490s-ha-desktop-projects-atellasfleetfullvers-backend-storage
+    namespace: atellasfleetfullvers
+spec:
+    storageClassName: "hostpath" # see docker/desktop-storage-provisioner

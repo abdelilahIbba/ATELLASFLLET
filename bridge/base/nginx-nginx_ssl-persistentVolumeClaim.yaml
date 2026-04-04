@@ -1,0 +1,18 @@
+#! nginx-nginx_ssl-persistentVolumeClaim.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: nginx-nginx-ssl
+    namespace: atellasfleetfullvers
+    labels:
+        com.docker.compose.service: nginx
+        com.docker.compose.volume: nginx_ssl
+spec:
+    accessModes:
+        # TODO would need to check which services use this volume
+        - ReadWriteOnce
+    volumeMode: Filesystem
+    resources:
+        requests:
+            storage: 100Mi

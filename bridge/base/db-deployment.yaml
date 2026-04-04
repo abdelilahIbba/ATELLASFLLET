@@ -1,0 +1,64 @@
+#! db-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: db
+    namespace: atellasfleetfullvers
+    labels:
+        com.docker.compose.project: atellasfleetfullvers
+        com.docker.compose.service: db
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: atellasfleetfullvers
+            com.docker.compose.service: db
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: atellasfleetfullvers
+                com.docker.compose.service: db
+                com.docker.compose.network.atellasfleet-network: "true"
+        spec:
+            restartPolicy: unless-stopped
+            containers:
+                - name: atellasfleet-db
+                  image: mysql:8.0
+                  imagePullPolicy: IfNotPresent
+                  env:
+                    - name: MYSQL_DATABASE
+                      value: "atellasfleet_db"
+                    - name: MYSQL_PASSWORD
+                      value: "secret"
+                    - name: MYSQL_ROOT_PASSWORD
+                      value: "rootsecret"
+                    - name: MYSQL_USER
+                      value: "fleet_user"
+                  livenessProbe:
+                    exec:
+                        command: [mysqladmin ping -h localhost -u root -prootsecret]
+                    periodSeconds: 10
+                    timeoutSeconds: 5
+                    failureThreshold: 5
+                  ports:
+                    - name: db-3306
+                      containerPort: 3306
+                    - name: db-33060
+                      containerPort: 33060
+                  volumeMounts:
+                    - name: var-lib-mysql
+                      mountPath: /var/lib/mysql
+                    - name: etc-mysql-conf-d-my-cnf
+                      mountPath: /etc/mysql/conf.d/my.cnf
+                      readOnly: true
+            volumes:
+                - name: var-lib-mysql
+                  persistentVolumeClaim:
+                    claimName: db-mysql-data
+                - name: etc-mysql-conf-d-my-cnf
+                  hostPath:
+                    path: C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\backend\docker\mysql\my.cnf
+                  readOnly: true

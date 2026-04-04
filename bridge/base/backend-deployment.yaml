@@ -1,0 +1,98 @@
+#! backend-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: backend
+    namespace: atellasfleetfullvers
+    labels:
+        com.docker.compose.project: atellasfleetfullvers
+        com.docker.compose.service: backend
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: atellasfleetfullvers
+            com.docker.compose.service: backend
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: atellasfleetfullvers
+                com.docker.compose.service: backend
+                com.docker.compose.network.atellasfleet-network: "true"
+        spec:
+            restartPolicy: unless-stopped
+            containers:
+                - name: atellasfleet-backend
+                  image: atellasfleetfullvers-backend
+                  imagePullPolicy: IfNotPresent
+                  env:
+                    - name: APP_DEBUG
+                      value: "false"
+                    - name: APP_ENV
+                      value: "production"
+                    - name: APP_KEY
+                      value: "base64:ne9zzjp7BjG+OQkihmkw2tFauhFPz2yYfqnHH5lEKEQ="
+                    - name: APP_NAME
+                      value: "Atellas Fleet"
+                    - name: APP_URL
+                      value: "http://localhost:8080"
+                    - name: CACHE_STORE
+                      value: "redis"
+                    - name: DB_CONNECTION
+                      value: "mysql"
+                    - name: DB_DATABASE
+                      value: "atellasfleet_db"
+                    - name: DB_HOST
+                      value: "db"
+                    - name: DB_PASSWORD
+                      value: "secret"
+                    - name: DB_PORT
+                      value: "3306"
+                    - name: DB_USERNAME
+                      value: "fleet_user"
+                    - name: MAIL_ENCRYPTION
+                      value: "tls"
+                    - name: MAIL_FROM_ADDRESS
+                      value: "no-reply@atellasfleet.ma"
+                    - name: MAIL_FROM_NAME
+                      value: "Atellas Fleet"
+                    - name: MAIL_HOST
+                      value: ""
+                    - name: MAIL_MAILER
+                      value: "log"
+                    - name: MAIL_PASSWORD
+                      value: ""
+                    - name: MAIL_PORT
+                      value: "587"
+                    - name: MAIL_USERNAME
+                      value: ""
+                    - name: QUEUE_CONNECTION
+                      value: "redis"
+                    - name: REDIS_HOST
+                      value: "redis"
+                    - name: REDIS_PORT
+                      value: "6379"
+                    - name: SESSION_DRIVER
+                      value: "redis"
+                  ports:
+                    - name: backend-9000
+                      containerPort: 9000
+                    - name: backend-80
+                      containerPort: 80
+                  volumeMounts:
+                    - name: var-www-html-storage
+                      mountPath: /var/www/html/storage
+                    - name: var-www-html--env
+                      mountPath: /var/www/html/.env
+                      readOnly: true
+            volumes:
+                - name: var-www-html-storage
+                  hostPath:
+                    path: C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\backend\storage
+                - name: var-www-html--env
+                  hostPath:
+                    path: C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\.env
+                  readOnly: true

@@ -1,0 +1,21 @@
+#! nginx-expose.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Service
+metadata:
+    name: nginx
+    namespace: atellasfleetfullvers
+    labels:
+        com.docker.compose.project: atellasfleetfullvers
+        com.docker.compose.service: nginx
+spec:
+    selector:
+        com.docker.compose.project: atellasfleetfullvers
+        com.docker.compose.service: nginx
+    ports:
+        - name: nginx-80
+          port: 80
+          targetPort: nginx-80
+        - name: nginx-443
+          port: 443
+          targetPort: nginx-443

@@ -8,6 +8,7 @@ import BookingManagement from '../Admin/Bookings/BookingManagement';
 import ClientManagement from '../Admin/Clients/ClientManagement';
 import InfractionsManagement from '../Admin/Infractions/InfractionsManagement';
 import SettingsManagement from '../Admin/Settings/SettingsManagement';
+import ContractModal, { loadCompanySettings, ContractCompanySettings } from '../Admin/Contracts/ContractModal';
 import MessageManagement from '../Admin/Messages/MessageManagement';
 import ContentManagement from '../Admin/Content/ContentManagement';
 import ReviewManagement from '../Admin/Reviews/ReviewManagement';
@@ -467,8 +468,8 @@ const ModalContainer: React.FC<ModalContainerProps> = ({ title, children, onClos
     </div>
 );
 
-type SettingsSubTab = 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points';
-const VALID_SETTINGS_TABS: SettingsSubTab[] = ['general','notifications','security','team','demo','roles','pickup-points'];
+type SettingsSubTab = 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts';
+const VALID_SETTINGS_TABS: SettingsSubTab[] = ['general','notifications','security','team','demo','roles','pickup-points','contracts'];
 
 type AdminTab = 'overview' | 'fleet' | 'clients' | 'bookings' | 'gps' | 'reviews' | 'blog' | 'messages' | 'settings' | 'analytics' | 'infractions';
 const VALID_ADMIN_TABS: AdminTab[] = ['overview','fleet','clients','bookings','gps','reviews','blog','messages','settings','analytics','infractions'];
@@ -585,8 +586,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(BLOG_DATA);
 
   // --- CONTRACT STATE ---
-  const [contractContent, setContractContent] = useState('');
-  const [isEditingContract, setIsEditingContract] = useState(false);
+  const [contractBooking, setContractBooking] = useState<Booking | null>(null);
+  const [companyContractSettings, setCompanyContractSettings] = useState<ContractCompanySettings>(() => loadCompanySettings());
 
   // --- NOTIFICATION STATE ---
   const [notifications, setNotifications] = useState<Notification[]>([
@@ -767,7 +768,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   const closeModal = () => {
     setModalType(null);
     setSelectedItem(null);
-    setIsEditingContract(false);
     setDocFileNames({});
     setModalInfractions([]);
     setInfFormVisible(false);
@@ -906,80 +906,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   };
 
   // --- CONTRACT HANDLERS ---
-  const escapeHtml = (str: string): string => {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  };
-
-  const generateContractTemplate = (booking: Booking) => {
-    const today = new Date().toLocaleDateString();
-    const safe = {
-      id: escapeHtml(String(booking.id)),
-      clientName: escapeHtml(booking.clientName),
-      vehicleName: escapeHtml(booking.vehicleName),
-      startDate: escapeHtml(booking.startDate),
-      endDate: escapeHtml(booking.endDate),
-      amount: escapeHtml(booking.amount.toLocaleString()),
-      paymentStatus: escapeHtml(booking.paymentStatus),
-    };
-    return `
-      <div style="font-family: serif; color: black; line-height: 1.6;">
-        <div style="text-align: center; margin-bottom: 2rem;">
-          <h1 style="font-size: 24px; font-weight: bold; text-transform: uppercase; margin-bottom: 0.5rem;">Contrat de Location de Véhicule</h1>
-          <p style="font-size: 14px; color: #666;">Contrat N°: ${safe.id} | Date: ${escapeHtml(today)}</p>
-        </div>
-        <div style="margin-bottom: 2rem;">
-          <h3 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; margin-bottom: 1rem;">1. LES PARTIES</h3>
-          <p><strong>Loueur:</strong> Atellas Fleet S.A.R.L, Casablanca, Maroc.</p>
-          <p><strong>Locataire:</strong> ${safe.clientName}</p>
-        </div>
-        <div style="margin-bottom: 2rem;">
-          <h3 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; margin-bottom: 1rem;">2. LE VÉHICULE</h3>
-          <p><strong>Marque/Modèle:</strong> ${safe.vehicleName}</p>
-          <p>Le Loueur loue par la présente le véhicule décrit ci-dessus au Locataire pour la période indiquée ci-dessous.</p>
-        </div>
-        <div style="margin-bottom: 2rem;">
-          <h3 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; margin-bottom: 1rem;">3. PÉRIODE DE LOCATION ET FRAIS</h3>
-          <p><strong>Date de Début:</strong> ${safe.startDate}</p>
-          <p><strong>Date de Fin:</strong> ${safe.endDate}</p>
-          <p><strong>Montant Total:</strong> ${safe.amount} MAD</p>
-          <p><strong>Statut de Paiement:</strong> ${safe.paymentStatus}</p>
-        </div>
-        <div style="margin-bottom: 2rem;">
-          <h3 style="font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; margin-bottom: 1rem;">4. CONDITIONS GÉNÉRALES</h3>
-          <p>Le Locataire reconnaît avoir reçu le véhicule en bon état. Le Locataire s'engage à payer toutes les amendes, contraventions et péages encourus pendant la période de location. Le véhicule doit être restitué avec le même niveau de carburant qu'au moment de la location.</p>
-          <p>La couverture d'assurance est soumise à une franchise de 5 000 MAD pour les dommages causés par la négligence du Locataire.</p>
-        </div>
-        <div style="margin-top: 4rem; display: flex; justify-content: space-between;">
-          <div style="width: 45%;">
-            <div style="border-bottom: 1px solid black; height: 40px;"></div>
-            <p style="margin-top: 0.5rem;">Signature du Loueur</p>
-          </div>
-          <div style="width: 45%;">
-            <div style="border-bottom: 1px solid black; height: 40px;"></div>
-            <p style="margin-top: 0.5rem;">Signature du Locataire</p>
-          </div>
-        </div>
-      </div>
-    `;
-  };
-
   const handleOpenContract = (booking: Booking) => {
-    setContractContent(generateContractTemplate(booking));
-    openModal('contract', booking);
-  };
-
-  const handlePrintContract = () => {
-    const printWindow = window.open('', '', 'height=600,width=800');
-    if (printWindow) {
-      printWindow.document.write('<html><head><title>Rental Contract</title>');
-      printWindow.document.write('</head><body style="padding: 40px;">');
-      printWindow.document.write(contractContent);
-      printWindow.document.write('</body></html>');
-      printWindow.document.close();
-      printWindow.print();
-    }
+    // Reload settings in case user updated them in Settings tab
+    setCompanyContractSettings(loadCompanySettings());
+    setContractBooking(booking);
   };
 
   // --- CRUD HANDLERS FOR BOOKINGS ---
@@ -2418,16 +2348,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                      </form>
                  </ModalContainer>
              )}
-             
-             {/* CONTRACT PREVIEW MODAL */}
-             {modalType === 'contract' && selectedItem && (
-                 <ModalContainer title={`Contrat de Location #${selectedItem.id}`} onClose={closeModal} width="max-w-4xl">
-                     <div className="flex flex-col h-[70vh]">
-                         <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-200 dark:border-white/10"><div className="flex items-center gap-2"><button onClick={() => setIsEditingContract(!isEditingContract)} className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase flex items-center gap-2 transition-colors ${isEditingContract ? 'bg-brand-blue text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10'}`}><Edit className="w-3 h-3" /> {isEditingContract ? 'Terminer Édition' : 'Modifier Contenu'}</button></div><div className="flex items-center gap-2"><button onClick={handlePrintContract} className="px-3 py-1.5 bg-brand-navy dark:bg-white text-white dark:text-brand-navy rounded-lg text-xs font-bold uppercase flex items-center gap-2 hover:opacity-90 transition-colors"><Printer className="w-3 h-3" /> Imprimer</button><button onClick={handlePrintContract} className="px-3 py-1.5 bg-brand-teal text-white rounded-lg text-xs font-bold uppercase flex items-center gap-2 hover:bg-teal-600 transition-colors"><Download className="w-3 h-3" /> PDF</button></div></div>
-                         <div className="flex-grow bg-white text-black p-8 rounded shadow-inner overflow-y-auto">{isEditingContract ? (<textarea className="w-full h-full p-4 font-serif text-sm border-none outline-none resize-none bg-slate-50" value={contractContent} onChange={(e) => setContractContent(e.target.value)} />) : (<div className="prose max-w-none text-sm font-serif" dangerouslySetInnerHTML={{ __html: contractContent }} />)}</div>
-                     </div>
-                 </ModalContainer>
-             )}
+
+             {/* CONTRACT MODAL — replaced by dedicated ContractModal component */}
 
              {/* REVIEW REPLY MODAL */}
              {modalType === 'review_reply' && selectedItem && (
@@ -2531,6 +2453,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                  </ModalContainer>
              )}
          </AnimatePresence>
+
+         {/* ── Contract Modal (standalone — outside AnimatePresence) ── */}
+         {contractBooking && (
+           <ContractModal
+             booking={contractBooking}
+             onClose={() => setContractBooking(null)}
+             company={companyContractSettings}
+           />
+         )}
     </div>
   );
 };

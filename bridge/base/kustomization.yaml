@@ -1,0 +1,29 @@
+#! kustomization.yaml
+# Generated code, do not edit
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+    - 0-atellasfleetfullvers-namespace.yaml
+    - atellasfleet-network-network-policy.yaml
+    - backend-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\.env-persistentVolumeClaim.yaml
+    - backend-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\backend\storage-persistentVolumeClaim.yaml
+    - backend-deployment.yaml
+    - backend-expose.yaml
+    - db-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\backend\docker\mysql\my.cnf-persistentVolumeClaim.yaml
+    - db-deployment.yaml
+    - db-expose.yaml
+    - db-mysql_data-persistentVolumeClaim.yaml
+    - db-service.yaml
+    - frontend-deployment.yaml
+    - frontend-expose.yaml
+    - nginx-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\backend\storage-persistentVolumeClaim.yaml
+    - nginx-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\nginx\default.conf-persistentVolumeClaim.yaml
+    - nginx-C:\Users\T490s Ha\Desktop\Projects\AtellasFleetFullVers\nginx\generate-ssl.sh-persistentVolumeClaim.yaml
+    - nginx-deployment.yaml
+    - nginx-expose.yaml
+    - nginx-nginx_ssl-persistentVolumeClaim.yaml
+    - nginx-service.yaml
+    - redis-deployment.yaml
+    - redis-expose.yaml
+    - redis-redis_data-persistentVolumeClaim.yaml
+    - redis-service.yaml

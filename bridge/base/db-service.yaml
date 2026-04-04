@@ -1,0 +1,23 @@
+# check if there is at least one published port
+
+#! db-service.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Service
+metadata:
+    name: db-published
+    namespace: atellasfleetfullvers
+    labels:
+        com.docker.compose.project: atellasfleetfullvers
+        com.docker.compose.service: db
+spec:
+    selector:
+        com.docker.compose.project: atellasfleetfullvers
+        com.docker.compose.service: db
+    ports:
+        - name: db-3309
+          port: 3309
+          protocol: TCP
+          targetPort: db-3306
+
+# check if there is at least one published port

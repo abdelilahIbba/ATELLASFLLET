@@ -1,7 +1,12 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import RoleManagement from './RoleManagement';
 import PickupPointsManager from './PickupPointsManager';
 import { adminSettingsApi, adminDemoApi, DemoAccountResource } from '../../../services/api';
+import {
+  COMPANY_SETTINGS_KEY,
+  DEFAULT_COMPANY_SETTINGS,
+  ContractCompanySettings,
+} from '../Contracts/ContractModal';
 import { 
   Save, 
   Bell, 
@@ -27,6 +32,9 @@ import {
   MapPin,
   RefreshCw,
   ClipboardCheck,
+  FileText,
+  Phone,
+  X,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -48,13 +56,44 @@ interface DemoAccount {
 }
 
 interface SettingsManagementProps {
-  activeTab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points';
-  onTabChange: (tab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points') => void;
+  activeTab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts';
+  onTabChange: (tab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts') => void;
 }
 
 const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTabChange }) => {
   const [loading, setLoading] = useState(false);
   const [modelInputType, setModelInputType] = useState<'url' | 'upload'>('url');
+
+  // ─── Contract / Company settings ────────────────────────────────────────
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [contractSettings, setContractSettings] = useState<ContractCompanySettings>(() => {
+    try {
+      const raw = localStorage.getItem(COMPANY_SETTINGS_KEY);
+      return raw ? { ...DEFAULT_COMPANY_SETTINGS, ...JSON.parse(raw) } : DEFAULT_COMPANY_SETTINGS;
+    } catch {
+      return DEFAULT_COMPANY_SETTINGS;
+    }
+  });
+  const [contractSaved, setContractSaved] = useState(false);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      if (ev.target?.result) {
+        setContractSettings(prev => ({ ...prev, logo: ev.target!.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleSaveContractSettings = () => {
+    localStorage.setItem(COMPANY_SETTINGS_KEY, JSON.stringify(contractSettings));
+    setContractSaved(true);
+    setTimeout(() => setContractSaved(false), 3000);
+  };
 
   // ─── Notification / email settings ─────────────────────────────────────
   const [notifSettings, setNotifSettings] = useState({
@@ -272,7 +311,8 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
                 { id: 'roles', label: 'Rôles & Permissions', icon: Lock },
                 { id: 'team', label: "Gestion d'Équipe", icon: UserPlus },
                 { id: 'demo', label: 'Accès Démo', icon: Clock },
-                  { id: 'pickup-points', label: 'Points de Prise en Charge', icon: MapPin },
+                { id: 'pickup-points', label: 'Points de Prise en Charge', icon: MapPin },
+                { id: 'contracts', label: 'Contrats & Logo', icon: FileText },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -757,6 +797,166 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
             {activeTab === 'pickup-points' && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <PickupPointsManager />
+              </div>
+            )}
+
+            {/* CONTRACTS TAB */}
+            {activeTab === 'contracts' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div>
+                  <h3 className="text-lg font-bold text-brand-navy dark:text-white mb-4 border-b border-slate-100 dark:border-white/5 pb-2">
+                    Logo de la Société
+                  </h3>
+                  <div className="flex flex-col sm:flex-row gap-6 items-start">
+                    {/* Preview */}
+                    <div className="w-40 h-28 rounded-xl border-2 border-dashed border-slate-200 dark:border-white/20 flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-white/5 flex-shrink-0">
+                      {contractSettings.logo ? (
+                        <img
+                          src={contractSettings.logo}
+                          alt="logo"
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center text-slate-300 dark:text-slate-600">
+                          <ImageIcon className="w-8 h-8 mb-1" />
+                          <span className="text-xs">Aucun logo</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <p className="text-sm text-slate-500">
+                        Ce logo apparaîtra en haut de chaque contrat généré.
+                        Taille recommandée : 400×120 px (PNG ou JPEG).
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => logoInputRef.current?.click()}
+                          className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white rounded-xl text-sm font-bold hover:bg-blue-600 transition-colors shadow-sm"
+                        >
+                          <UploadCloud className="w-4 h-4" /> Importer Logo
+                        </button>
+                        {contractSettings.logo && (
+                          <button
+                            type="button"
+                            onClick={() => setContractSettings(prev => ({ ...prev, logo: null }))}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-sm font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors border border-red-200 dark:border-red-500/30"
+                          >
+                            <X className="w-4 h-4" /> Supprimer
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoUpload}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold text-brand-navy dark:text-white mb-4 border-b border-slate-100 dark:border-white/5 pb-2">
+                    Informations de la Société (en-tête du contrat)
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-2xl">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Nom de la Société</label>
+                      <div className="relative">
+                        <Building className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                        <input
+                          type="text"
+                          value={contractSettings.name}
+                          onChange={e => setContractSettings(prev => ({ ...prev, name: e.target.value }))}
+                          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-brand-blue dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Email</label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                        <input
+                          type="email"
+                          value={contractSettings.email}
+                          onChange={e => setContractSettings(prev => ({ ...prev, email: e.target.value }))}
+                          placeholder="contact@societe.ma"
+                          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-brand-blue dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Adresse</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                        <input
+                          type="text"
+                          value={contractSettings.address}
+                          onChange={e => setContractSettings(prev => ({ ...prev, address: e.target.value }))}
+                          placeholder="Casablanca, Maroc"
+                          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-brand-blue dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Téléphone</label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
+                        <input
+                          type="tel"
+                          value={contractSettings.phone}
+                          onChange={e => setContractSettings(prev => ({ ...prev, phone: e.target.value }))}
+                          placeholder="+212 6XX XXX XXX"
+                          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-brand-blue dark:text-white"
+                        />
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">ICE (Identifiant Commun de l'Entreprise)</label>
+                      <input
+                        type="text"
+                        value={contractSettings.ice}
+                        onChange={e => setContractSettings(prev => ({ ...prev, ice: e.target.value }))}
+                        placeholder="000000000000000"
+                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-brand-blue dark:text-white font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {contractSaved && (
+                  <div className="flex items-center gap-2 px-4 py-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/30 rounded-xl text-sm text-green-700 dark:text-green-300">
+                    <CheckCircle2 className="w-4 h-4" /> Paramètres du contrat sauvegardés.
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="text-lg font-bold text-brand-navy dark:text-white mb-4 border-b border-slate-100 dark:border-white/5 pb-2">
+                    Conditions Générales (texte du contrat)
+                  </h3>
+                  <p className="text-sm text-slate-500 mb-3">
+                    Ce texte apparaît dans la section "Conditions Générales" de chaque contrat imprimé. Saisissez une clause par ligne.
+                  </p>
+                  <textarea
+                    value={contractSettings.conditionsText ?? ''}
+                    onChange={e => setContractSettings(prev => ({ ...prev, conditionsText: e.target.value }))}
+                    rows={8}
+                    placeholder="Une clause par ligne..."
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-brand-blue dark:text-white resize-y leading-relaxed"
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleSaveContractSettings}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-brand-blue hover:bg-blue-600 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
+                  >
+                    <Save className="w-4 h-4" /> Sauvegarder
+                  </button>
+                </div>
               </div>
             )}
 

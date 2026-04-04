@@ -1,0 +1,24 @@
+#! atellasfleet-network-network-policy.yaml
+# Generated code, do not edit
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+    name: atellasfleet-network-network-policy
+    namespace: atellasfleetfullvers
+spec:
+    podSelector:
+        matchLabels:
+            com.docker.compose.network.atellasfleet-network: "true"
+    policyTypes:
+        - Ingress
+        - Egress
+    ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                    com.docker.compose.network.atellasfleet-network: "true"
+    egress:
+        - to:
+            - podSelector:
+                matchLabels:
+                    com.docker.compose.network.atellasfleet-network: "true"
