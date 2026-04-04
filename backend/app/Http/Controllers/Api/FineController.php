@@ -23,6 +23,7 @@ class FineController extends Controller
         if ($request->filled('type'))     $query->where('type', $request->type);
         if ($request->filled('car_id'))   $query->where('car_id', $request->car_id);
         if ($request->filled('vehicle_id')) $query->where('car_id', $request->vehicle_id);
+        if ($request->filled('user_id'))  $query->where('user_id', $request->user_id);
 
         return FineResource::collection(
             $query->latest()->paginate($request->get('per_page', 15))
@@ -57,8 +58,13 @@ class FineController extends Controller
             'notification_ref' => 'nullable|string|max:100',
         ]);
 
+        // Track which admin recorded this infraction if not explicitly provided
+        if (!isset($validated['user_id'])) {
+            $validated['user_id'] = $request->user()->id;
+        }
+
         $fine = Fine::create($validated);
-        $fine->load(['car']);
+        $fine->load(['car', 'user']);
 
         return response()->json([
             'message' => 'Fine recorded successfully.',
@@ -84,7 +90,7 @@ class FineController extends Controller
         ]);
 
         $fine->update($validated);
-        $fine->load(['car']);
+        $fine->load(['car', 'user']);
 
         return response()->json([
             'message' => 'Fine updated.',

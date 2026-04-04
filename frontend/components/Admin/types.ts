@@ -138,6 +138,14 @@ export interface Infraction {
     /** Official notification / PV reference number */
     notification_ref?: string;
     notes?: string;
+    /** ID of the admin/agent who recorded this infraction */
+    user_id?: string | number;
+    /** Name of the admin/agent who recorded this infraction */
+    user_name?: string;
+    /** Resolved car name (make + model) */
+    car_name?: string;
+    /** Resolved car plate */
+    car_plate?: string;
 }
 
 export interface MaintenanceLog {

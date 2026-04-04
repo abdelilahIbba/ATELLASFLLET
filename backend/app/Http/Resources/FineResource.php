@@ -21,10 +21,16 @@ class FineResource extends JsonResource
             'notes'            => $this->notes,
             'notification_ref' => $this->notification_ref,
             'vehicle_id'       => $this->car_id,
+            'car_id'           => $this->car_id,
+            'user_id'          => $this->user_id,
             'car'              => $this->whenLoaded('car', fn () => [
                 'id'    => $this->car->id,
                 'plate' => $this->car->plate,
                 'name'  => $this->car->make . ' ' . $this->car->model,
+            ]),
+            'user'             => $this->whenLoaded('user', fn () => [
+                'id'   => $this->user->id,
+                'name' => $this->user->name,
             ]),
         ];
     }

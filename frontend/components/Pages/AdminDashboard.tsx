@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import FleetManagement from '../Admin/Fleet/FleetManagement';
 import BookingManagement from '../Admin/Bookings/BookingManagement';
 import ClientManagement from '../Admin/Clients/ClientManagement';
+import InfractionsManagement from '../Admin/Infractions/InfractionsManagement';
 import SettingsManagement from '../Admin/Settings/SettingsManagement';
 import MessageManagement from '../Admin/Messages/MessageManagement';
 import ContentManagement from '../Admin/Content/ContentManagement';
@@ -469,8 +470,8 @@ const ModalContainer: React.FC<ModalContainerProps> = ({ title, children, onClos
 type SettingsSubTab = 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points';
 const VALID_SETTINGS_TABS: SettingsSubTab[] = ['general','notifications','security','team','demo','roles','pickup-points'];
 
-type AdminTab = 'overview' | 'fleet' | 'clients' | 'bookings' | 'gps' | 'reviews' | 'blog' | 'messages' | 'settings' | 'analytics';
-const VALID_ADMIN_TABS: AdminTab[] = ['overview','fleet','clients','bookings','gps','reviews','blog','messages','settings','analytics'];
+type AdminTab = 'overview' | 'fleet' | 'clients' | 'bookings' | 'gps' | 'reviews' | 'blog' | 'messages' | 'settings' | 'analytics' | 'infractions';
+const VALID_ADMIN_TABS: AdminTab[] = ['overview','fleet','clients','bookings','gps','reviews','blog','messages','settings','analytics','infractions'];
 
 // ─── Infraction type catalogue ───────────────────────────────────────────────
 const INF_TYPE_OPTIONS: { value: string; label: string }[] = [
@@ -1263,6 +1264,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                 <TabButton id="overview" icon={LayoutDashboard} label="Tableau de Bord" />
                 <TabButton id="analytics" icon={BarChart3} label="Analytique & Rapports" />
                 <TabButton id="fleet" icon={Car} label="Flotte & Inventaire" />
+                <TabButton id="infractions" icon={ShieldAlert} label="Infractions" />
                 <TabButton id="bookings" icon={CalendarRange} label="Réservations" alertCount={pendingRequests} />
                 <TabButton id="clients" icon={Users} label="Clients (KYC)" />
                 <TabButton id="gps" icon={MapIcon} label="Suivi GPS en Direct" />
@@ -1301,6 +1303,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                             overview: "Vue d'ensemble",
                             analytics: "Analytique",
                             fleet: "Gestion de Flotte",
+                            infractions: "Infractions",
                             bookings: "Réservations",
                             clients: "Gestion Clients",
                             gps: "Suivi GPS",
@@ -1537,6 +1540,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                   <ContentManagement 
                       blogPosts={blogPosts} 
                       openModal={openModal} 
+                  />
+               )}
+
+               {/* --- INFRACTIONS TAB --- */}
+               {activeTab === 'infractions' && (
+                  <InfractionsManagement
+                    vehicles={vehicles.map(v => ({ id: v.id, name: v.name, plate: v.plate }))}
                   />
                )}
 
