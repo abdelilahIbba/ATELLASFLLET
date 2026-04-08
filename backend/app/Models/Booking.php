@@ -60,4 +60,14 @@ class Booking extends Model
     {
         return $this->belongsTo(\App\Models\PickupPoint::class, 'dropoff_point_id');
     }
+
+    public function contracts()
+    {
+        return $this->hasMany(Contract::class);
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
 }

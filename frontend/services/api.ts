@@ -475,3 +475,62 @@ export const adminPickupPointsApi = {
              api.put<PickupPoint>(`/admin/pickup-points/${id}`, data),
   destroy: (id: number)                      => api.delete<{ message: string }>(`/admin/pickup-points/${id}`),
 };
+
+// ---------------------------------------------------------------------------
+// Admin — Contracts
+// ---------------------------------------------------------------------------
+export const adminContractsApi = {
+  list: (params?: Record<string, string | number>) => {
+    const qs = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : '';
+    return api.get<{ data: any[] }>(`/admin/contracts${qs}`);
+  },
+  get: (id: number | string) => api.get<{ contract: unknown }>(`/admin/contracts/${id}`),
+  create: (payload: Record<string, unknown>) =>
+    api.post<{ message: string; contract: unknown }>('/admin/contracts', payload),
+  update: (id: number | string, payload: Record<string, unknown>) =>
+    api.put<{ message: string; contract: unknown }>(`/admin/contracts/${id}`, payload),
+  delete: (id: number | string) => api.delete<void>(`/admin/contracts/${id}`),
+  createFromBooking: (bookingId: number | string) =>
+    api.post<{ message: string; contract: unknown }>(`/admin/contracts/from-booking/${bookingId}`, {}),
+  generateInvoice: (contractId: number | string) =>
+    api.post<{ message: string; invoice: unknown }>(`/admin/invoices/from-contract/${contractId}`, {}),
+};
+
+// ---------------------------------------------------------------------------
+// Admin — Invoices
+// ---------------------------------------------------------------------------
+export const adminInvoicesApi = {
+  list: (params?: Record<string, string | number>) => {
+    const qs = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : '';
+    return api.get<{ data: any[] }>(`/admin/invoices${qs}`);
+  },
+  get: (id: number | string) => api.get<{ invoice: unknown }>(`/admin/invoices/${id}`),
+  create: (payload: Record<string, unknown>) =>
+    api.post<{ message: string; invoice: unknown }>('/admin/invoices', payload),
+  update: (id: number | string, payload: Record<string, unknown>) =>
+    api.put<{ message: string; invoice: unknown }>(`/admin/invoices/${id}`, payload),
+  delete: (id: number | string) => api.delete<void>(`/admin/invoices/${id}`),
+  markPaid: (id: number | string, paymentMethod: string) =>
+    api.patch<{ message: string; invoice: unknown }>(`/admin/invoices/${id}/mark-paid`, {
+      payment_method: paymentMethod,
+    }),
+  createFromContract: (contractId: number | string) =>
+    api.post<{ message: string; invoice: unknown }>(`/admin/invoices/from-contract/${contractId}`, {}),
+};
+
+// ---------------------------------------------------------------------------
+// Admin — Expenses
+// ---------------------------------------------------------------------------
+export const adminExpensesApi = {
+  list: (params?: Record<string, string | number>) => {
+    const qs = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : '';
+    return api.get<{ data: any[]; stats: any }>(`/admin/expenses${qs}`);
+  },
+  summary: () => api.get<{ summary: any[] }>('/admin/expenses/summary'),
+  get: (id: number | string) => api.get<{ expense: unknown }>(`/admin/expenses/${id}`),
+  create: (payload: Record<string, unknown>) =>
+    api.post<{ message: string; expense: unknown }>('/admin/expenses', payload),
+  update: (id: number | string, payload: Record<string, unknown>) =>
+    api.put<{ message: string; expense: unknown }>(`/admin/expenses/${id}`, payload),
+  delete: (id: number | string) => api.delete<void>(`/admin/expenses/${id}`),
+};

@@ -7,9 +7,12 @@ use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CarController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\ContactController;
+use App\Http\Controllers\Api\ContractController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DemoController;
+use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\FineController;
+use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\PickupPointController;
 use App\Http\Controllers\Api\ProfileController;
@@ -167,4 +170,31 @@ Route::middleware(['auth:sanctum', 'api.role:admin,demo_admin'])->prefix('admin'
     Route::post('/pickup-points',                             [PickupPointController::class, 'store']);
     Route::put('/pickup-points/{pickupPoint}',                [PickupPointController::class, 'update']);
     Route::delete('/pickup-points/{pickupPoint}',             [PickupPointController::class, 'destroy']);
+
+    // Contracts
+    Route::post('/contracts/from-booking/{booking}',  [ContractController::class, 'createFromBooking']);
+    Route::get('/contracts/{contract}/pdf',           [ContractController::class, 'downloadPdf']);
+    Route::get('/contracts',                          [ContractController::class, 'index']);
+    Route::post('/contracts',                         [ContractController::class, 'store']);
+    Route::get('/contracts/{contract}',               [ContractController::class, 'show']);
+    Route::put('/contracts/{contract}',               [ContractController::class, 'update']);
+    Route::delete('/contracts/{contract}',            [ContractController::class, 'destroy']);
+
+    // Invoices
+    Route::post('/invoices/from-contract/{contract}', [InvoiceController::class, 'createFromContract']);
+    Route::patch('/invoices/{invoice}/mark-paid',     [InvoiceController::class, 'markPaid']);
+    Route::get('/invoices/{invoice}/pdf',             [InvoiceController::class, 'downloadPdf']);
+    Route::get('/invoices',                           [InvoiceController::class, 'index']);
+    Route::post('/invoices',                          [InvoiceController::class, 'store']);
+    Route::get('/invoices/{invoice}',                 [InvoiceController::class, 'show']);
+    Route::put('/invoices/{invoice}',                 [InvoiceController::class, 'update']);
+    Route::delete('/invoices/{invoice}',              [InvoiceController::class, 'destroy']);
+
+    // Expenses
+    Route::get('/expenses/summary',        [ExpenseController::class, 'summary']);
+    Route::get('/expenses',                [ExpenseController::class, 'index']);
+    Route::post('/expenses',               [ExpenseController::class, 'store']);
+    Route::get('/expenses/{expense}',      [ExpenseController::class, 'show']);
+    Route::put('/expenses/{expense}',      [ExpenseController::class, 'update']);
+    Route::delete('/expenses/{expense}',   [ExpenseController::class, 'destroy']);
 });

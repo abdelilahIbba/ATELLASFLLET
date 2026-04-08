@@ -7,6 +7,7 @@ import FleetManagement from '../Admin/Fleet/FleetManagement';
 import BookingManagement from '../Admin/Bookings/BookingManagement';
 import ClientManagement from '../Admin/Clients/ClientManagement';
 import InfractionsManagement from '../Admin/Infractions/InfractionsManagement';
+import ExpenseManagement from '../Admin/Expenses/ExpenseManagement';
 import SettingsManagement from '../Admin/Settings/SettingsManagement';
 import ContractModal, { loadCompanySettings, ContractCompanySettings } from '../Admin/Contracts/ContractModal';
 import MessageManagement from '../Admin/Messages/MessageManagement';
@@ -14,6 +15,7 @@ import ContentManagement from '../Admin/Content/ContentManagement';
 import ReviewManagement from '../Admin/Reviews/ReviewManagement';
 import DashboardOverview from '../Admin/Overview/DashboardOverview';
 import AnalyticsManagement from '../Admin/Analytics/AnalyticsManagement';
+import ContractsAndInvoices from '../Admin/ContractsAndInvoices';
 import GPSManagement from '../Admin/Tracking/GPSManagement';
 import AvailabilityCalendar from '../UI/AvailabilityCalendar';
 import { UserInfo, Message } from '../../types';
@@ -84,7 +86,8 @@ import {
   Power,
   Eye,
   ThumbsUp,
-  Share2
+  Share2,
+  TrendingDown
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -471,8 +474,8 @@ const ModalContainer: React.FC<ModalContainerProps> = ({ title, children, onClos
 type SettingsSubTab = 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts';
 const VALID_SETTINGS_TABS: SettingsSubTab[] = ['general','notifications','security','team','demo','roles','pickup-points','contracts'];
 
-type AdminTab = 'overview' | 'fleet' | 'clients' | 'bookings' | 'gps' | 'reviews' | 'blog' | 'messages' | 'settings' | 'analytics' | 'infractions';
-const VALID_ADMIN_TABS: AdminTab[] = ['overview','fleet','clients','bookings','gps','reviews','blog','messages','settings','analytics','infractions'];
+type AdminTab = 'overview' | 'fleet' | 'clients' | 'bookings' | 'gps' | 'reviews' | 'blog' | 'messages' | 'settings' | 'analytics' | 'infractions' | 'contracts' | 'expenses';
+const VALID_ADMIN_TABS: AdminTab[] = ['overview','fleet','clients','bookings','gps','reviews','blog','messages','settings','analytics','infractions','contracts','expenses'];
 
 // ─── Infraction type catalogue ───────────────────────────────────────────────
 const INF_TYPE_OPTIONS: { value: string; label: string }[] = [
@@ -907,7 +910,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
 
   // --- CONTRACT HANDLERS ---
   const handleOpenContract = (booking: Booking) => {
-    // Reload settings in case user updated them in Settings tab
     setCompanyContractSettings(loadCompanySettings());
     setContractBooking(booking);
   };
@@ -1196,6 +1198,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                 <TabButton id="fleet" icon={Car} label="Flotte & Inventaire" />
                 <TabButton id="infractions" icon={ShieldAlert} label="Infractions" />
                 <TabButton id="bookings" icon={CalendarRange} label="Réservations" alertCount={pendingRequests} />
+                <TabButton id="contracts" icon={FileSignature} label="Contrats & Factures" />
+                <TabButton id="expenses" icon={TrendingDown} label="Dépenses Agence" />
                 <TabButton id="clients" icon={Users} label="Clients (KYC)" />
                 <TabButton id="gps" icon={MapIcon} label="Suivi GPS en Direct" />
                 <TabButton id="messages" icon={MessageSquare} label="Messages" alertCount={messages.filter(m => m.unread).length} />
@@ -1234,7 +1238,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                             analytics: "Analytique",
                             fleet: "Gestion de Flotte",
                             infractions: "Infractions",
+                            expenses: "Dépenses Agence",
                             bookings: "Réservations",
+                            contracts: "Contrats & Factures",
                             clients: "Gestion Clients",
                             gps: "Suivi GPS",
                             messages: "Messagerie",
@@ -1480,6 +1486,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                   />
                )}
 
+
+               {/* --- CONTRACTS & INVOICES TAB --- */}
+               {activeTab === 'contracts' && <ContractsAndInvoices />}
+
+               {/* --- EXPENSES TAB --- */}
+               {activeTab === 'expenses' && <ExpenseManagement />}
 
                {/* --- SETTINGS TAB --- */}
                {activeTab === 'settings' && (

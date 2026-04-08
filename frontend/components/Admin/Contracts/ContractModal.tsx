@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -10,6 +10,7 @@ import {
   Printer,
   Download,
   Car,
+  RefreshCw,
 } from 'lucide-react';
 import { Booking } from '../types';
 import VehicleConditionPanel, {
@@ -18,6 +19,7 @@ import VehicleConditionPanel, {
   buildConditionSvgString,
 } from './VehicleConditionPanel';
 import SignaturePad from './SignaturePad';
+import { adminContractsApi } from '../../../services/api';
 
 // ─── Company settings ────────────────────────────────────────────────────────
 
@@ -114,6 +116,29 @@ const sigHtml = (dataUrl: string | null, label: string) =>
         <p style="margin-top:4px;font-size:12px;color:#6b7280;">${esc(label)}</p>
       </div>`;
 
+// ─── Backend-enriched extras ──────────────────────────────────────────────────
+
+interface ContractExtras {
+  contractId:          string | null;
+  contractNumber:      string | null;
+  clientIdNumber:      string | null;
+  clientLicenseNumber: string | null;
+  clientLicenseExpiry: string | null;
+  clientNationality:   string | null;
+  clientAddress:       string | null;
+  vehiclePlate:        string | null;
+  dailyRate:           number | null;
+  depositAmount:       number | null;
+  insuranceType:       string | null;
+}
+
+const EMPTY_EXTRAS: ContractExtras = {
+  contractId: null, contractNumber: null,
+  clientIdNumber: null, clientLicenseNumber: null, clientLicenseExpiry: null,
+  clientNationality: null, clientAddress: null, vehiclePlate: null,
+  dailyRate: null, depositAmount: null, insuranceType: null,
+};
+
 // ─── Contract HTML generator ─────────────────────────────────────────────────
 
 const generateContractHtml = (
@@ -126,6 +151,7 @@ const generateContractHtml = (
   sigClientEnd: string | null,
   sigAgentEnd: string | null,
   sigCity: string,
+  extras: ContractExtras = EMPTY_EXTRAS,
 ): string => {
   const today = new Date().toLocaleDateString('fr-FR', {
     year: 'numeric',
@@ -175,7 +201,7 @@ const generateContractHtml = (
 </div>
 
 <div class="meta">
-  <div><strong>N° Contrat:</strong> ${esc(String(booking.id))}</div>
+  <div><strong>N° Contrat:</strong> ${esc(extras.contractNumber ?? String(booking.id))}</div>
   <div><strong>Date d'émission:</strong> ${today}</div>
   <div><strong>Statut:</strong> ${esc(booking.status)}</div>
 </div>
@@ -183,26 +209,35 @@ const generateContractHtml = (
 <div class="section">
   <h3>1. Les Parties</h3>
   <table>
-    <tr><th style="width:30%">Loueur</th><td>${esc(company.name)}${company.address ? ', ' + esc(company.address) : ''}</td></tr>
-    <tr><th>Locataire</th><td>${esc(booking.clientName)}</td></tr>
+    <tr><th style="width:32%">Loueur</th><td>${esc(company.name)}${company.address ? ', ' + esc(company.address) : ''}</td></tr>
+    ${company.phone  ? `<tr><th>Tél. Loueur</th><td>${esc(company.phone)}</td></tr>` : ''}
+    ${company.ice    ? `<tr><th>ICE</th><td>${esc(company.ice)}</td></tr>` : ''}
+    <tr><th>Locataire</th><td><strong>${esc(booking.clientName)}</strong></td></tr>
+    <tr><th>Nationalité</th><td>${esc(extras.clientNationality ?? '—')}</td></tr>
+    <tr><th>Adresse</th><td>${esc(extras.clientAddress ?? '—')}</td></tr>
+    <tr><th>CIN / Passeport</th><td><strong>${esc(extras.clientIdNumber ?? '—')}</strong></td></tr>
+    <tr><th>Permis de Conduire</th><td><strong>${esc(extras.clientLicenseNumber ?? '—')}</strong>${extras.clientLicenseExpiry ? ` &nbsp;<span style="color:#6b7280;font-size:12px;">(exp. ${esc(extras.clientLicenseExpiry)})</span>` : ''}</td></tr>
   </table>
 </div>
 
 <div class="section">
   <h3>2. Le Véhicule</h3>
   <table>
-    <tr><th style="width:30%">Marque / Modèle</th><td>${esc(booking.vehicleName)}</td></tr>
-    ${booking.unitPlate ? `<tr><th>Immatriculation</th><td>${esc(booking.unitPlate)}</td></tr>` : ''}
+    <tr><th style="width:32%">Marque / Modèle</th><td>${esc(booking.vehicleName || '—')}</td></tr>
+    <tr><th>Immatriculation</th><td>${esc(extras.vehiclePlate ?? booking.unitPlate ?? '—')}</td></tr>
     ${booking.unitNumber ? `<tr><th>Unité</th><td>#${booking.unitNumber}</td></tr>` : ''}
+    ${extras.insuranceType ? `<tr><th>Assurance</th><td>${esc(extras.insuranceType)}</td></tr>` : ''}
   </table>
 </div>
 
 <div class="section">
   <h3>3. Période de Location &amp; Frais</h3>
   <table>
-    <tr><th style="width:30%">Date de Début</th><td>${esc(fmtDate(booking.startDate))}</td></tr>
+    <tr><th style="width:32%">Date de Début</th><td>${esc(fmtDate(booking.startDate))}</td></tr>
     <tr><th>Date de Fin</th><td>${esc(fmtDate(booking.endDate))}</td></tr>
-    <tr><th>Montant Total</th><td>${esc(booking.amount.toLocaleString())} MAD</td></tr>
+    ${extras.dailyRate != null ? `<tr><th>Tarif Journalier</th><td>${extras.dailyRate.toLocaleString('fr-MA')} MAD / jour</td></tr>` : ''}
+    <tr><th>Montant Total</th><td><strong>${esc(booking.amount.toLocaleString())} MAD</strong></td></tr>
+    ${extras.depositAmount ? `<tr><th>Caution / Dépôt</th><td>${extras.depositAmount.toLocaleString('fr-MA')} MAD</td></tr>` : ''}
     <tr><th>Statut de Paiement</th><td>${esc(booking.paymentStatus)}</td></tr>
   </table>
 </div>
@@ -283,6 +318,7 @@ interface ContractModalProps {
   booking: Booking;
   onClose: () => void;
   company?: ContractCompanySettings;
+  onSaved?: () => void;
 }
 
 type Step = 0 | 1 | 2 | 3;
@@ -294,7 +330,7 @@ const STEPS: { label: string; shortLabel: string; icon: React.ReactNode }[] = [
   { label: 'Contrat Final', shortLabel: 'Contrat', icon: <FileText className="w-4 h-4" /> },
 ];
 
-const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company }) => {
+const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company, onSaved }) => {
   const companySettings = company ?? loadCompanySettings();
 
   const [step, setStep] = useState<Step>(0);
@@ -305,28 +341,143 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
   const [sigClientEnd, setSigClientEnd] = useState<string | null>(null);
   const [sigAgentEnd, setSigAgentEnd] = useState<string | null>(null);
   const [sigCity, setSigCity] = useState('');
+  const [extras, setExtras] = useState<ContractExtras>(EMPTY_EXTRAS);
+  const [loadingContract, setLoadingContract] = useState(true);
+  const [saving, setSaving] = useState(false);
+  // Editable client identity fields (pre-filled from backend, editable in step 2)
+  const [editCin,        setEditCin]        = useState('');
+  const [editLicense,    setEditLicense]    = useState('');
+  const [editExpiry,     setEditExpiry]     = useState('');
+  const [editNationality,setEditNationality]= useState('');
+  const [editAddress,    setEditAddress]    = useState('');
+
+  // Fetch or auto-create the backend contract for this booking
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoadingContract(true);
+      try {
+        const res = await adminContractsApi.list();
+        const all: any[] = (res as any)?.data ?? [];
+        let raw = all.find((c: any) => String(c.booking_id) === String(booking.id));
+        if (!raw) {
+          const created = await adminContractsApi.createFromBooking(booking.id);
+          raw = (created as any)?.contract ?? created;
+        }
+        if (!cancelled && raw) {
+          const ex: ContractExtras = {
+            contractId:          String(raw.id),
+            contractNumber:      raw.contract_number ?? null,
+            clientIdNumber:      raw.client_id_number ?? null,
+            clientLicenseNumber: raw.client_license_number ?? null,
+            clientLicenseExpiry: raw.client_license_expiry?.slice(0, 10) ?? null,
+            clientNationality:   raw.client_nationality ?? null,
+            clientAddress:       raw.client_address ?? null,
+            vehiclePlate:        raw.vehicle_plate ?? null,
+            dailyRate:           raw.daily_rate != null ? parseFloat(raw.daily_rate) : null,
+            depositAmount:       raw.deposit_amount != null ? parseFloat(raw.deposit_amount) : null,
+            insuranceType:       raw.insurance_type ?? null,
+          };
+          setExtras(ex);
+          // Seed editable fields from backend (user can override)
+          setEditCin(raw.client_id_number ?? '');
+          setEditLicense(raw.client_license_number ?? '');
+          setEditExpiry(raw.client_license_expiry?.slice(0, 10) ?? '');
+          setEditNationality(raw.client_nationality ?? '');
+          setEditAddress(raw.client_address ?? '');
+          if (raw.signature_city) setSigCity(raw.signature_city);
+          if (raw.condition_start) setCondStart(raw.condition_start);
+          if (raw.condition_end)   setCondEnd(raw.condition_end);
+        }
+      } catch {
+        // Silently fail — the modal still works without backend data
+      } finally {
+        if (!cancelled) setLoadingContract(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [booking.id]);
 
   const contractHtml = generateContractHtml(
-    booking,
-    companySettings,
-    condStart,
-    condEnd,
-    sigClientStart,
-    sigAgentStart,
-    sigClientEnd,
-    sigAgentEnd,
+    booking, companySettings,
+    condStart, condEnd,
+    sigClientStart, sigAgentStart,
+    sigClientEnd, sigAgentEnd,
     sigCity,
+    // Merge editable fields on top of fetched extras so live edits show in preview
+    {
+      ...extras,
+      clientIdNumber:      editCin        || extras.clientIdNumber,
+      clientLicenseNumber: editLicense    || extras.clientLicenseNumber,
+      clientLicenseExpiry: editExpiry     || extras.clientLicenseExpiry,
+      clientNationality:   editNationality|| extras.clientNationality,
+      clientAddress:       editAddress    || extras.clientAddress,
+    },
   );
 
   const handlePrint = useCallback(() => {
     const pw = window.open('', '', 'height=900,width=850');
     if (!pw) return;
-    pw.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Contrat #${booking.id}</title></head><body>${contractHtml}</body></html>`);
+    pw.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Contrat #${extras.contractNumber ?? booking.id}</title></head><body>${contractHtml}</body></html>`);
     pw.document.close();
-    // Give browser time to load inline images before printing
     pw.onload = () => setTimeout(() => pw.print(), 400);
     setTimeout(() => pw.print(), 700);
-  }, [booking.id, contractHtml]);
+  }, [booking.id, contractHtml, extras.contractNumber]);
+
+  // Save conditions + signatures to backend, then print
+  const handleSaveAndPrint = useCallback(async () => {
+    if (extras.contractId) {
+      setSaving(true);
+      try {
+        await adminContractsApi.update(extras.contractId, {
+          condition_start:        condStart,
+          condition_end:          condEnd,
+          signature_client_start: sigClientStart ?? undefined,
+          signature_agent_start:  sigAgentStart ?? undefined,
+          signature_client_end:   sigClientEnd ?? undefined,
+          signature_agent_end:    sigAgentEnd ?? undefined,
+          signature_city:         sigCity || undefined,
+          client_id_number:       editCin        || undefined,
+          client_license_number:  editLicense    || undefined,
+          client_license_expiry:  editExpiry     || undefined,
+          client_nationality:     editNationality|| undefined,
+          client_address:         editAddress    || undefined,
+          status:                 'active',
+        });
+        onSaved?.();
+      } catch {
+        // Non-fatal — still print even if save failed
+      } finally {
+        setSaving(false);
+      }
+    }
+    handlePrint();
+  }, [extras.contractId, condStart, condEnd, sigClientStart, sigAgentStart, sigClientEnd, sigAgentEnd, sigCity, editCin, editLicense, editExpiry, editNationality, editAddress, handlePrint, onSaved]);
+
+  // Download backend PDF (auth-aware fetch → blob)
+  const handleDownloadPdf = useCallback(async () => {
+    if (!extras.contractId) { handlePrint(); return; }
+    const token = localStorage.getItem('auth_token');
+    const base  = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
+    try {
+      const res = await fetch(`${base}/admin/contracts/${extras.contractId}/pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `contrat-${extras.contractNumber ?? booking.id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch {
+      // Fallback: print to PDF via browser
+      handlePrint();
+    }
+  }, [extras.contractId, extras.contractNumber, booking.id, handlePrint]);
 
   const goNext = () => setStep(s => Math.min(s + 1, 3) as Step);
   const goPrev = () => setStep(s => Math.max(s - 1, 0) as Step);
@@ -357,6 +508,12 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue">
                 {booking.clientName}
               </span>
+              {loadingContract && (
+                <RefreshCw className="w-3.5 h-3.5 text-slate-400 animate-spin" />
+              )}
+              {extras.contractNumber && (
+                <span className="text-xs font-mono text-slate-400">{extras.contractNumber}</span>
+              )}
             </div>
             <button
               onClick={onClose}
@@ -421,8 +578,47 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
             )}
 
             {step === 2 && (
-              <div className="space-y-6">
-                {/* City / location input */}
+              <div className="space-y-5">
+
+                {/* ── Client Identity ── */}
+                <div className="border border-slate-200 dark:border-white/10 rounded-xl p-5">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-brand-navy dark:text-white mb-4">
+                    Informations du Locataire
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">CIN / Passeport</label>
+                      <input value={editCin} onChange={e => setEditCin(e.target.value)}
+                        placeholder="ex : AB123456"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-brand-blue dark:text-white font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">N° Permis de Conduire</label>
+                      <input value={editLicense} onChange={e => setEditLicense(e.target.value)}
+                        placeholder="ex : P123456"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-brand-blue dark:text-white font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Date d’Expiration Permis</label>
+                      <input type="date" value={editExpiry} onChange={e => setEditExpiry(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-brand-blue dark:text-white" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nationalité</label>
+                      <input value={editNationality} onChange={e => setEditNationality(e.target.value)}
+                        placeholder="ex : Marocaine"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-brand-blue dark:text-white" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Adresse</label>
+                      <input value={editAddress} onChange={e => setEditAddress(e.target.value)}
+                        placeholder="ex : 12 rue des Fleurs, Casablanca"
+                        className="w-full px-3 py-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-brand-blue dark:text-white" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Ville + Signatures ── */}
                 <div className="max-w-xs">
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                     Fait à (ville)
@@ -484,7 +680,7 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
                       <Printer className="w-3.5 h-3.5" /> Imprimer
                     </button>
                     <button
-                      onClick={handlePrint}
+                      onClick={handleDownloadPdf}
                       className="flex items-center gap-1.5 px-4 py-2 bg-brand-teal text-white rounded-lg text-xs font-bold hover:bg-teal-600 transition-colors"
                     >
                       <Download className="w-3.5 h-3.5" /> PDF
@@ -526,10 +722,15 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
               </button>
             ) : (
               <button
-                onClick={handlePrint}
-                className="flex items-center gap-1.5 px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors shadow-md"
+                onClick={handleSaveAndPrint}
+                disabled={saving}
+                className="flex items-center gap-1.5 px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-colors shadow-md disabled:opacity-60"
               >
-                <Printer className="w-4 h-4" /> Générer &amp; Imprimer
+                {saving
+                  ? <RefreshCw className="w-4 h-4 animate-spin" />
+                  : <Printer className="w-4 h-4" />
+                }
+                Générer &amp; Imprimer
               </button>
             )}
           </div>
