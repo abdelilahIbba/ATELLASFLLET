@@ -60,20 +60,28 @@ class DemoController extends Controller
         $user->role       = 'demo_admin'; // demo agencies get limited admin access
         $user->save();
 
-        $this->sendEmail($demo);
+        $emailSent = $this->sendEmail($demo);
 
         return response()->json([
-            'message' => 'Compte démo créé — identifiants envoyés par email.',
-            'data'    => $demo->toFrontend(),
+            'message'    => $emailSent
+                ? 'Compte démo créé — identifiants envoyés par email.'
+                : 'Compte démo créé — email non envoyé (vérifier RESEND_KEY dans .env).',
+            'email_sent' => $emailSent,
+            'data'       => $demo->toFrontend(),
         ], 201);
     }
 
     // ── POST /api/admin/demo/{demo}/resend ───────────────────────────────────
     public function resend(DemoAccount $demo): JsonResponse
     {
-        $this->sendEmail($demo);
+        $emailSent = $this->sendEmail($demo);
 
-        return response()->json(['message' => 'Email renvoyé avec succès.']);
+        return response()->json([
+            'message'    => $emailSent
+                ? 'Email renvoyé avec succès.'
+                : 'Email non envoyé (vérifier RESEND_KEY dans .env).',
+            'email_sent' => $emailSent,
+        ]);
     }
 
     // ── DELETE /api/admin/demo/{demo} ────────────────────────────────────────
@@ -85,13 +93,30 @@ class DemoController extends Controller
     }
 
     // ── Private helpers ──────────────────────────────────────────────────────
-    private function sendEmail(DemoAccount $demo): void
+
+    /**
+     * Send demo credentials email via Resend (falls back silently if not configured).
+     * Returns true on success, false on failure.
+     */
+    private function sendEmail(DemoAccount $demo): bool
     {
         $fromAddress = config('mail.demo_from.address');
         $fromName    = config('mail.demo_from.name');
         $loginUrl    = rtrim(config('app.url'), '/') . '/login';
 
-        Mail::to($demo->email, $demo->client_name)
-            ->send(new DemoCredentialsMail($demo, $loginUrl, $fromAddress, $fromName));
+        try {
+            Mail::mailer('resend')
+                ->to($demo->email, $demo->client_name)
+                ->send(new DemoCredentialsMail($demo, $loginUrl, $fromAddress, $fromName));
+
+            return true;
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[DemoController] Email failed: ' . $e->getMessage(), [
+                'demo_id' => $demo->id,
+                'email'   => $demo->email,
+            ]);
+
+            return false;
+        }
     }
 }
