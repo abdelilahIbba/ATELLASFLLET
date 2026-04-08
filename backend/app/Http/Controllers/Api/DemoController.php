@@ -105,8 +105,7 @@ class DemoController extends Controller
         $loginUrl    = rtrim(config('app.url'), '/') . '/login';
 
         try {
-            Mail::mailer('resend')
-                ->to($demo->email, $demo->client_name)
+            Mail::to($demo->email, $demo->client_name)
                 ->send(new DemoCredentialsMail($demo, $loginUrl, $fromAddress, $fromName));
 
             return true;

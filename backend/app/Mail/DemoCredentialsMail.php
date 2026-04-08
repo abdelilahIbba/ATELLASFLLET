@@ -23,10 +23,8 @@ class DemoCredentialsMail extends Mailable
 
     public function envelope(): Envelope
     {
-        // Resend requires a verified domain as sender.
-        // We use Resend's shared onboarding sender and set replyTo to the real address.
         return new Envelope(
-            from:    new Address('onboarding@resend.dev', $this->fromName),
+            from:    new Address($this->fromAddress, $this->fromName),
             replyTo: [new Address($this->fromAddress, $this->fromName)],
             subject: 'Vos Accès Démo — Atlas Fleet',
         );
