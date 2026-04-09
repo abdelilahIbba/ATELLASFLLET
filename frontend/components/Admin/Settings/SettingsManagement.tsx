@@ -939,11 +939,11 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
                             </div>
                             <div>
                               <p className="text-slate-400 uppercase font-bold mb-0.5">Début</p>
-                              <p className="font-mono font-bold text-brand-navy dark:text-white">{account.createdAt}</p>
+                              <p className="font-mono font-bold text-brand-navy dark:text-white">{account.createdAt.split('-').reverse().join('/')}</p>
                             </div>
                             <div>
                               <p className="text-slate-400 uppercase font-bold mb-0.5">Expire le</p>
-                              <p className="font-mono font-bold text-brand-navy dark:text-white">{account.expiresAt}</p>
+                              <p className="font-mono font-bold text-brand-navy dark:text-white">{account.expiresAt.split('-').reverse().join('/')}</p>
                             </div>
                           </div>
 
