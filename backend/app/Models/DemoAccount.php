@@ -55,6 +55,7 @@ class DemoAccount extends Model
             'clientName'  => $this->client_name,
             'email'       => $this->email,
             'plan'        => $this->plan,
+            'createdAt'   => $this->created_at->toDateString(),
             'expiresAt'   => $this->expires_at->toDateString(),
             'daysLeft'    => $this->daysLeft,
             'accessKey'   => $this->access_key,

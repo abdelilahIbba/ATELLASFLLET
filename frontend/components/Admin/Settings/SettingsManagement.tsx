@@ -55,6 +55,7 @@ interface DemoAccount {
   clientName: string;
   email: string;
   plan: string;
+  createdAt: string;
   expiresAt: string;
   daysLeft: number;
   status: 'Active' | 'Expired';
@@ -930,11 +931,15 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
                             </div>
                           </div>
 
-                          {/* Plan + expiry */}
+                          {/* Plan + dates */}
                           <div className="flex gap-4 mb-3 text-xs">
                             <div>
                               <p className="text-slate-400 uppercase font-bold mb-0.5">Plan</p>
                               <p className="font-mono font-bold text-brand-navy dark:text-white">{account.plan}</p>
+                            </div>
+                            <div>
+                              <p className="text-slate-400 uppercase font-bold mb-0.5">Début</p>
+                              <p className="font-mono font-bold text-brand-navy dark:text-white">{account.createdAt}</p>
                             </div>
                             <div>
                               <p className="text-slate-400 uppercase font-bold mb-0.5">Expire le</p>

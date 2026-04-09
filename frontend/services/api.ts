@@ -398,6 +398,7 @@ export interface DemoAccountResource {
   clientName: string;
   email: string;
   plan: string;
+  createdAt: string;
   expiresAt: string;
   daysLeft: number;
   accessKey: string;
