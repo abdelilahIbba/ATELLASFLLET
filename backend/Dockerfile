@@ -113,7 +113,7 @@ EXPOSE 80
 
 # Health check — verifies both nginx and PHP-FPM are accepting requests
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s \
-    CMD curl -sf http://localhost/api/pickup-points > /dev/null || exit 1
+    CMD curl -sf http://localhost/up > /dev/null || exit 1
 
 # Set entrypoint to handle initialization
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

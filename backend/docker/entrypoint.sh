@@ -17,8 +17,8 @@ echo "[OK] Database connection established"
 # Clear and cache configuration for production
 echo "[*] Optimizing Laravel caches..."
 php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan route:cache || echo "[WARN] route:cache failed, continuing without route cache"
+php artisan view:cache || echo "[WARN] view:cache failed, continuing without view cache"
 
 # Run database migrations
 echo "[*] Running database migrations..."
