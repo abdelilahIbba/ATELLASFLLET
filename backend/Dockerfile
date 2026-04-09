@@ -107,9 +107,6 @@ RUN chown -R www-data:www-data /var/www/html \
 RUN mkdir -p /var/www/html/storage/framework/{sessions,views,cache} \
     && mkdir -p /var/www/html/storage/logs
 
-# Copy the entire storage directory to ensure it is included in the image
-COPY storage /var/www/html/storage
-
 # Expose port 80 for Nginx
 EXPOSE 80
 
