@@ -16,7 +16,7 @@ services:
       - key: APP_KEY
         value: base64:WYca75xdyoPYqgs3cNuyoeeP0PQ4isrUUqqMUcB7EZE=
       - key: DB_CONNECTION
-        value: postgresql
+        value: pgsql
       - key: DB_HOST
         fromService:
           type: pserv

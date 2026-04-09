@@ -1,0 +1,12 @@
+# AtellasFleet — Render Blueprint
+# Deploy: render.com → New → Blueprint → connect this repo
+
+services:
+  - type: web
+    name: atellasfleet-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    autoDeploy: false
+    healthCheckPath: /api/pickup-points
+    plan: free
