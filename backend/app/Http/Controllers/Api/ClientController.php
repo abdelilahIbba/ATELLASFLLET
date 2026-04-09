@@ -20,6 +20,14 @@ class ClientController extends Controller
     {
         $query = User::where('role', 'client');
 
+        // Demo tenant isolation: demo_admin sees only their tenant's clients
+        $authUser = $request->user();
+        if ($authUser && $authUser->role === 'demo_admin' && $authUser->demo_account_id) {
+            $query->where('demo_account_id', $authUser->demo_account_id);
+        } else {
+            $query->whereNull('demo_account_id');
+        }
+
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(fn ($q) => $q
@@ -88,6 +96,13 @@ class ClientController extends Controller
         }
 
         $user = User::create($data);
+
+        // Demo tenant isolation
+        $authUser = $request->user();
+        if ($authUser && $authUser->role === 'demo_admin' && $authUser->demo_account_id) {
+            $user->demo_account_id = $authUser->demo_account_id;
+            $user->save();
+        }
 
         return response()->json([
             'message' => 'Client created.',

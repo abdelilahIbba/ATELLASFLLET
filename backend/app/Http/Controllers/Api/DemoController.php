@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\DemoCredentialsMail;
 use App\Models\DemoAccount;
 use App\Models\User;
+use App\Services\DemoSeeder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -66,7 +67,11 @@ class DemoController extends Controller
         $user->role             = 'demo_admin';
         $user->demo_permissions = $permissions;
         $user->demo_expires_at  = $expiresAt;
+        $user->demo_account_id  = $demo->id;
         $user->save();
+
+        // Seed sample data for this demo tenant
+        (new DemoSeeder)->seed($demo);
 
         $emailSent = $this->sendEmail($demo);
 
@@ -116,6 +121,21 @@ class DemoController extends Controller
     // -- DELETE /api/admin/demo/{demo}
     public function destroy(DemoAccount $demo): JsonResponse
     {
+        $demoId = $demo->id;
+
+        // Clean up all tenant data
+        \App\Models\Contract::withoutGlobalScopes()->where('demo_account_id', $demoId)->delete();
+        \App\Models\Booking::withoutGlobalScopes()->where('demo_account_id', $demoId)->delete();
+        \App\Models\Invoice::withoutGlobalScopes()->where('demo_account_id', $demoId)->delete();
+        \App\Models\Expense::withoutGlobalScopes()->where('demo_account_id', $demoId)->delete();
+        \App\Models\Fine::withoutGlobalScopes()->where('demo_account_id', $demoId)->delete();
+        \App\Models\MaintenanceLog::withoutGlobalScopes()->where('demo_account_id', $demoId)->delete();
+        \App\Models\Review::withoutGlobalScopes()->where('demo_account_id', $demoId)->delete();
+        \App\Models\Blog::withoutGlobalScopes()->where('demo_account_id', $demoId)->delete();
+        \App\Models\Contact::withoutGlobalScopes()->where('demo_account_id', $demoId)->delete();
+        \App\Models\Car::withoutGlobalScopes()->where('demo_account_id', $demoId)->delete();
+        User::where('demo_account_id', $demoId)->delete();
+
         $demo->delete();
         return response()->json(['message' => 'Compte demo supprime.']);
     }

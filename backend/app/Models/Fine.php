@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToDemoTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Fine extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToDemoTenant;
 
     protected $fillable = [
         'car_id',
@@ -22,6 +23,7 @@ class Fine extends Model
         'status',
         'notes',
         'notification_ref',
+        'demo_account_id',
     ];
 
     protected $casts = [

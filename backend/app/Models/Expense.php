@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToDemoTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Expense extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToDemoTenant;
 
     protected $fillable = [
         'title',
@@ -22,6 +23,7 @@ class Expense extends Model
         'status',
         'receipt_path',
         'created_by',
+        'demo_account_id',
     ];
 
     protected $casts = [

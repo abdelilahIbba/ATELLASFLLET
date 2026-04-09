@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToDemoTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Contract extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToDemoTenant;
 
     protected $fillable = [
         'contract_number',
@@ -52,6 +53,7 @@ class Contract extends Model
         'extra_charges',
         'notes',
         'conditions_text',
+        'demo_account_id',
     ];
 
     protected $casts = [

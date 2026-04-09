@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToDemoTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,7 +10,7 @@ use Illuminate\Support\Carbon;
 
 class Car extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToDemoTenant;
 
     protected $fillable = [
         'model',
@@ -40,6 +41,7 @@ class Car extends Model
         'doc_vignette',
         'doc_carte_grise',
         'unit_plates',
+        'demo_account_id',
     ];
 
     protected $casts = [

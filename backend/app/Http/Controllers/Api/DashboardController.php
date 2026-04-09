@@ -9,24 +9,37 @@ use App\Models\Car;
 use App\Models\Testimonial;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     /**
      * GET /api/dashboard  (admin)
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $lastMonth = now()->subMonth();
 
-        // Counts
+        // Helper: scope User queries for demo tenant isolation
+        $authUser = $request->user();
+        $clientQuery = function () use ($authUser) {
+            $q = User::where('role', 'client');
+            if ($authUser && $authUser->role === 'demo_admin' && $authUser->demo_account_id) {
+                $q->where('demo_account_id', $authUser->demo_account_id);
+            } else {
+                $q->whereNull('demo_account_id');
+            }
+            return $q;
+        };
+
+        // Counts (Car, Booking auto-scoped via BelongsToDemoTenant trait)
         $totalCars         = Car::count();
-        $totalClients      = User::where('role', 'client')->count();
+        $totalClients      = $clientQuery()->count();
         $totalTestimonials = Testimonial::where('is_active', true)->count();
 
         // Previous-month counts
         $lastMonthCars    = Car::whereMonth('created_at', $lastMonth->month)->whereYear('created_at', $lastMonth->year)->count();
-        $lastMonthClients = User::where('role', 'client')->whereMonth('created_at', $lastMonth->month)->whereYear('created_at', $lastMonth->year)->count();
+        $lastMonthClients = $clientQuery()->whereMonth('created_at', $lastMonth->month)->whereYear('created_at', $lastMonth->year)->count();
 
         $carsPercent    = $lastMonthCars    ? round((($totalCars - $lastMonthCars) / $lastMonthCars) * 100)       : 0;
         $clientsPercent = $lastMonthClients ? round((($totalClients - $lastMonthClients) / $lastMonthClients) * 100) : 0;
@@ -44,7 +57,7 @@ class DashboardController extends Controller
             $d = now()->subMonths($i);
             $months[]       = $d->format('M');
             $carCounts[]    = Car::whereMonth('created_at', $d->month)->whereYear('created_at', $d->year)->count();
-            $clientCounts[] = User::where('role', 'client')->whereMonth('created_at', $d->month)->whereYear('created_at', $d->year)->count();
+            $clientCounts[] = $clientQuery()->whereMonth('created_at', $d->month)->whereYear('created_at', $d->year)->count();
             $revenueMonths[]= $d->format('M');
             $revenueData[]  = (float) Booking::where('status', 'confirmed')->whereMonth('created_at', $d->month)->whereYear('created_at', $d->year)->sum('amount');
         }

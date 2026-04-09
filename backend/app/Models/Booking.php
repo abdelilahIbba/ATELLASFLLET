@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToDemoTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Booking extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToDemoTenant;
 
     protected $fillable = [
         'user_id',
@@ -24,6 +25,7 @@ class Booking extends Model
         'pickup_address',
         'pickup_point_id',
         'dropoff_point_id',
+        'demo_account_id',
     ];
 
     protected $casts = [

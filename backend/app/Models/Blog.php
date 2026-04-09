@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToDemoTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 class Blog extends Model
 {
+    use BelongsToDemoTenant;
     protected $fillable = [
         'title',
         'slug',
@@ -17,6 +19,7 @@ class Blog extends Model
         'author_id',
         'is_published',
         'published_at',
+        'demo_account_id',
     ];
 
     protected $casts = [

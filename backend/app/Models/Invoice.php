@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToDemoTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Invoice extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToDemoTenant;
 
     protected $fillable = [
         'invoice_number',
@@ -31,6 +32,7 @@ class Invoice extends Model
         'due_date',
         'paid_at',
         'notes',
+        'demo_account_id',
     ];
 
     protected $casts = [
