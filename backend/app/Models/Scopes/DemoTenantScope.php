@@ -17,7 +17,8 @@ class DemoTenantScope implements Scope
 {
     public function apply(Builder $builder, Model $model): void
     {
-        $user = auth()->user();
+        // Try both default guard and sanctum (for public routes with Bearer token)
+        $user = auth()->user() ?? auth('sanctum')->user();
 
         if (!$user) {
             // Public / unauthenticated — show only real data

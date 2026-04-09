@@ -246,12 +246,11 @@ export const bookingsApi = {
 // ---------------------------------------------------------------------------
 export const adminCarsApi = {
   /**
-   * GET /api/cars — public endpoint that returns all cars when bearer token has role=admin.
-   * There is no GET /api/admin/cars route; the single /api/cars route handles auth-level filtering.
+   * GET /api/admin/cars — authenticated admin endpoint, scoped by demo_account_id.
    */
   list: (params?: Record<string, string | number>) => {
     const qs = params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : '';
-    return api.get<{ data: unknown[] }>(`/cars${qs}`);
+    return api.get<{ data: unknown[] }>(`/admin/cars${qs}`);
   },
   create: (formData: FormData) => api.upload<{ message: string; car: unknown }>('/admin/cars', formData),
   /**

@@ -91,6 +91,7 @@ Route::middleware(['auth:sanctum', 'api.role:admin,demo_admin'])->prefix('admin'
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
     // Cars CRUD
+    Route::get('/cars',             [CarController::class, 'index']);
     Route::post('/cars',            [CarController::class, 'store']);
     Route::put('/cars/{car}',       [CarController::class, 'update']);
     Route::delete('/cars/{car}',    [CarController::class, 'destroy']);

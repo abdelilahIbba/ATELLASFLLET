@@ -43,8 +43,12 @@ const VEHICLE_PERFORMANCE = [
   { name: 'Lamborghini Urus', revenue: 110000, bookings: 48, retention: 78, maintenance: 13500 },
 ];
 
-const AnalyticsManagement: React.FC = () => {
-  const [data, setData] = useState(generateData());
+const AnalyticsManagement: React.FC<{ isDemoUser?: boolean }> = ({ isDemoUser = false }) => {
+  const emptyData = () => {
+    const months = ['Janv', 'Févr', 'Mars', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc'];
+    return months.map(m => ({ name: m, Actual: 0, Target: 0, Bookings: 0, Utilization: 0, TargetUtilization: 0 }));
+  };
+  const [data, setData] = useState(isDemoUser ? emptyData() : generateData());
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [timeRange, setTimeRange] = useState('Année en Cours');
@@ -52,6 +56,7 @@ const AnalyticsManagement: React.FC = () => {
 
   // Real-time Simulation
   useEffect(() => {
+    if (isDemoUser) return; // No fake data updates for demo users
     const interval = setInterval(() => {
         // Subtle update simulation to show "live" data movement
         setData(prevData => {
@@ -196,12 +201,17 @@ const AnalyticsManagement: React.FC = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print:grid-cols-4 print:gap-2">
-        {[
+        {(isDemoUser ? [
+            { label: 'Revenu Total', value: '0 MAD', target: '—', trend: '0%', icon: DollarSign, color: 'text-slate-400' },
+            { label: 'Utilisation Flotte', value: '0%', target: '—', trend: '0%', icon: TrendingUp, color: 'text-slate-400' },
+            { label: 'Locations Actives', value: '0', target: '—', trend: '0%', icon: Users, color: 'text-slate-400' },
+            { label: 'Satisfaction Client', value: '—/5', target: '—', trend: '0%', icon: Award, color: 'text-slate-400' },
+        ] : [
             { label: 'Revenu Total', value: '4,829,000 MAD', target: '4,500,000 MAD', trend: '+7.3%', icon: DollarSign, color: 'text-green-500' },
             { label: 'Utilisation Flotte', value: '78%', target: '85%', trend: '-8.2%', icon: TrendingUp, color: 'text-red-500' },
             { label: 'Locations Actives', value: '142', target: '120', trend: '+18.3%', icon: Users, color: 'text-blue-500' },
             { label: 'Satisfaction Client', value: '4.9/5', target: '4.8/5', trend: '+2.1%', icon: Award, color: 'text-yellow-500' },
-        ].map((kpi, idx) => (
+        ]).map((kpi, idx) => (
             <div key={idx} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-5 rounded-2xl shadow-sm print:border-slate-300 print:shadow-none">
                 <div className="flex justify-between items-start mb-4">
                     <div className="p-2 bg-slate-50 dark:bg-white/10 rounded-lg">
@@ -293,13 +303,13 @@ const AnalyticsManagement: React.FC = () => {
                    <ResponsiveContainer width="100%" height={300} minWidth={0}>
                       <PieChart>
                          <Pie
-                           data={CLIENT_SEGMENTS}
+                           data={isDemoUser ? [] : CLIENT_SEGMENTS}
                            innerRadius={60}
                            outerRadius={80}
                            paddingAngle={5}
                            dataKey="value"
                          >
-                           {CLIENT_SEGMENTS.map((entry, index) => (
+                           {(isDemoUser ? [] : CLIENT_SEGMENTS).map((entry, index) => (
                              <Cell key={`cell-${index}`} fill={entry.color} />
                            ))}
                          </Pie>
@@ -308,7 +318,7 @@ const AnalyticsManagement: React.FC = () => {
                    </ResponsiveContainer>
                 </div>
                 <div className="w-full md:w-1/2 space-y-4 pl-0 md:pl-4">
-                    {CLIENT_SEGMENTS.map((segment) => (
+                    {(isDemoUser ? [] : CLIENT_SEGMENTS).map((segment) => (
                        <div key={segment.name} className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: segment.color }}></div>
@@ -342,7 +352,7 @@ const AnalyticsManagement: React.FC = () => {
                 <ResponsiveContainer width="100%" height={300} minWidth={0}>
                     <BarChart
                       layout="vertical"
-                      data={VEHICLE_PERFORMANCE}
+                      data={isDemoUser ? [] : VEHICLE_PERFORMANCE}
                       margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
@@ -425,6 +435,7 @@ const AnalyticsManagement: React.FC = () => {
       </div>
 
       {/* STRATEGIC INSIGHTS SECTION (New) */}
+      {!isDemoUser && (
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-8 shadow-xl print:break-inside-avoid print:bg-none print:text-black print:border print:border-slate-300">
          <div className="flex items-center gap-3 mb-6">
             <div className="p-3 bg-white/10 rounded-full backdrop-blur-sm print:bg-slate-100">
@@ -471,6 +482,7 @@ const AnalyticsManagement: React.FC = () => {
             </div>
          </div>
       </div>
+      )}
 
     </div>
   );

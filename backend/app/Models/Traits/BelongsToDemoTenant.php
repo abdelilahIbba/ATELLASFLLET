@@ -19,7 +19,7 @@ trait BelongsToDemoTenant
 
         static::creating(function ($model) {
             if ($model->demo_account_id === null) {
-                $user = auth()->user();
+                $user = auth()->user() ?? auth('sanctum')->user();
                 if ($user && $user->role === 'demo_admin' && $user->demo_account_id) {
                     $model->demo_account_id = $user->demo_account_id;
                 }

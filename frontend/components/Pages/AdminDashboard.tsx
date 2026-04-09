@@ -605,7 +605,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   // Load vehicles from backend on mount
   useEffect(() => {
     setVehiclesLoading(true);
-    api.get<{ data: unknown[] }>('/cars')
+    api.get<{ data: unknown[] }>('/admin/cars')
       .then(resp => {
         setVehicles((resp.data ?? []).map(c => carFromApi(c as Record<string, any>)));
       })
@@ -1404,7 +1404,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
 
                {/* --- ANALYTICS TAB --- */}
                {activeTab === 'analytics' && (
-                  <AnalyticsManagement />
+                  <AnalyticsManagement isDemoUser={currentUser?.role === 'demo_admin'} />
                )}
 
                {/* --- BOOKINGS TAB (FULL CRUD) --- */}
