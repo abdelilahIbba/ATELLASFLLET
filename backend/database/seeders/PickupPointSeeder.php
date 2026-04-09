@@ -10,10 +10,14 @@ class PickupPointSeeder extends Seeder
 {
     public function run(): void
     {
-        // Disable FK checks so TRUNCATE works even when bookings table references pickup_points
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
-        PickupPoint::truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        // Reset existing rows in a DB-safe way (MySQL supports FK toggle, PostgreSQL does not).
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            PickupPoint::truncate();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        } else {
+            DB::table('pickup_points')->delete();
+        }
 
         $airports = [
             [
