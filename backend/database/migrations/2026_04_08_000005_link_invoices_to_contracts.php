@@ -11,6 +11,22 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $driver = DB::getDriverName();
+
+        if ($driver === 'pgsql') {
+            DB::statement("
+                UPDATE invoices AS i
+                SET contract_id = c.id
+                FROM contracts AS c
+                WHERE c.booking_id = i.booking_id
+                  AND i.contract_id IS NULL
+                  AND i.booking_id IS NOT NULL
+            ");
+
+            return;
+        }
+
+        // MySQL / MariaDB syntax
         DB::statement("
             UPDATE invoices i
             INNER JOIN contracts c ON c.booking_id = i.booking_id
