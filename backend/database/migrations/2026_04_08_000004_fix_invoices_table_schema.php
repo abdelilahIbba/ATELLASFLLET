@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -25,10 +26,12 @@ return new class extends Migration
             }
         });
 
-        // Update status enum to include draft + sent (requires raw SQL — Doctrine can't introspect enums)
-        \Illuminate\Support\Facades\DB::statement(
-            "ALTER TABLE invoices MODIFY COLUMN status ENUM('draft','sent','pending','paid','overdue','cancelled') NOT NULL DEFAULT 'pending'"
-        );
+        // invoices.status is created as string in this codebase; MySQL-only enum change is optional.
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement(
+                "ALTER TABLE invoices MODIFY COLUMN status ENUM('draft','sent','pending','paid','overdue','cancelled') NOT NULL DEFAULT 'pending'"
+            );
+        }
     }
 
     public function down(): void
@@ -45,8 +48,10 @@ return new class extends Migration
             }
         });
 
-        \Illuminate\Support\Facades\DB::statement(
-            "ALTER TABLE invoices MODIFY COLUMN status ENUM('pending','paid','overdue','cancelled') NOT NULL DEFAULT 'pending'"
-        );
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement(
+                "ALTER TABLE invoices MODIFY COLUMN status ENUM('pending','paid','overdue','cancelled') NOT NULL DEFAULT 'pending'"
+            );
+        }
     }
 };
