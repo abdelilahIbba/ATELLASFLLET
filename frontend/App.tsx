@@ -67,7 +67,7 @@ function buildUserInfo(user: {
   return {
     firstName: parts[0] || 'User',
     lastName: parts.slice(1).join(' '),
-    role: user.role as 'client' | 'admin',
+    role: user.role as 'client' | 'admin' | 'demo_admin',
     email: user.email,
     photo: user.avatar ?? undefined,
     accessKey: `ID-${user.id}`,
@@ -138,7 +138,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isAuthReady) return;
 
-    if (location.pathname.startsWith('/admin') && (!currentUser || currentUser.role !== 'admin')) {
+    if (location.pathname.startsWith('/admin') && (!currentUser || !['admin', 'demo_admin'].includes(currentUser.role))) {
       navigate('/', { replace: true });
     }
   }, [isAuthReady, location.pathname, currentUser, navigate]);
@@ -190,7 +190,7 @@ const App: React.FC = () => {
 
   const handleLoginClick = () => {
     if (currentUser) {
-        if (currentUser.role === 'admin') {
+        if (currentUser.role === 'admin' || currentUser.role === 'demo_admin') {
             handleNavigation('admin');
         } else {
             handleNavigation('tracking');
@@ -215,7 +215,8 @@ const App: React.FC = () => {
         console.warn('[Auth] No resp or no user in response');
         return false;
       }
-      if (resp.user.role !== role) {
+      const isAdminRole = resp.user.role === 'admin' || resp.user.role === 'demo_admin';
+      if ((role === 'admin' && !isAdminRole) || (role === 'client' && resp.user.role !== 'client')) {
         console.warn(`[Auth] Role mismatch: API returned "${resp.user.role}", tab expects "${role}"`);
         return false;
       }
@@ -226,12 +227,12 @@ const App: React.FC = () => {
       localStorage.setItem('currentUser', JSON.stringify(userInfo));
       setCurrentUser(userInfo);
 
-      if (resp.user.role === 'admin') {
+      if (resp.user.role === 'admin' || resp.user.role === 'demo_admin') {
         navigate('/admin');
       }
       setIsAuthOpen(false);
       // Open pending booking if user initiated it before logging in
-      if (pendingBookingAfterAuth && resp.user.role !== 'admin') {
+      if (pendingBookingAfterAuth && resp.user.role !== 'admin' && resp.user.role !== 'demo_admin') {
         setPendingBookingAfterAuth(false);
         setIsBookingOpen(true);
       }
@@ -418,7 +419,7 @@ const App: React.FC = () => {
               element={
                 !isAuthReady
                   ? null
-                  : currentUser?.role === 'admin'
+                  : (currentUser?.role === 'admin' || currentUser?.role === 'demo_admin')
                   ? <AdminDashboard
                       isDark={isDark}
                       toggleTheme={toggleTheme}

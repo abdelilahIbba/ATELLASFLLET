@@ -24,7 +24,7 @@ export interface ChatMessage {
 export interface UserInfo {
   firstName: string;
   lastName: string;
-  role: 'client' | 'admin';
+  role: 'client' | 'admin' | 'demo_admin';
   photo?: string;
   email?: string;
   licenseNumber?: string;
