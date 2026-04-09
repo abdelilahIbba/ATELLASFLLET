@@ -70,9 +70,6 @@ class DemoController extends Controller
         $user->demo_account_id  = $demo->id;
         $user->save();
 
-        // Seed sample data for this demo tenant
-        (new DemoSeeder)->seed($demo);
-
         $emailSent = $this->sendEmail($demo);
 
         return response()->json([
