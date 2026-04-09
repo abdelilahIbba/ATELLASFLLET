@@ -87,7 +87,8 @@ import {
   Eye,
   ThumbsUp,
   Share2,
-  TrendingDown
+  TrendingDown,
+  Clock,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -1192,29 +1193,54 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Admin Maroc v3.0</p>
              </div>
 
+             {/* Demo badge in sidebar */}
+             {currentUser?.role === 'demo_admin' && (() => {
+               const daysLeft = currentUser.demoExpiresAt
+                 ? Math.max(0, Math.ceil((new Date(currentUser.demoExpiresAt).getTime() - Date.now()) / 86400000))
+                 : null;
+               return (
+                 <div className={`mb-3 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 ${daysLeft !== null && daysLeft <= 3 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                   <Clock className="w-4 h-4 flex-shrink-0" />
+                   <span>{daysLeft !== null ? `Démo · ${daysLeft} jour${daysLeft !== 1 ? 's' : ''} restant${daysLeft !== 1 ? 's' : ''}` : 'Mode Démo'}</span>
+                 </div>
+               );
+             })()}
+
              <nav className="space-y-1 flex-grow overflow-y-auto custom-scrollbar">
-                <TabButton id="overview" icon={LayoutDashboard} label="Tableau de Bord" />
-                <TabButton id="analytics" icon={BarChart3} label="Analytique & Rapports" />
-                <TabButton id="fleet" icon={Car} label="Flotte & Inventaire" />
-                <TabButton id="infractions" icon={ShieldAlert} label="Infractions" />
-                <TabButton id="bookings" icon={CalendarRange} label="Réservations" alertCount={pendingRequests} />
-                <TabButton id="contracts" icon={FileSignature} label="Contrats & Factures" />
-                <TabButton id="expenses" icon={TrendingDown} label="Dépenses Agence" />
-                <TabButton id="clients" icon={Users} label="Clients (KYC)" />
-                <TabButton id="gps" icon={MapIcon} label="Suivi GPS en Direct" />
-                <TabButton id="messages" icon={MessageSquare} label="Messages" alertCount={messages.filter(m => m.unread).length} />
-                <TabButton id="reviews" icon={Star} label="Avis & Réputation" />
-                <TabButton id="blog" icon={PenTool} label="Blog & Contenu" />
+                {/* Filter tabs for demo_admin — only show allowed ones */}
+                {(() => {
+                  const allowed = currentUser?.role === 'demo_admin' ? (currentUser.demoPermissions ?? []) : null;
+                  const can = (id: string) => allowed === null || allowed.includes(id);
+                  return (
+                    <>
+                      {can('overview')     && <TabButton id="overview"     icon={LayoutDashboard} label="Tableau de Bord" />}
+                      {can('analytics')    && <TabButton id="analytics"    icon={BarChart3}       label="Analytique & Rapports" />}
+                      {can('fleet')        && <TabButton id="fleet"        icon={Car}             label="Flotte & Inventaire" />}
+                      {can('infractions')  && <TabButton id="infractions"  icon={ShieldAlert}     label="Infractions" />}
+                      {can('bookings')     && <TabButton id="bookings"     icon={CalendarRange}   label="Réservations" alertCount={pendingRequests} />}
+                      {can('contracts')    && <TabButton id="contracts"    icon={FileSignature}   label="Contrats & Factures" />}
+                      {can('expenses')     && <TabButton id="expenses"     icon={TrendingDown}    label="Dépenses Agence" />}
+                      {can('clients')      && <TabButton id="clients"      icon={Users}           label="Clients (KYC)" />}
+                      {can('gps')          && <TabButton id="gps"          icon={MapIcon}         label="Suivi GPS en Direct" />}
+                      {can('messages')     && <TabButton id="messages"     icon={MessageSquare}   label="Messages" alertCount={messages.filter(m => m.unread).length} />}
+                      {can('reviews')      && <TabButton id="reviews"      icon={Star}            label="Avis & Réputation" />}
+                      {can('blog')         && <TabButton id="blog"         icon={PenTool}         label="Blog & Contenu" />}
+                    </>
+                  );
+                })()}
              </nav>
 
              <div className="mt-auto pt-4 border-t border-slate-100 dark:border-white/5 space-y-2">
-                <button 
-                    onClick={() => adminNav('/admin/settings')}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${activeTab === 'settings' ? 'bg-brand-blue/10 text-brand-blue font-bold shadow-sm' : 'text-slate-500 hover:text-brand-navy dark:hover:text-white'}`}
-                >
-                    <Settings className="w-5 h-5" />
-                    <span className="font-medium text-sm">Paramètres Système</span>
-                </button>
+                {/* Only real admins can access system settings */}
+                {currentUser?.role !== 'demo_admin' && (
+                  <button 
+                      onClick={() => adminNav('/admin/settings')}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${activeTab === 'settings' ? 'bg-brand-blue/10 text-brand-blue font-bold shadow-sm' : 'text-slate-500 hover:text-brand-navy dark:hover:text-white'}`}
+                  >
+                      <Settings className="w-5 h-5" />
+                      <span className="font-medium text-sm">Paramètres Système</span>
+                  </button>
+                )}
                 <button 
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 text-brand-red hover:bg-brand-red/10 rounded-xl transition-colors"
@@ -1228,6 +1254,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
          {/* Main Content Area */}
          <div className="flex-grow bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden relative flex flex-col z-10 print:w-full print:border-none print:shadow-none print:bg-white print:dark:bg-white print:text-black">
             
+            {/* Demo mode top banner */}
+            {currentUser?.role === 'demo_admin' && (() => {
+              const daysLeft = currentUser.demoExpiresAt
+                ? Math.max(0, Math.ceil((new Date(currentUser.demoExpiresAt).getTime() - Date.now()) / 86400000))
+                : null;
+              const isUrgent = daysLeft !== null && daysLeft <= 3;
+              return (
+                <div className={`flex items-center justify-between px-6 py-2 text-xs font-semibold print:hidden ${isUrgent ? 'bg-red-500 text-white' : 'bg-amber-400 text-amber-900'}`}>
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>
+                      Mode Démo — accès limité aux modules autorisés.
+                      {daysLeft !== null && ` Votre période d'essai expire dans ${daysLeft} jour${daysLeft !== 1 ? 's' : ''} (${currentUser.demoExpiresAt}).`}
+                    </span>
+                  </div>
+                  {isUrgent && <span className="font-bold uppercase text-[10px] tracking-widest animate-pulse">Expiration imminente !</span>}
+                </div>
+              );
+            })()}
+
             {/* Header / Topbar */}
             {activeTab !== 'gps' && (
                 <div className="h-16 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-6 bg-slate-50/50 dark:bg-white/[0.02] print:hidden">

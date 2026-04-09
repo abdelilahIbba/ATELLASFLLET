@@ -61,6 +61,8 @@ function buildUserInfo(user: {
   email: string;
   role: string;
   avatar?: string | null;
+  demo_permissions?: string[] | null;
+  demo_expires_at?: string | null;
 }): UserInfo {
   const parts = (user.name ?? '').trim().split(' ').filter(Boolean);
 
@@ -71,6 +73,8 @@ function buildUserInfo(user: {
     email: user.email,
     photo: user.avatar ?? undefined,
     accessKey: `ID-${user.id}`,
+    demoPermissions: user.demo_permissions ?? undefined,
+    demoExpiresAt: user.demo_expires_at ?? undefined,
   };
 }
 

@@ -35,6 +35,11 @@ import {
   FileText,
   Phone,
   X,
+  Plus,
+  CalendarDays,
+  ShieldCheck,
+  Edit3,
+  TimerReset,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -51,14 +56,32 @@ interface DemoAccount {
   email: string;
   plan: string;
   expiresAt: string;
+  daysLeft: number;
   status: 'Active' | 'Expired';
   accessKey: string;
+  permissions: string[];
 }
 
 interface SettingsManagementProps {
   activeTab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts';
   onTabChange: (tab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts') => void;
 }
+
+// All modules available for demo access
+const DEMO_MODULES = [
+  { id: 'overview',     label: 'Tableau de Bord' },
+  { id: 'analytics',   label: 'Analytique & Rapports' },
+  { id: 'fleet',       label: 'Flotte & Inventaire' },
+  { id: 'bookings',    label: 'Réservations' },
+  { id: 'contracts',   label: 'Contrats & Factures' },
+  { id: 'clients',     label: 'Clients (KYC)' },
+  { id: 'expenses',    label: 'Dépenses Agence' },
+  { id: 'messages',    label: 'Messagerie' },
+  { id: 'gps',         label: 'Suivi GPS' },
+  { id: 'infractions', label: 'Infractions' },
+  { id: 'reviews',     label: 'Avis & Réputation' },
+  { id: 'blog',        label: 'Blog & Contenu' },
+];
 
 const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTabChange }) => {
   const [loading, setLoading] = useState(false);
@@ -169,7 +192,21 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
   const [resendingId,   setResendingId]   = useState<number | string | null>(null);
   const [copiedId,      setCopiedId]      = useState<number | string | null>(null);
   const [showDemoForm,  setShowDemoForm]  = useState(false);
-  const [newDemo,       setNewDemo]       = useState({ clientName: '', email: '', duration: '14' });
+  const [newDemo,       setNewDemo]       = useState({ clientName: '', email: '', duration: '14', customDuration: '', permissions: ['overview', 'fleet', 'bookings', 'clients', 'contracts', 'analytics'] });
+  // Trial period presets (stored in localStorage)
+  const [trialPresets,    setTrialPresets]    = useState<number[]>(() => {
+    try { const r = localStorage.getItem('demo_trial_presets'); return r ? JSON.parse(r) : [3, 7, 14, 30]; }
+    catch { return [3, 7, 14, 30]; }
+  });
+  const [newPresetInput,  setNewPresetInput]  = useState('');
+  // Extend period
+  const [extendingId,     setExtendingId]     = useState<number | string | null>(null);
+  const [extendDays,      setExtendDays]      = useState(7);
+  const [extendLoading,   setExtendLoading]   = useState(false);
+  // Edit permissions
+  const [editPermsId,     setEditPermsId]     = useState<number | string | null>(null);
+  const [editPerms,       setEditPerms]       = useState<string[]>([]);
+  const [editPermsLoading,setEditPermsLoading]= useState(false);
 
   // Load demo accounts when tab becomes active
   useEffect(() => {
@@ -207,14 +244,17 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
     setDemoCreating(true);
     setDemoError(null);
     setDemoSuccess(null);
+    const dur = newDemo.duration === 'custom' ? parseInt(newDemo.customDuration) : parseInt(newDemo.duration);
+    if (!dur || dur < 1) { setDemoError('Durée invalide.'); setDemoCreating(false); return; }
     try {
       const res: any = await adminDemoApi.create({
         client_name: newDemo.clientName,
         email:       newDemo.email,
-        duration:    parseInt(newDemo.duration),
+        duration:    dur,
+        permissions: newDemo.permissions,
       });
       setDemoAccounts(prev => [res.data, ...prev]);
-      setNewDemo({ clientName: '', email: '', duration: '14' });
+      setNewDemo({ clientName: '', email: '', duration: '14', customDuration: '', permissions: ['overview', 'fleet', 'bookings', 'clients', 'contracts', 'analytics'] });
       setShowDemoForm(false);
       setDemoSuccess('Compte démo créé — identifiants envoyés par email ✓');
       setTimeout(() => setDemoSuccess(null), 5000);
@@ -223,6 +263,59 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
     } finally {
       setDemoCreating(false);
     }
+  };
+
+  const handleAddTrialPreset = () => {
+    const n = parseInt(newPresetInput);
+    if (!n || n < 1 || n > 365 || trialPresets.includes(n)) return;
+    const updated = [...trialPresets, n].sort((a, b) => a - b);
+    setTrialPresets(updated);
+    localStorage.setItem('demo_trial_presets', JSON.stringify(updated));
+    setNewPresetInput('');
+  };
+
+  const handleRemoveTrialPreset = (days: number) => {
+    const updated = trialPresets.filter(p => p !== days);
+    setTrialPresets(updated);
+    localStorage.setItem('demo_trial_presets', JSON.stringify(updated));
+  };
+
+  const handleExtendDemo = async (id: number | string) => {
+    setExtendLoading(true);
+    try {
+      const res: any = await adminDemoApi.extend(id, extendDays);
+      setDemoAccounts(prev => prev.map(d => d.id === id ? res.data : d));
+      setExtendingId(null);
+      setDemoSuccess(`Période prolongée de ${extendDays} jour(s) ✓`);
+      setTimeout(() => setDemoSuccess(null), 4000);
+    } catch {
+      setDemoError("Erreur lors de l'extension.");
+    } finally {
+      setExtendLoading(false);
+    }
+  };
+
+  const handleUpdatePermissions = async (id: number | string) => {
+    if (editPerms.length === 0) { setDemoError('Sélectionnez au moins un module.'); return; }
+    setEditPermsLoading(true);
+    try {
+      const res: any = await adminDemoApi.updatePermissions(id, editPerms);
+      setDemoAccounts(prev => prev.map(d => d.id === id ? res.data : d));
+      setEditPermsId(null);
+      setDemoSuccess('Permissions mises à jour ✓');
+      setTimeout(() => setDemoSuccess(null), 4000);
+    } catch {
+      setDemoError('Erreur lors de la mise à jour des permissions.');
+    } finally {
+      setEditPermsLoading(false);
+    }
+  };
+
+  const togglePermission = (moduleId: string, currentPerms: string[], setter: (p: string[]) => void) => {
+    setter(currentPerms.includes(moduleId)
+      ? currentPerms.filter(p => p !== moduleId)
+      : [...currentPerms, moduleId]
+    );
   };
 
   const handleDeleteDemo = async (id: number | string) => {
@@ -634,60 +727,159 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
             {/* DEMO ACCESS TAB */}
             {activeTab === 'demo' && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+                {/* ── Header ─────────────────────────────────────────────── */}
                 <div className="flex justify-between items-center bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-6 rounded-2xl">
                   <div>
-                    <h3 className="text-xl font-bold text-brand-navy dark:text-white">Comptes Démo</h3>
-                    <p className="text-xs text-slate-500 mt-1">Générer un accès temporaire au tableau de bord pour des agences de location prospects. Les identifiants sont envoyés automatiquement par email.</p>
+                    <h3 className="text-xl font-bold text-brand-navy dark:text-white">Accès Démo & Contrôle d'Accès</h3>
+                    <p className="text-xs text-slate-500 mt-1">Gérez les comptes démo, leurs droits d'accès aux modules et les périodes d'essai.</p>
                   </div>
                   <button onClick={() => setShowDemoForm(!showDemoForm)} className="px-4 py-2 bg-brand-navy dark:bg-white text-white dark:text-brand-navy rounded-lg text-sm font-bold uppercase flex items-center gap-2 hover:opacity-90 transition-opacity">
-                    <Clock className="w-4 h-4" /> {showDemoForm ? 'Annuler' : 'Créer Démo'}
+                    <Plus className="w-4 h-4" /> {showDemoForm ? 'Annuler' : 'Créer Démo'}
                   </button>
                 </div>
 
-                {/* Success banner */}
+                {/* ── Trial period presets config ────────────────────────── */}
+                <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-5">
+                  <h4 className="text-sm font-bold text-brand-navy dark:text-white mb-3 flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-brand-blue" /> Préréglages de Période d'Essai
+                  </h4>
+                  <p className="text-xs text-slate-500 mb-4">Choisissez les durées disponibles lors de la création d'un compte démo. Ces préréglages apparaîtront dans le formulaire de création.</p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {trialPresets.map(days => (
+                      <div key={days} className="flex items-center gap-1 bg-brand-blue/10 text-brand-blue border border-brand-blue/20 rounded-full px-3 py-1 text-xs font-bold">
+                        <Clock className="w-3 h-3" />
+                        {days === 1 ? '1 jour' : `${days} jours`}
+                        <button
+                          onClick={() => handleRemoveTrialPreset(days)}
+                          className="ml-1 hover:text-red-500 transition-colors"
+                          title="Supprimer ce préréglage"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 items-center max-w-xs">
+                    <input
+                      type="number"
+                      min={1}
+                      max={365}
+                      value={newPresetInput}
+                      onChange={e => setNewPresetInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleAddTrialPreset()}
+                      placeholder="Ex: 3"
+                      className="w-24 px-3 py-2 bg-slate-50 dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-sm outline-none focus:border-brand-blue dark:text-white"
+                    />
+                    <span className="text-xs text-slate-500">jours</span>
+                    <button
+                      onClick={handleAddTrialPreset}
+                      disabled={!newPresetInput || parseInt(newPresetInput) < 1}
+                      className="flex items-center gap-1 px-3 py-2 bg-brand-blue text-white rounded-lg text-xs font-bold hover:bg-blue-600 disabled:opacity-40 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" /> Ajouter
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── Banners ───────────────────────────────────────────── */}
                 {demoSuccess && (
                   <div className="flex items-center gap-3 bg-green-50 border border-green-200 text-green-700 rounded-xl px-5 py-3 text-sm font-medium">
-                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                    {demoSuccess}
+                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" />{demoSuccess}
                   </div>
                 )}
-
-                {/* Error banner */}
                 {demoError && (
                   <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-5 py-3 text-sm font-medium">
-                    <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                    {demoError}
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0" />{demoError}
+                    <button onClick={() => setDemoError(null)} className="ml-auto"><X className="w-4 h-4" /></button>
                   </div>
                 )}
 
+                {/* ── Create form ────────────────────────────────────────── */}
                 {showDemoForm && (
-                  <form onSubmit={handleCreateDemo} className="bg-brand-blue/5 border border-brand-blue/20 p-6 rounded-xl mb-6">
-                    <h4 className="font-bold text-brand-navy dark:text-white text-sm mb-4">Configurer Nouveau Compte Démo</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <form onSubmit={handleCreateDemo} className="bg-brand-blue/5 border border-brand-blue/20 p-6 rounded-xl space-y-5">
+                    <h4 className="font-bold text-brand-navy dark:text-white text-sm">Configurer Nouveau Compte Démo</h4>
+
+                    {/* Row 1: identity */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Client / Nom de la Société</label>
-                        <input value={newDemo.clientName} onChange={e => setNewDemo({...newDemo, clientName: e.target.value})} className="w-full p-2.5 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-sm outline-none focus:border-brand-blue" required />
+                        <input value={newDemo.clientName} onChange={e => setNewDemo({...newDemo, clientName: e.target.value})} className="w-full p-2.5 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-sm outline-none focus:border-brand-blue dark:text-white" required />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Adresse Email</label>
-                        <input type="email" value={newDemo.email} onChange={e => setNewDemo({...newDemo, email: e.target.value})} className="w-full p-2.5 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-sm outline-none focus:border-brand-blue" required />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Durée de l'Essai</label>
-                        <select value={newDemo.duration} onChange={e => setNewDemo({...newDemo, duration: e.target.value})} className="w-full p-2.5 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-sm outline-none focus:border-brand-blue">
-                          <option value="14">Essai 2 Semaines</option>
-                          <option value="30">Essai 1 Mois</option>
-                          <option value="7">7 Jours (Express)</option>
-                        </select>
+                        <input type="email" value={newDemo.email} onChange={e => setNewDemo({...newDemo, email: e.target.value})} className="w-full p-2.5 bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg text-sm outline-none focus:border-brand-blue dark:text-white" required />
                       </div>
                     </div>
-                    <div className="flex justify-end">
-                      <button type="submit" disabled={demoCreating} className="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-bold uppercase hover:bg-blue-600 transition-colors flex items-center gap-2 disabled:opacity-60">
-                        {demoCreating ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Send className="w-4 h-4" />
+
+                    {/* Row 2: duration */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Durée de l'Essai</label>
+                      <div className="flex flex-wrap gap-2">
+                        {trialPresets.map(days => (
+                          <button
+                            key={days}
+                            type="button"
+                            onClick={() => setNewDemo({...newDemo, duration: String(days), customDuration: ''})}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold border transition-colors ${newDemo.duration === String(days) && newDemo.duration !== 'custom' ? 'bg-brand-blue text-white border-brand-blue' : 'bg-white dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-brand-blue/50'}`}
+                          >
+                            <Clock className="w-3 h-3 inline mr-1" />
+                            {days === 1 ? '1 jour' : `${days} jours`}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setNewDemo({...newDemo, duration: 'custom'})}
+                          className={`px-4 py-2 rounded-lg text-xs font-bold border transition-colors ${newDemo.duration === 'custom' ? 'bg-brand-blue text-white border-brand-blue' : 'bg-white dark:bg-white/10 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-brand-blue/50'}`}
+                        >
+                          Personnalisé
+                        </button>
+                        {newDemo.duration === 'custom' && (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min={1}
+                              max={365}
+                              value={newDemo.customDuration}
+                              onChange={e => setNewDemo({...newDemo, customDuration: e.target.value})}
+                              placeholder="Nb jours"
+                              className="w-24 px-3 py-2 bg-white dark:bg-white/10 border border-brand-blue rounded-lg text-sm outline-none dark:text-white"
+                            />
+                            <span className="text-xs text-slate-500">jours</span>
+                          </div>
                         )}
+                      </div>
+                    </div>
+
+                    {/* Row 3: permissions matrix */}
+                    <div>
+                      <label className="flex items-center gap-1 text-xs font-bold text-slate-500 uppercase mb-2">
+                        <ShieldCheck className="w-3 h-3" /> Modules Accessibles par ce Compte Démo
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {DEMO_MODULES.map(mod => {
+                          const checked = newDemo.permissions.includes(mod.id);
+                          return (
+                            <button
+                              key={mod.id}
+                              type="button"
+                              onClick={() => togglePermission(mod.id, newDemo.permissions, (p) => setNewDemo({...newDemo, permissions: p}))}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium text-left transition-colors ${checked ? 'bg-brand-blue/10 border-brand-blue/40 text-brand-blue dark:text-blue-400' : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 hover:border-slate-300'}`}
+                            >
+                              <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center flex-shrink-0 ${checked ? 'bg-brand-blue border-brand-blue' : 'border-slate-300'}`}>
+                                {checked && <CheckCircle className="w-3 h-3 text-white" />}
+                              </div>
+                              {mod.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-2">{newDemo.permissions.length} module(s) sélectionné(s) · La page de paramètres système n'est jamais accessible aux comptes démo.</p>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button type="submit" disabled={demoCreating} className="px-5 py-2 bg-brand-blue text-white rounded-lg text-sm font-bold uppercase hover:bg-blue-600 transition-colors flex items-center gap-2 disabled:opacity-60">
+                        {demoCreating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         {demoCreating ? 'Envoi en cours…' : 'Générer & Envoyer'}
                       </button>
                     </div>
@@ -710,74 +902,173 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* ── Demo account cards ─────────────────────────────────── */}
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                   {demoAccounts.map((account) => {
-                    const isExpired = new Date(account.expiresAt) < new Date();
+                    const isExpired = account.status === 'Expired';
+                    const isEditingPerms = editPermsId === account.id;
+                    const isExtending   = extendingId  === account.id;
                     return (
-                      <div key={account.id} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-6 hover:shadow-lg transition-all relative overflow-hidden group">
-                        {isExpired && <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] uppercase font-bold px-3 py-1">Expiré</div>}
-                        {!isExpired && <div className="absolute top-0 right-0 bg-green-500 text-white text-[10px] uppercase font-bold px-3 py-1">Actif</div>}
-                        
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h4 className="font-bold text-brand-navy dark:text-white text-lg">{account.clientName}</h4>
-                            <p className="text-xs text-slate-500">{account.email}</p>
-                          </div>
-                          <button onClick={() => handleDeleteDemo(account.id)} className="text-slate-300 hover:text-red-500 transition-colors">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                      <div key={account.id} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden hover:shadow-lg transition-all">
+                        {/* Colored status bar */}
+                        <div className={`h-1.5 w-full ${isExpired ? 'bg-red-500' : account.daysLeft <= 3 ? 'bg-amber-400' : 'bg-green-500'}`} />
 
-                        <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
-                          <div>
-                            <p className="text-slate-400 uppercase font-bold mb-1">Durée du Plan</p>
-                            <p className="font-mono font-bold text-brand-navy dark:text-white">{account.plan}</p>
+                        <div className="p-5">
+                          {/* Header row */}
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h4 className="font-bold text-brand-navy dark:text-white text-base">{account.clientName}</h4>
+                              <p className="text-xs text-slate-500">{account.email}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${isExpired ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : account.daysLeft <= 3 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}`}>
+                                {isExpired ? 'Expiré' : `${account.daysLeft}j restants`}
+                              </span>
+                              <button onClick={() => handleDeleteDemo(account.id)} className="text-slate-300 hover:text-red-500 transition-colors p-1">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-slate-400 uppercase font-bold mb-1">Expire Le</p>
-                            <p className="font-mono font-bold text-brand-navy dark:text-white">{account.expiresAt}</p>
+
+                          {/* Plan + expiry */}
+                          <div className="flex gap-4 mb-3 text-xs">
+                            <div>
+                              <p className="text-slate-400 uppercase font-bold mb-0.5">Plan</p>
+                              <p className="font-mono font-bold text-brand-navy dark:text-white">{account.plan}</p>
+                            </div>
+                            <div>
+                              <p className="text-slate-400 uppercase font-bold mb-0.5">Expire le</p>
+                              <p className="font-mono font-bold text-brand-navy dark:text-white">{account.expiresAt}</p>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="bg-slate-50 dark:bg-black/20 p-3 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between group-hover:border-brand-blue/30 transition-colors cursor-pointer mb-3" onClick={() => copyToClipboard(account.accessKey)}>
-                          <div>
-                            <p className="text-[10px] text-slate-400 uppercase mb-1 font-bold">Clé d'Accès</p>
-                            <code className="text-brand-blue font-bold font-mono">{account.accessKey}</code>
+                          {/* Permissions pills */}
+                          {!isEditingPerms && (
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {(account.permissions ?? []).map(pId => {
+                                const mod = DEMO_MODULES.find(m => m.id === pId);
+                                return mod ? (
+                                  <span key={pId} className="text-[10px] font-bold bg-brand-blue/10 text-brand-blue dark:text-blue-400 px-2 py-0.5 rounded-full">
+                                    {mod.label}
+                                  </span>
+                                ) : null;
+                              })}
+                            </div>
+                          )}
+
+                          {/* ── Edit permissions panel ── */}
+                          {isEditingPerms && (
+                            <div className="mb-3 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-brand-blue/20 space-y-2">
+                              <p className="text-xs font-bold text-brand-navy dark:text-white mb-2">Modifier les modules accessibles :</p>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {DEMO_MODULES.map(mod => {
+                                  const checked = editPerms.includes(mod.id);
+                                  return (
+                                    <button
+                                      key={mod.id}
+                                      type="button"
+                                      onClick={() => togglePermission(mod.id, editPerms, setEditPerms)}
+                                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs font-medium text-left transition-colors ${checked ? 'bg-brand-blue/10 border-brand-blue/40 text-brand-blue dark:text-blue-400' : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500'}`}
+                                    >
+                                      <div className={`w-3 h-3 rounded border flex-shrink-0 flex items-center justify-center ${checked ? 'bg-brand-blue border-brand-blue' : 'border-slate-300'}`}>
+                                        {checked && <CheckCircle className="w-2.5 h-2.5 text-white" />}
+                                      </div>
+                                      {mod.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div className="flex gap-2 pt-1">
+                                <button
+                                  onClick={() => handleUpdatePermissions(account.id)}
+                                  disabled={editPermsLoading || editPerms.length === 0}
+                                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-brand-blue text-white rounded-lg text-xs font-bold disabled:opacity-50 hover:bg-blue-600 transition-colors"
+                                >
+                                  {editPermsLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                                  Sauvegarder
+                                </button>
+                                <button onClick={() => setEditPermsId(null)} className="px-3 py-1.5 text-slate-500 text-xs rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                                  Annuler
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ── Extend period panel ── */}
+                          {isExtending && (
+                            <div className="mb-3 p-3 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-500/20 space-y-2">
+                              <p className="text-xs font-bold text-amber-800 dark:text-amber-300 mb-2">Prolonger la période d'essai :</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {trialPresets.map(days => (
+                                  <button key={days} type="button" onClick={() => setExtendDays(days)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${extendDays === days ? 'bg-amber-500 text-white border-amber-500' : 'bg-white dark:bg-white/5 border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-300 hover:border-amber-400'}`}>
+                                    +{days}j
+                                  </button>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input type="number" min={1} max={365} value={extendDays} onChange={e => setExtendDays(parseInt(e.target.value) || 1)} className="w-20 px-2 py-1.5 bg-white dark:bg-white/10 border border-amber-200 dark:border-amber-500/30 rounded-lg text-sm outline-none dark:text-white text-center font-bold" />
+                                <span className="text-xs text-amber-700 dark:text-amber-300">jours</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <button onClick={() => handleExtendDemo(account.id)} disabled={extendLoading} className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-bold disabled:opacity-50 hover:bg-amber-600 transition-colors">
+                                  {extendLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <TimerReset className="w-3 h-3" />}
+                                  Prolonger de {extendDays}j
+                                </button>
+                                <button onClick={() => setExtendingId(null)} className="px-3 py-1.5 text-slate-500 text-xs rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                                  Annuler
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Access key */}
+                          <div className="bg-slate-50 dark:bg-black/20 p-2.5 rounded-lg border border-slate-100 dark:border-white/5 flex items-center justify-between cursor-pointer mb-3 hover:border-brand-blue/30 transition-colors" onClick={() => copyToClipboard(account.accessKey)}>
+                            <div>
+                              <p className="text-[10px] text-slate-400 uppercase mb-0.5 font-bold">Clé d'Accès</p>
+                              <code className="text-brand-blue font-bold font-mono text-sm">{account.accessKey}</code>
+                            </div>
+                            <Copy className="w-4 h-4 text-slate-400 hover:text-brand-blue transition-colors" />
                           </div>
-                          <Copy className="w-4 h-4 text-slate-400 group-hover:text-brand-blue transition-colors" />
-                        </div>
 
-                        {/* Action buttons */}
-                        <div className="flex gap-2">
-                          {/* Copy credentials */}
-                          <button
-                            onClick={() => copyDemoCredentials(account)}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border text-xs font-bold uppercase transition-colors ${
-                              copiedId === account.id
-                                ? 'border-green-400 text-green-600 bg-green-50'
-                                : 'border-slate-300 dark:border-white/20 text-slate-600 dark:text-slate-300 hover:border-brand-blue/50 hover:text-brand-blue'
-                            }`}
-                          >
-                            {copiedId === account.id ? (
-                              <><ClipboardCheck className="w-3 h-3" /> Copié !</>
-                            ) : (
-                              <><Copy className="w-3 h-3" /> Copier Identifiants</>
-                            )}
-                          </button>
+                          {/* Action buttons */}
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {/* Copy credentials */}
+                            <button
+                              onClick={() => copyDemoCredentials(account)}
+                              className={`flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-bold transition-colors ${copiedId === account.id ? 'border-green-400 text-green-600 bg-green-50' : 'border-slate-300 dark:border-white/20 text-slate-600 dark:text-slate-300 hover:border-brand-blue/50 hover:text-brand-blue'}`}
+                              title="Copier identifiants"
+                            >
+                              {copiedId === account.id ? <ClipboardCheck className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
 
-                          {/* Resend email */}
-                          <button
-                            onClick={() => handleResendDemo(account.id)}
-                            disabled={resendingId === account.id}
-                            title="Renvoyer par email"
-                            className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-brand-blue/30 text-brand-blue text-xs font-bold uppercase hover:bg-brand-blue/5 transition-colors disabled:opacity-50"
-                          >
-                            {resendingId === account.id ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <RefreshCw className="w-3 h-3" />
-                            )}
-                          </button>
+                            {/* Resend email */}
+                            <button
+                              onClick={() => handleResendDemo(account.id)}
+                              disabled={resendingId === account.id}
+                              title="Renvoyer l'email"
+                              className="flex items-center justify-center gap-1.5 py-2 rounded-lg border border-slate-300 dark:border-white/20 text-slate-600 dark:text-slate-300 text-xs font-bold hover:border-brand-blue/50 hover:text-brand-blue disabled:opacity-50 transition-colors"
+                            >
+                              {resendingId === account.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                            </button>
+
+                            {/* Edit permissions */}
+                            <button
+                              onClick={() => { setEditPermsId(isEditingPerms ? null : account.id); setEditPerms(account.permissions ?? []); setExtendingId(null); }}
+                              title="Modifier les permissions"
+                              className={`flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-bold transition-colors ${isEditingPerms ? 'bg-brand-blue/10 border-brand-blue/40 text-brand-blue' : 'border-slate-300 dark:border-white/20 text-slate-600 dark:text-slate-300 hover:border-brand-blue/50 hover:text-brand-blue'}`}
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                            </button>
+
+                            {/* Extend period */}
+                            <button
+                              onClick={() => { setExtendingId(isExtending ? null : account.id); setExtendDays(7); setEditPermsId(null); }}
+                              title="Prolonger la période"
+                              className={`flex items-center justify-center gap-1.5 py-2 rounded-lg border text-xs font-bold transition-colors ${isExtending ? 'bg-amber-100 border-amber-400 text-amber-600' : 'border-slate-300 dark:border-white/20 text-slate-600 dark:text-slate-300 hover:border-amber-400 hover:text-amber-600'}`}
+                            >
+                              <TimerReset className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );

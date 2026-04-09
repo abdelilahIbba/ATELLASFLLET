@@ -30,6 +30,10 @@ export interface UserInfo {
   licenseNumber?: string;
   idNumber?: string;
   accessKey?: string; // Unique password/key generated after booking
+  /** For demo_admin: list of allowed admin tab IDs */
+  demoPermissions?: string[];
+  /** For demo_admin: trial expiry date (YYYY-MM-DD) */
+  demoExpiresAt?: string;
 }
 
 export interface Booking {

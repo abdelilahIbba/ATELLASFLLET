@@ -19,6 +19,9 @@ class UserResource extends JsonResource
             'driver_license_number'      => $this->driver_license_number,
             'driver_license_expiry_date' => $this->driver_license_expiry_date,
             'role'                       => $this->role,
+            // Demo-mode fields (only populated for demo_admin users)
+            'demo_permissions'           => $this->role === 'demo_admin' ? ($this->demo_permissions ?? []) : null,
+            'demo_expires_at'            => $this->role === 'demo_admin' ? $this->demo_expires_at?->toDateString() : null,
             // KYC fields
             'status'                     => $this->status ?? 'Active',
             'kyc_status'                 => $this->kyc_status ?? 'Missing',

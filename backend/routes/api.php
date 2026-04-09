@@ -160,10 +160,12 @@ Route::middleware(['auth:sanctum', 'api.role:admin,demo_admin'])->prefix('admin'
     Route::put('/settings',  [SettingController::class, 'update']);
 
     // Demo accounts
-    Route::get('/demo',                [DemoController::class, 'index']);
-    Route::post('/demo',               [DemoController::class, 'store']);
-    Route::post('/demo/{demo}/resend', [DemoController::class, 'resend']);
-    Route::delete('/demo/{demo}',      [DemoController::class, 'destroy']);
+    Route::get('/demo',                          [DemoController::class, 'index']);
+    Route::post('/demo',                         [DemoController::class, 'store']);
+    Route::post('/demo/{demo}/resend',           [DemoController::class, 'resend']);
+    Route::post('/demo/{demo}/extend',           [DemoController::class, 'extend']);
+    Route::put('/demo/{demo}/permissions',       [DemoController::class, 'updatePermissions']);
+    Route::delete('/demo/{demo}',                [DemoController::class, 'destroy']);
 
     // Pickup / drop-off points CRUD
     Route::get('/pickup-points',                              [PickupPointController::class, 'adminIndex']);

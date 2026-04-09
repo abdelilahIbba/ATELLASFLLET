@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 
 class DemoController extends Controller
 {
-    // ── GET /api/admin/demo ──────────────────────────────────────────────────
+    // -- GET /api/admin/demo
     public function index(): JsonResponse
     {
         $demos = DemoAccount::orderByDesc('created_at')
@@ -24,80 +24,102 @@ class DemoController extends Controller
         return response()->json(['data' => $demos]);
     }
 
-    // ── POST /api/admin/demo ─────────────────────────────────────────────────
+    // -- POST /api/admin/demo
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'client_name' => 'required|string|max:255',
-            'email'       => 'required|email|max:255',
-            'duration'    => 'required|integer|min:1|max:365',
+            'client_name'   => 'required|string|max:255',
+            'email'         => 'required|email|max:255',
+            'duration'      => 'required|integer|min:1|max:365',
+            'permissions'   => 'nullable|array',
+            'permissions.*' => 'string',
         ]);
 
-        $days      = (int) $validated['duration'];
-        $accessKey = 'demo_' . Str::lower(Str::random(6));
+        $days        = (int) $validated['duration'];
+        $accessKey   = 'demo_' . Str::lower(Str::random(6));
+        $permissions = $validated['permissions'] ?? DemoAccount::defaultPermissions();
 
         $plan = match (true) {
-            $days === 14 => '2 Weeks',
-            $days === 30 => '1 Month',
-            $days === 7  => '7 Days',
-            default      => 'Custom (' . $days . ' j)',
+            $days === 3  => '3 Jours',
+            $days === 7  => '7 Jours',
+            $days === 14 => '2 Semaines',
+            $days === 30 => '1 Mois',
+            default      => 'Personnalise (' . $days . ' j)',
         };
+
+        $expiresAt = now()->addDays($days)->toDateString();
 
         $demo = DemoAccount::create([
             'client_name' => $validated['client_name'],
             'email'       => $validated['email'],
             'plan'        => $plan,
-            'expires_at'  => now()->addDays($days)->toDateString(),
+            'expires_at'  => $expiresAt,
             'access_key'  => $accessKey,
+            'permissions' => $permissions,
         ]);
 
-        // Create / update a User so the demo agency can log into the admin dashboard
         $user = User::firstOrNew(['email' => $validated['email']]);
-        $user->name       = $validated['client_name'];
-        $user->password   = Hash::make($accessKey);
-        $user->status     = 'Active';
-        $user->kyc_status = 'Verified';
-        $user->role       = 'demo_admin'; // demo agencies get limited admin access
+        $user->name             = $validated['client_name'];
+        $user->password         = Hash::make($accessKey);
+        $user->status           = 'Active';
+        $user->kyc_status       = 'Verified';
+        $user->role             = 'demo_admin';
+        $user->demo_permissions = $permissions;
+        $user->demo_expires_at  = $expiresAt;
         $user->save();
 
         $emailSent = $this->sendEmail($demo);
 
         return response()->json([
-            'message'    => $emailSent
-                ? 'Compte démo créé — identifiants envoyés par email.'
-                : 'Compte démo créé — email non envoyé (vérifier RESEND_KEY dans .env).',
+            'message'    => $emailSent ? 'Compte demo cree.' : 'Compte demo cree — email non envoye.',
             'email_sent' => $emailSent,
             'data'       => $demo->toFrontend(),
         ], 201);
     }
 
-    // ── POST /api/admin/demo/{demo}/resend ───────────────────────────────────
+    // -- POST /api/admin/demo/{demo}/resend
     public function resend(DemoAccount $demo): JsonResponse
     {
         $emailSent = $this->sendEmail($demo);
-
         return response()->json([
-            'message'    => $emailSent
-                ? 'Email renvoyé avec succès.'
-                : 'Email non envoyé (vérifier RESEND_KEY dans .env).',
+            'message'    => $emailSent ? 'Email renvoye.' : 'Email non envoye.',
             'email_sent' => $emailSent,
         ]);
     }
 
-    // ── DELETE /api/admin/demo/{demo} ────────────────────────────────────────
+    // -- POST /api/admin/demo/{demo}/extend
+    public function extend(Request $request, DemoAccount $demo): JsonResponse
+    {
+        $validated = $request->validate(['days' => 'required|integer|min:1|max:365']);
+        $days      = (int) $validated['days'];
+        $base      = $demo->expires_at->isPast() ? now() : $demo->expires_at;
+        $newExpiry = $base->addDays($days)->toDateString();
+
+        $demo->update(['expires_at' => $newExpiry]);
+        User::where('email', $demo->email)->where('role', 'demo_admin')->update(['demo_expires_at' => $newExpiry]);
+
+        return response()->json(['message' => "Periode etendue de {$days} jour(s).", 'data' => $demo->fresh()->toFrontend()]);
+    }
+
+    // -- PUT /api/admin/demo/{demo}/permissions
+    public function updatePermissions(Request $request, DemoAccount $demo): JsonResponse
+    {
+        $validated = $request->validate(['permissions' => 'required|array|min:1', 'permissions.*' => 'string']);
+        $permissions = $validated['permissions'];
+
+        $demo->update(['permissions' => $permissions]);
+        User::where('email', $demo->email)->where('role', 'demo_admin')->update(['demo_permissions' => json_encode($permissions)]);
+
+        return response()->json(['message' => 'Permissions mises a jour.', 'data' => $demo->fresh()->toFrontend()]);
+    }
+
+    // -- DELETE /api/admin/demo/{demo}
     public function destroy(DemoAccount $demo): JsonResponse
     {
         $demo->delete();
-
-        return response()->json(['message' => 'Compte démo supprimé.']);
+        return response()->json(['message' => 'Compte demo supprime.']);
     }
 
-    // ── Private helpers ──────────────────────────────────────────────────────
-
-    /**
-     * Send demo credentials email via Resend (falls back silently if not configured).
-     * Returns true on success, false on failure.
-     */
     private function sendEmail(DemoAccount $demo): bool
     {
         $fromAddress = config('mail.demo_from.address');
@@ -107,14 +129,12 @@ class DemoController extends Controller
         try {
             Mail::to($demo->email, $demo->client_name)
                 ->send(new DemoCredentialsMail($demo, $loginUrl, $fromAddress, $fromName));
-
             return true;
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('[DemoController] Email failed: ' . $e->getMessage(), [
                 'demo_id' => $demo->id,
                 'email'   => $demo->email,
             ]);
-
             return false;
         }
     }

@@ -399,19 +399,27 @@ export interface DemoAccountResource {
   email: string;
   plan: string;
   expiresAt: string;
+  daysLeft: number;
   accessKey: string;
   status: 'Active' | 'Expired';
+  permissions: string[];
 }
 
 export const adminDemoApi = {
   /** GET /api/admin/demo — list all demo accounts */
   list: () => api.get<{ data: DemoAccountResource[] }>('/admin/demo'),
   /** POST /api/admin/demo — create + auto-send credentials email */
-  create: (payload: { client_name: string; email: string; duration: number }) =>
+  create: (payload: { client_name: string; email: string; duration: number; permissions?: string[] }) =>
     api.post<{ message: string; data: DemoAccountResource }>('/admin/demo', payload),
   /** POST /api/admin/demo/{id}/resend — resend credentials email */
   resend: (id: number | string) =>
     api.post<{ message: string }>(`/admin/demo/${id}/resend`, {}),
+  /** POST /api/admin/demo/{id}/extend — extend by N days */
+  extend: (id: number | string, days: number) =>
+    api.post<{ message: string; data: DemoAccountResource }>(`/admin/demo/${id}/extend`, { days }),
+  /** PUT /api/admin/demo/{id}/permissions — update allowed tabs */
+  updatePermissions: (id: number | string, permissions: string[]) =>
+    api.put<{ message: string; data: DemoAccountResource }>(`/admin/demo/${id}/permissions`, { permissions }),
   /** DELETE /api/admin/demo/{id} */
   delete: (id: number | string) => api.delete<void>(`/admin/demo/${id}`),
 };

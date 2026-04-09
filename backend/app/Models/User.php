@@ -53,7 +53,9 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'password'          => 'hashed',
+            'demo_permissions'  => 'array',
+            'demo_expires_at'   => 'date',
         ];
     }
     public function hasRole($roles): bool
