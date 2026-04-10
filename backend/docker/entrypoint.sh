@@ -16,6 +16,9 @@ fi
 # ── Default SESSION_DRIVER to cookie (no DB table needed) ─────────────
 export SESSION_DRIVER=${SESSION_DRIVER:-cookie}
 
+# ── Default MAIL_MAILER to smtp in production ─────────────────────────
+export MAIL_MAILER=${MAIL_MAILER:-smtp}
+
 # ── Ensure storage directories exist and are writable ─────────────────
 echo "[*] Preparing storage directories..."
 mkdir -p /var/www/html/storage/framework/{sessions,views,cache}
