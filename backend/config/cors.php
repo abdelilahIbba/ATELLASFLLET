@@ -21,7 +21,9 @@ return [
 
     'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:5173,http://localhost:8080')),
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        'https://atellasfleetdeploy-.*\.vercel\.app',
+    ],
 
     'allowed_headers' => ['*'],
 
