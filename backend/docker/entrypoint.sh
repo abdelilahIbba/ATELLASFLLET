@@ -6,6 +6,16 @@ set -e
 
 echo "[*] Starting Laravel application initialization..."
 
+# ── Ensure APP_KEY is set (required for cookie/session encryption) ────
+if [ -z "$APP_KEY" ]; then
+    echo "[WARN] APP_KEY not set — generating one now..."
+    export APP_KEY=$(php artisan key:generate --show)
+    echo "[OK] APP_KEY generated: ${APP_KEY:0:12}..."
+fi
+
+# ── Default SESSION_DRIVER to cookie (no DB table needed) ─────────────
+export SESSION_DRIVER=${SESSION_DRIVER:-cookie}
+
 # Wait for database to be ready
 echo "[*] Waiting for database connection..."
 until php artisan db:show 2>/dev/null; do
