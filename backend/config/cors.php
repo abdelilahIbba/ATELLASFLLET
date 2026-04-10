@@ -23,6 +23,7 @@ return [
 
     'allowed_origins_patterns' => [
         '#^https://atellasfleetdeploy-.*\.vercel\.app$#',
+        '#^https://atellasfllet(-[a-z0-9]+)?\.vercel\.app$#',
     ],
 
     'allowed_headers' => ['*'],
