@@ -16,8 +16,10 @@ fi
 # ── Default SESSION_DRIVER to cookie (no DB table needed) ─────────────
 export SESSION_DRIVER=${SESSION_DRIVER:-cookie}
 
-# ── Default MAIL_MAILER to smtp in production ─────────────────────────
-export MAIL_MAILER=${MAIL_MAILER:-smtp}
+# ── Force MAIL_MAILER to smtp unless explicitly set to something other than log ──
+if [ -z "$MAIL_MAILER" ] || [ "$MAIL_MAILER" = "log" ]; then
+    export MAIL_MAILER=smtp
+fi
 
 # ── Ensure storage directories exist and are writable ─────────────────
 echo "[*] Preparing storage directories..."
