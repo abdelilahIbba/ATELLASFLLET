@@ -54,6 +54,37 @@ Route::post('/contact',       [ContactController::class, 'store']);
 // Pickup / drop-off points (public — clients read during booking)
 Route::get('/pickup-points',  [PickupPointController::class, 'index']);
 
+// ─── Temporary diagnostic (remove after fixing 500) ─────────────────
+Route::get('/diag', function () {
+    try {
+        $key = config('app.key');
+        $driver = config('session.driver');
+        $conn = config('session.connection');
+        $dbDriver = config('database.default');
+
+        // Try rendering the health view (same as /up)
+        $html = view('welcome')->render();
+
+        return response()->json([
+            'app_key_set'   => !empty($key),
+            'app_key_len'   => strlen((string) $key),
+            'session_driver' => $driver,
+            'session_conn'  => $conn,
+            'db_driver'     => $dbDriver,
+            'view_ok'       => true,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'error'   => $e->getMessage(),
+            'file'    => $e->getFile(),
+            'line'    => $e->getLine(),
+            'class'   => get_class($e),
+            'app_key_set'   => !empty(config('app.key')),
+            'session_driver' => config('session.driver'),
+        ], 500);
+    }
+});
+
 // ─── Authenticated (any role) ────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
 
