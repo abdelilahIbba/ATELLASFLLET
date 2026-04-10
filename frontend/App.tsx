@@ -215,7 +215,6 @@ const App: React.FC = () => {
       clearToken(); // ensure no stale token on each login attempt
       const resp = await authApi.login({ email, password });
       console.log('[Auth] API response →', resp);
-      alert(`[DEBUG] API URL: ${import.meta.env.VITE_API_BASE_URL}\nResp: ${JSON.stringify(resp?.user?.role ?? resp)}`);
 
       if (!resp || !resp.user) {
         console.warn('[Auth] No resp or no user in response');
@@ -245,8 +244,6 @@ const App: React.FC = () => {
       console.log('[Auth] Login successful, navigating to admin dashboard');
       return true;
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
-      alert(`[DEBUG] Login FAILED\nAPI URL: ${import.meta.env.VITE_API_BASE_URL}\nError: ${errMsg}`);
       console.error('[Auth] login failed (exception):', err);
       return false;
     }
@@ -375,10 +372,6 @@ const App: React.FC = () => {
 
   return (
     <>
-      {/* DEBUG BANNER – remove after confirming deployment works */}
-      <div style={{position:'fixed',bottom:0,left:0,right:0,zIndex:9999,background:'#f00',color:'#fff',padding:'4px 12px',fontSize:'12px',textAlign:'center'}}>
-        BUILD v2 | API: {import.meta.env.PROD ? 'PROD' : 'DEV'} | BASE_URL: {import.meta.env.VITE_API_BASE_URL ?? 'undefined'}
-      </div>
       <div className={`min-h-screen font-sans selection:bg-brand-red selection:text-white transition-colors duration-700 ${isDark ? 'bg-gray-950 text-white' : 'bg-white text-slate-900'}`}>
         <Routes>
           <Route path="/" element={homePage} />

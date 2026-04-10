@@ -8,13 +8,11 @@ use App\Models\PickupPoint;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class BookingPlanningSeeder extends Seeder
 {
     public function run(): void
     {
-        $driver = DB::getDriverName();
         $today = Carbon::today();
 
         $clients = User::whereIn('email', [
@@ -117,12 +115,6 @@ class BookingPlanningSeeder extends Seeder
             $days = max(1, Carbon::parse($r['start'])->diffInDays(Carbon::parse($r['end'])) + 1);
             $amount = $days * (float) $car->daily_price;
 
-            $status = $r['status'];
-            // PostgreSQL constraint may still allow only: pending, confirmed, cancelled.
-            if ($driver === 'pgsql' && in_array($status, ['active', 'completed'], true)) {
-                $status = 'confirmed';
-            }
-
             Booking::updateOrCreate(
                 [
                     'user_id'    => $client->id,
@@ -132,7 +124,7 @@ class BookingPlanningSeeder extends Seeder
                 ],
                 [
                     'unit_number'       => $unit($car, $r['unit']),
-                    'status'            => $status,
+                    'status'            => $r['status'],
                     'payment_status'    => $r['payment'],
                     'amount'            => $amount,
                     'notes'             => $r['notes'],
