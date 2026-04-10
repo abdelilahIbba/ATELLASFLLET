@@ -59,19 +59,22 @@ Route::get('/diag', function () {
     try {
         $key = config('app.key');
         $driver = config('session.driver');
-        $conn = config('session.connection');
         $dbDriver = config('database.default');
+        $viewPath = config('view.compiled');
+        $viewPathExists = is_dir($viewPath);
 
-        // Try rendering the health view (same as /up)
-        $html = view('welcome')->render();
+        // Try hitting / internally
+        $response = app()->handle(\Illuminate\Http\Request::create('/', 'GET'));
+        $statusCode = $response->getStatusCode();
 
         return response()->json([
-            'app_key_set'   => !empty($key),
-            'app_key_len'   => strlen((string) $key),
-            'session_driver' => $driver,
-            'session_conn'  => $conn,
-            'db_driver'     => $dbDriver,
-            'view_ok'       => true,
+            'app_key_set'      => !empty($key),
+            'session_driver'   => $driver,
+            'db_driver'        => $dbDriver,
+            'view_compiled'    => $viewPath,
+            'view_path_exists' => $viewPathExists,
+            'home_status'      => $statusCode,
+            'home_ok'          => $statusCode === 200,
         ]);
     } catch (\Throwable $e) {
         return response()->json([
@@ -79,8 +82,9 @@ Route::get('/diag', function () {
             'file'    => $e->getFile(),
             'line'    => $e->getLine(),
             'class'   => get_class($e),
-            'app_key_set'   => !empty(config('app.key')),
-            'session_driver' => config('session.driver'),
+            'app_key_set'      => !empty(config('app.key')),
+            'session_driver'   => config('session.driver'),
+            'view_compiled'    => config('view.compiled'),
         ], 500);
     }
 });
