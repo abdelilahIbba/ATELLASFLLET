@@ -215,6 +215,7 @@ const App: React.FC = () => {
       clearToken(); // ensure no stale token on each login attempt
       const resp = await authApi.login({ email, password });
       console.log('[Auth] API response →', resp);
+      alert(`[DEBUG] API URL: ${import.meta.env.VITE_API_BASE_URL}\nResp: ${JSON.stringify(resp?.user?.role ?? resp)}`);
 
       if (!resp || !resp.user) {
         console.warn('[Auth] No resp or no user in response');
@@ -244,6 +245,8 @@ const App: React.FC = () => {
       console.log('[Auth] Login successful, navigating to admin dashboard');
       return true;
     } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      alert(`[DEBUG] Login FAILED\nAPI URL: ${import.meta.env.VITE_API_BASE_URL}\nError: ${errMsg}`);
       console.error('[Auth] login failed (exception):', err);
       return false;
     }
