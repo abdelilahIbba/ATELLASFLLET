@@ -75,6 +75,13 @@ Route::get('/diag', function () {
             'view_path_exists' => $viewPathExists,
             'home_status'      => $statusCode,
             'home_ok'          => $statusCode === 200,
+            'mail_mailer'      => config('mail.default'),
+            'mail_host'        => config('mail.mailers.smtp.host'),
+            'mail_port'        => config('mail.mailers.smtp.port'),
+            'mail_username'    => config('mail.mailers.smtp.username') ? 'SET' : 'NOT SET',
+            'mail_password'    => config('mail.mailers.smtp.password') ? 'SET' : 'NOT SET',
+            'mail_from'        => config('mail.from.address'),
+            'demo_from'        => config('mail.demo_from.address'),
         ]);
     } catch (\Throwable $e) {
         return response()->json([
