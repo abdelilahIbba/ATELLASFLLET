@@ -17,11 +17,14 @@ return new class extends Migration
         });
 
         // Extend the status enum to include active and completed
-        // MODIFY COLUMN is MySQL-only; SQLite (used in tests) stores as TEXT so no change needed
-        if (DB::getDriverName() === 'mysql') {
+        $driver = DB::getDriverName();
+        if ($driver === 'mysql') {
             DB::statement("ALTER TABLE bookings MODIFY COLUMN status ENUM(
                 'pending','confirmed','active','completed','cancelled'
             ) NOT NULL DEFAULT 'pending'");
+        } elseif ($driver === 'pgsql') {
+            DB::statement("ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check");
+            DB::statement("ALTER TABLE bookings ADD CONSTRAINT bookings_status_check CHECK (status::text = ANY (ARRAY['pending','confirmed','active','completed','cancelled']))");
         }
     }
 
@@ -31,10 +34,14 @@ return new class extends Migration
             $table->dropColumn(['payment_status', 'notes']);
         });
 
-        if (DB::getDriverName() === 'mysql') {
+        $driver = DB::getDriverName();
+        if ($driver === 'mysql') {
             DB::statement("ALTER TABLE bookings MODIFY COLUMN status ENUM(
                 'pending','confirmed','cancelled'
             ) NOT NULL DEFAULT 'pending'");
+        } elseif ($driver === 'pgsql') {
+            DB::statement("ALTER TABLE bookings DROP CONSTRAINT IF EXISTS bookings_status_check");
+            DB::statement("ALTER TABLE bookings ADD CONSTRAINT bookings_status_check CHECK (status::text = ANY (ARRAY['pending','confirmed','cancelled']))");
         }
     }
 };
