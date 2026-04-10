@@ -111,6 +111,7 @@ const App: React.FC = () => {
     const token = getToken();
 
     if (!token) {
+      setCurrentUser(null);
       setIsAuthReady(true);
       return;
     }
