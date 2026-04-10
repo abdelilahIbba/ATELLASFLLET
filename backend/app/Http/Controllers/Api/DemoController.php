@@ -141,7 +141,8 @@ class DemoController extends Controller
     {
         $fromAddress = config('mail.demo_from.address');
         $fromName    = config('mail.demo_from.name');
-        $loginUrl    = rtrim(config('app.url'), '/') . '/login';
+        $frontendUrl = rtrim(env('FRONTEND_URL', config('app.url')), '/');
+        $loginUrl    = $frontendUrl;
 
         try {
             Mail::to($demo->email, $demo->client_name)
