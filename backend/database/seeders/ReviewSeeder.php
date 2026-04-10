@@ -54,10 +54,18 @@ class ReviewSeeder extends Seeder
         ];
 
         foreach ($reviews as $i => $data) {
-            Review::create(array_merge($data, [
+            $payload = array_merge($data, [
                 'user_id' => $clients[$i % count($clients)] ?? null,
                 'car_id'  => $cars[$i % count($cars)]       ?? null,
-            ]));
+            ]);
+
+            Review::updateOrCreate(
+                [
+                    'client_name' => $payload['client_name'],
+                    'comment'     => $payload['comment'],
+                ],
+                $payload
+            );
         }
     }
 }

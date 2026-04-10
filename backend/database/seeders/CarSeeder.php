@@ -117,7 +117,10 @@ class CarSeeder extends Seeder
         ];
 
         foreach ($cars as $car) {
-            Car::create($car);
+            Car::updateOrCreate(
+                ['plate' => $car['plate']],
+                $car
+            );
         }
     }
 }

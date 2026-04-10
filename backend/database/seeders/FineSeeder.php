@@ -53,9 +53,18 @@ class FineSeeder extends Seeder
         ];
 
         foreach ($fines as $i => $fine) {
-            Fine::create(array_merge($fine, [
+            $payload = array_merge($fine, [
                 'car_id' => $cars[$i % $cars->count()]->id,
-            ]));
+            ]);
+
+            Fine::updateOrCreate(
+                [
+                    'car_id' => $payload['car_id'],
+                    'date'   => $payload['date'],
+                    'type'   => $payload['type'],
+                ],
+                $payload
+            );
         }
     }
 }

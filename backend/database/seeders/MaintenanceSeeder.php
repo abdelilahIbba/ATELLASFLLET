@@ -60,9 +60,18 @@ class MaintenanceSeeder extends Seeder
         ];
 
         foreach ($logs as $i => $log) {
-            MaintenanceLog::create(array_merge($log, [
+            $payload = array_merge($log, [
                 'car_id' => $cars[$i % $cars->count()]->id,
-            ]));
+            ]);
+
+            MaintenanceLog::updateOrCreate(
+                [
+                    'car_id' => $payload['car_id'],
+                    'type'   => $payload['type'],
+                    'date'   => $payload['date'],
+                ],
+                $payload
+            );
         }
     }
 }
