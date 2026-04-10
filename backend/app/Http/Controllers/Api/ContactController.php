@@ -167,19 +167,28 @@ class ContactController extends Controller
         ]);
 
         // ── Dispatch email to the client (async, non-blocking) ──
-        $emailEnabled = Setting::get('notifications_reply_email_enabled', true);
+        $emailSent = false;
+        try {
+            $emailEnabled = Setting::get('notifications_reply_email_enabled', true);
 
-        if ($emailEnabled) {
-            $fromAddress = Setting::get('notifications_mail_from_address', config('mail.from.address'));
-            $fromName    = Setting::get('notifications_mail_from_name',    config('mail.from.name'));
+            if ($emailEnabled) {
+                $fromAddress = Setting::get('notifications_mail_from_address', config('mail.from.address'));
+                $fromName    = Setting::get('notifications_mail_from_name',    config('mail.from.name'));
 
-            Mail::to($contact->email, $contact->name)
-                ->queue(new AdminReplyMail($contact->fresh(), $fromAddress, $fromName));
+                Mail::to($contact->email, $contact->name)
+                    ->send(new AdminReplyMail($contact->fresh(), $fromAddress, $fromName));
+                $emailSent = true;
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Admin reply email failed', [
+                'contact_id' => $contact->id,
+                'error'      => $e->getMessage(),
+            ]);
         }
 
         return response()->json([
-            'message'      => 'Réponse envoyée' . ($emailEnabled ? ' et email expédié.' : '.'),
-            'email_sent'   => (bool) $emailEnabled,
+            'message'      => 'Réponse envoyée' . ($emailSent ? ' et email expédié.' : '.'),
+            'email_sent'   => $emailSent,
             'contact'      => new ContactResource($contact->fresh()),
         ]);
     }

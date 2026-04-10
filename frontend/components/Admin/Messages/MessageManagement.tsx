@@ -37,7 +37,7 @@ const TYPE_META = {
 const relativeTime = (iso: string): string => {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "Ã€ l'instant";
+  if (m < 1) return "À l'instant";
   if (m < 60) return `Il y a ${m} min`;
   const h = Math.floor(m / 60);
   if (h < 24) return `Il y a ${h}h`;
@@ -47,7 +47,7 @@ const relativeTime = (iso: string): string => {
 };
 
 const FILTER_LABELS: Record<string, string> = {
-  All: 'Tous', Unread: 'Non lus', Emergency: 'Urgence', Support: 'Assistance', Replied: 'RÃ©pondus',
+  All: 'Tous', Unread: 'Non lus', Emergency: 'Urgence', Support: 'Assistance', Replied: 'Répondus',
 };
 
 // â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -172,7 +172,7 @@ const MessageManagement: React.FC<MessageManagementProps> = ({
 
   const handleDelete = async (id: string) => {
     if (isDeleting) return;
-    if (!confirm('Supprimer ce message dÃ©finitivement ?')) return;
+    if (!confirm('Supprimer ce message définitivement ?')) return;
     setIsDeleting(true);
     try {
       await onDelete(id);
@@ -191,7 +191,7 @@ const MessageManagement: React.FC<MessageManagementProps> = ({
       {/* â”€â”€ Header â”€â”€ */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-brand-navy dark:text-white font-space">BoÃ®te de RÃ©ception</h2>
+          <h2 className="text-2xl font-bold text-brand-navy dark:text-white font-space">Boîte de Réception</h2>
           {unreadCount > 0 && (
             <span className="px-2 py-0.5 bg-brand-red text-white text-xs font-bold rounded-full">{unreadCount}</span>
           )}
@@ -244,7 +244,7 @@ const MessageManagement: React.FC<MessageManagementProps> = ({
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input
           type="text"
-          placeholder="Rechercher par nom, email, sujetâ€¦"
+          placeholder="Rechercher par nom, email, sujet…"
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-10 py-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue transition-colors"
@@ -264,12 +264,12 @@ const MessageManagement: React.FC<MessageManagementProps> = ({
           {isLoading ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-400 p-8">
               <Loader2 className="w-8 h-8 animate-spin" />
-              <span className="text-sm">Chargementâ€¦</span>
+              <span className="text-sm">Chargement…</span>
             </div>
           ) : groups.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 text-slate-400 p-8">
               <Inbox className="w-12 h-12 opacity-20" />
-              <p className="text-sm font-medium">Aucun message trouvÃ©</p>
+              <p className="text-sm font-medium">Aucun message trouvé</p>
             </div>
           ) : (
             <div className="overflow-y-auto flex-1 divide-y divide-slate-100 dark:divide-white/5">
@@ -325,7 +325,7 @@ const MessageManagement: React.FC<MessageManagementProps> = ({
                         )}
                         {group.messages.every(m => !!m.replyText) && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                            <CheckCircle2 className="w-2.5 h-2.5" /> RÃ©pondu
+                            <CheckCircle2 className="w-2.5 h-2.5" /> Répondu
                           </span>
                         )}
                       </div>
@@ -348,7 +348,7 @@ const MessageManagement: React.FC<MessageManagementProps> = ({
           {!selectedGroup ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-slate-300 dark:text-slate-600 p-12">
               <MessageSquare className="w-16 h-16 opacity-30" />
-              <p className="text-sm font-medium">SÃ©lectionnez une conversation pour la lire</p>
+              <p className="text-sm font-medium">Sélectionnez une conversation pour la lire</p>
             </div>
           ) : (
             <>
@@ -433,7 +433,7 @@ const MessageManagement: React.FC<MessageManagementProps> = ({
                               <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">{msg.replyText}</p>
                             </div>
                             <div className="flex items-center justify-end gap-1 mt-1.5 text-xs text-green-600 dark:text-green-400">
-                              <CheckCircle2 className="w-3 h-3" /> RÃ©ponse envoyÃ©e
+                              <CheckCircle2 className="w-3 h-3" /> Réponse envoyée
                             </div>
                           </div>
                         </div>
@@ -444,7 +444,7 @@ const MessageManagement: React.FC<MessageManagementProps> = ({
 
                 {sendDone && (
                   <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
-                    <CheckCircle2 className="w-4 h-4" /> RÃ©ponse envoyÃ©e avec succÃ¨s
+                    <CheckCircle2 className="w-4 h-4" /> Réponse envoyée avec succès
                   </div>
                 )}
               </div>
@@ -453,19 +453,19 @@ const MessageManagement: React.FC<MessageManagementProps> = ({
               <div className="p-5 border-t border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
                 <div className="flex items-center gap-2 mb-2">
                   <Reply className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">RÃ©pondre Ã  {selectedGroup.sender}</span>
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Répondre à {selectedGroup.sender}</span>
                 </div>
                 <textarea
                   ref={replyRef}
                   value={replyText}
                   onChange={e => setReplyText(e.target.value)}
-                  placeholder="Tapez votre rÃ©ponseâ€¦"
+                  placeholder="Tapez votre réponse…"
                   rows={4}
                   onKeyDown={e => { if (e.ctrlKey && e.key === 'Enter') handleReply(); }}
                   className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue resize-none transition-colors"
                 />
                 <div className="flex items-center justify-between mt-3">
-                  <span className="text-xs text-slate-400">{replyText.length} / 5000 Â· Ctrl+EntrÃ©e pour envoyer</span>
+                  <span className="text-xs text-slate-400">{replyText.length} / 5000 · Ctrl+Entrée pour envoyer</span>
                   <div className="flex gap-2">
                     {replyText && (
                       <button onClick={() => setReplyText('')} className="px-3 py-2 text-xs font-bold text-slate-500 hover:text-brand-navy dark:hover:text-white transition-colors">
@@ -477,7 +477,7 @@ const MessageManagement: React.FC<MessageManagementProps> = ({
                       disabled={!replyText.trim() || isSending}
                       className="flex items-center gap-2 px-5 py-2 bg-brand-blue text-white rounded-xl text-xs font-bold uppercase hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isSending ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Envoiâ€¦</> : <><Send className="w-3.5 h-3.5" /> Envoyer</>}
+                      {isSending ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Envoi…</> : <><Send className="w-3.5 h-3.5" /> Envoyer</>}
                     </button>
                   </div>
                 </div>

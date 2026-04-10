@@ -18,7 +18,7 @@ const subjectToType = (subject: string): 'Support' | 'Inquiry' | 'Emergency' => 
 const relativeTime = (iso: string): string => {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "Ã€ l'instant";
+  if (m < 1) return "À l'instant";
   if (m < 60) return `Il y a ${m} min`;
   const h = Math.floor(m / 60);
   if (h < 24) return `Il y a ${h}h`;
@@ -62,7 +62,7 @@ interface ContactPageProps {
 const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginClick, onNavigate, onLogout, currentUser }) => {
 
   // â”€â”€ Guest form state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const [formState, setFormState] = useState({ name: '', email: '', subject: 'Demande de RÃ©servation', message: '' });
+  const [formState, setFormState] = useState({ name: '', email: '', subject: 'Demande de Réservation', message: '' });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -71,7 +71,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
   const [thread, setThread] = useState<ThreadItem[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
   const [threadError, setThreadError] = useState<string | null>(null);
-  const [newSubject, setNewSubject] = useState('Demande de RÃ©servation');
+  const [newSubject, setNewSubject] = useState('Demande de Réservation');
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -97,7 +97,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
         }));
         setThread(items.reverse()); // oldest first for chat order
       })
-      .catch(() => setThreadError("Impossible de charger votre historique. Veuillez rÃ©essayer."))
+      .catch(() => setThreadError("Impossible de charger votre historique. Veuillez réessayer."))
       .finally(() => setThreadLoading(false));
   }, [currentUser]);
 
@@ -179,7 +179,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
       });
       setIsSubmitted(true);
     } catch (err: any) {
-      setSubmitError(err?.message ?? 'Une erreur est survenue. Veuillez rÃ©essayer.');
+      setSubmitError(err?.message ?? 'Une erreur est survenue. Veuillez réessayer.');
     } finally {
       setIsSubmitting(false);
     }
@@ -449,7 +449,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
           <div className="text-center mb-16">
             <motion.span initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="text-brand-teal font-bold tracking-[0.2em] text-xs uppercase mb-4 block">
-              {currentUser ? 'Votre Espace Personnel' : 'ConnectivitÃ© Mondiale'}
+              {currentUser ? 'Votre Espace Personnel' : 'Connectivité Mondiale'}
             </motion.span>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               className="text-5xl md:text-6xl font-bold text-brand-navy dark:text-white font-space mb-6">
@@ -458,8 +458,8 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
               className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
               {currentUser
-                ? `Bonjour ${currentUser.firstName}. Retrouvez ici l'historique de vos Ã©changes avec notre Ã©quipe et envoyez de nouveaux messages.`
-                : "Notre Ã©quipe de conciergerie est disponible 24/7 pour vous aider avec vos rÃ©servations, demandes concernant la flotte et arrangements de voyage sur mesure."}
+                ? `Bonjour ${currentUser.firstName}. Retrouvez ici l'historique de vos échanges avec notre équipe et envoyez de nouveaux messages.`
+                : "Notre équipe de conciergerie est disponible 24/7 pour vous aider avec vos réservations, demandes concernant la flotte et arrangements de voyage sur mesure."}
             </motion.p>
           </div>
 
@@ -505,7 +505,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
                           .finally(() => setThreadLoading(false));
                       }}
                       className="p-2 rounded-lg text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 transition-colors"
-                      title="RafraÃ®chir"
+                      title="Rafraîchir"
                     >
                       <RefreshCw className={`w-4 h-4 ${threadLoading ? 'animate-spin' : ''}`} />
                     </button>
@@ -517,7 +517,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
                     {threadLoading && (
                       <div className="flex items-center justify-center py-16 text-slate-400">
                         <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                        <span className="text-sm">Chargementâ€¦</span>
+                        <span className="text-sm">Chargement…</span>
                       </div>
                     )}
 
@@ -531,7 +531,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
                       <div className="flex flex-col items-center justify-center py-16 text-center text-slate-400">
                         <MessageSquare className="w-10 h-10 mb-3 opacity-30" />
                         <p className="text-sm font-medium">Aucun message pour l'instant.</p>
-                        <p className="text-xs mt-1">Envoyez votre premiÃ¨re demande ci-dessous.</p>
+                        <p className="text-xs mt-1">Envoyez votre première demande ci-dessous.</p>
                       </div>
                     )}
 
@@ -612,14 +612,14 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAuthSend(e as any); }}
-                        placeholder="Ã‰crivez votre messageâ€¦ (Ctrl+EntrÃ©e pour envoyer)"
+                        placeholder="Écrivez votre message… (Ctrl+Entrée pour envoyer)"
                         className="flex-grow bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue transition-all resize-none"
                       />
                       <button
                         type="submit"
                         disabled={sending || !newMessage.trim()}
                         className="shrink-0 h-[58px] w-12 flex items-center justify-center bg-brand-navy dark:bg-brand-blue text-white rounded-xl hover:opacity-90 transition-all disabled:opacity-40 shadow"
-                        title="Envoyer (Ctrl+EntrÃ©e)"
+                        title="Envoyer (Ctrl+Entrée)"
                       >
                         {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       </button>
@@ -640,7 +640,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
                       </div>
                       <h3 className="text-2xl font-bold text-brand-navy dark:text-white mb-2">Message Transmis</h3>
                       <p className="text-slate-500 dark:text-slate-400 max-w-xs mx-auto mb-8">
-                        Notre Ã©quipe a bien reÃ§u votre demande. Un concierge vous rÃ©pondra par canal sÃ©curisÃ© dans les 15 minutes.
+                        Notre équipe a bien reçu votre demande. Un concierge vous répondra par canal sécurisé dans les 15 minutes.
                       </p>
                       <button onClick={() => setIsSubmitted(false)}
                         className="text-sm font-bold text-brand-blue hover:text-brand-navy dark:hover:text-white transition-colors">
@@ -706,7 +706,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
 
                       <button type="submit" disabled={isSubmitting}
                         className="w-full py-4 bg-brand-navy dark:bg-white text-white dark:text-brand-navy rounded-xl font-bold text-sm uppercase tracking-wider hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-lg group">
-                        {isSubmitting ? 'Transmissionâ€¦' : (
+                        {isSubmitting ? 'Transmission…' : (
                           <>Envoyer Message <Send className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /></>
                         )}
                       </button>
@@ -725,7 +725,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
               className="flex flex-col justify-center">
               <div className="mb-12">
                 <h3 className="text-2xl font-bold text-brand-navy dark:text-white font-space mb-8 flex items-center gap-3">
-                  <Globe className="w-6 h-6 text-brand-teal" /> SiÃ¨ge Mondial
+                  <Globe className="w-6 h-6 text-brand-teal" /> Siège Mondial
                 </h3>
                 <div className="space-y-6">
                   <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-brand-blue/30 transition-colors group">
@@ -759,7 +759,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
               </div>
 
               <div>
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Hubs RÃ©gionaux</h4>
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Hubs Régionaux</h4>
                 <div className="grid grid-cols-2 gap-4">
                   {LOCATIONS.slice(1, 5).map((loc, idx) => (
                     <div key={idx} className="flex items-center gap-3">
