@@ -375,6 +375,10 @@ const App: React.FC = () => {
 
   return (
     <>
+      {/* DEBUG BANNER – remove after confirming deployment works */}
+      <div style={{position:'fixed',bottom:0,left:0,right:0,zIndex:9999,background:'#f00',color:'#fff',padding:'4px 12px',fontSize:'12px',textAlign:'center'}}>
+        BUILD v2 | API: {import.meta.env.PROD ? 'PROD' : 'DEV'} | BASE_URL: {import.meta.env.VITE_API_BASE_URL ?? 'undefined'}
+      </div>
       <div className={`min-h-screen font-sans selection:bg-brand-red selection:text-white transition-colors duration-700 ${isDark ? 'bg-gray-950 text-white' : 'bg-white text-slate-900'}`}>
         <Routes>
           <Route path="/" element={homePage} />

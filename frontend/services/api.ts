@@ -11,7 +11,9 @@
 // ---------------------------------------------------------------------------
 // Base URL
 // ---------------------------------------------------------------------------
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
+const BASE_URL = import.meta.env.PROD
+  ? 'https://atellasfleet-backend.onrender.com/api'
+  : (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
 
 // ---------------------------------------------------------------------------
 // Token helpers
