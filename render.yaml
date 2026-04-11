@@ -8,5 +8,5 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     autoDeploy: false
-    healthCheckPath: /api/pickup-points
+    healthCheckPath: /health
     plan: free
