@@ -1057,10 +1057,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     fd.set('latitude',    String(selectedItem?.location?.lat ?? 33.5731));
     fd.set('longitude',   String(selectedItem?.location?.lng ?? -7.5898));
 
-    // Image: only file uploads reach the backend; URL mode is display-only
+    // Image: send file or URL to backend
     if (imageInputType === 'upload') {
       const file = raw.get('image_file') as File;
       if (file && file.size > 0) fd.set('image', file);
+    } else {
+      const imageUrl = raw.get('image')?.toString() ?? '';
+      if (imageUrl) fd.set('image_url', imageUrl);
     }
 
     // Document expiry dates (inputs are named expiry_* to avoid clash with file fields)

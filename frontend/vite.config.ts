@@ -6,11 +6,13 @@ import basicSsl from '@vitejs/plugin-basic-ssl';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
 
-    // In production builds (Vercel), point to the Render backend.
-    // In dev, the Vite proxy forwards /api to localhost:8000.
-    const apiBaseUrl = mode === 'production'
-      ? 'https://atellasfleet-backend.onrender.com/api'
-      : (env.VITE_API_BASE_URL || '/api');
+    // Use explicit env var first (allows Docker/CI to override).
+    // Fall back to mode-based default: Vercel production → Render backend, dev → proxy.
+    const apiBaseUrl =
+      process.env.VITE_API_BASE_URL ||
+      (mode === 'production'
+        ? 'https://atellasfleet-backend.onrender.com/api'
+        : (env.VITE_API_BASE_URL || '/api'));
 
     return {
       server: {

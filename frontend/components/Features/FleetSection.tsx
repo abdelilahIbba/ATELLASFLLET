@@ -1,8 +1,23 @@
-import React, { useState } from 'react';
-import { CARS } from '../../constants';
+import React, { useState, useEffect } from 'react';
+import { carsApi } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Fuel, Settings2, Users } from 'lucide-react';
 import { Car } from '../../types';
+
+const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&q=80&w=800';
+
+function apiCarToLocal(c: Record<string, any>): Car {
+  return {
+    id: String(c.id),
+    name: (c.full_name as string) ?? `${c.make ?? ''} ${c.model ?? ''}`.trim(),
+    category: (c.category as Car['category']) ?? 'Sedan',
+    pricePerDay: Number(c.daily_price ?? 0),
+    speed: 'Boîte Manuelle',
+    range: (c.fuel_type as string) ?? 'Essence',
+    image: (c.image as string) || PLACEHOLDER_IMAGE,
+    features: Array.isArray(c.features) ? c.features : [],
+  };
+}
 
 interface FleetSectionProps {
   onBook: (data: { car: Car }) => void;
@@ -13,14 +28,26 @@ interface FleetSectionProps {
 
 const FleetSection: React.FC<FleetSectionProps> = ({ onBook, maxVisible, showViewAll = false, onViewAll }) => {
   const [activeCategory, setActiveCategory] = useState('Tous');
+  const [cars, setCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
   const categories = ['Tous', 'Citadine', 'SUV', 'Berline', 'Utilitaire', 'Automatique', 'Diesel', 'Économique'];
+
+  useEffect(() => {
+    carsApi.list({ per_page: 100 })
+      .then((resp: any) => {
+        const data: Record<string, any>[] = resp.data ?? [];
+        setCars(data.map(apiCarToLocal));
+      })
+      .catch(() => setCars([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   const hasEconomyFlag = (car: Car) =>
     car.features.some(feature => /économique|consommation/i.test(feature)) || car.pricePerDay <= 360;
 
-  const filteredCars = activeCategory === 'Tous' 
-    ? CARS 
-    : CARS.filter(car => {
+  const filteredCars = activeCategory === 'Tous'
+    ? cars
+    : cars.filter(car => {
         if (['Citadine', 'SUV', 'Berline', 'Utilitaire'].includes(activeCategory)) {
           return car.category === activeCategory;
         }
@@ -73,6 +100,15 @@ const FleetSection: React.FC<FleetSectionProps> = ({ onBook, maxVisible, showVie
         </div>
 
         {/* Grid */}
+        {loading ? (
+          <div className="flex justify-center items-center py-24">
+            <div className="w-10 h-10 border-4 border-brand-blue border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : displayedCars.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-slate-500 dark:text-slate-400">
+            <p className="text-lg font-semibold">Aucun véhicule disponible pour le moment.</p>
+          </div>
+        ) : (
         <motion.div 
           layout
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
@@ -91,8 +127,9 @@ const FleetSection: React.FC<FleetSectionProps> = ({ onBook, maxVisible, showVie
                 {/* Image Background */}
                 <div className="absolute inset-0">
                   <img
-                    src={car.image}
+                    src={car.image || PLACEHOLDER_IMAGE}
                     alt={car.name}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = PLACEHOLDER_IMAGE; }}
                     className="w-full h-full object-cover opacity-90 dark:opacity-60 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 ease-out"
                   />
                   {/* Gradient Overlay */}
@@ -114,11 +151,7 @@ const FleetSection: React.FC<FleetSectionProps> = ({ onBook, maxVisible, showVie
                        Disponible immédiatement
                      </span>
                     </div>
-                    {['c3', 'c6', 'c11'].includes(car.id) && (
-                      <span className="bg-brand-red text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded">
-                        -10% longue durée
-                      </span>
-                    )}
+                    
                   </div>
 
                   {/* Bottom Info */}
@@ -164,6 +197,7 @@ const FleetSection: React.FC<FleetSectionProps> = ({ onBook, maxVisible, showVie
             ))}
           </AnimatePresence>
         </motion.div>
+        )}
 
         {showViewAll && (
           <div className="mt-10 flex justify-center">

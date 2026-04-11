@@ -21,10 +21,10 @@ class DatabaseSeeder extends Seeder
     {
         // ── Admin account ──────────────────────────────────────
         User::updateOrCreate(
-            ['email' => 'admin@admin.ma'],
+            ['email' => 'abdelilah@mail.ma'],
             [
-                'name'       => 'Admin User',
-                'password'   => Hash::make('admin@admin.ma'),
+                'name'       => 'Abdelilah',
+                'password'   => Hash::make('abdelilah@mail.ma'),
                 'role'       => 'admin',
                 'status'     => 'Active',
                 'kyc_status' => 'Verified',

@@ -7,6 +7,27 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class CarResource extends JsonResource
 {
+    /**
+     * Resolve a stored image/doc path or an external URL to an absolute URL.
+     *
+     * - If the value is already an absolute URL (http/https), return it as-is.
+     * - Otherwise treat it as a relative storage path and prepend the backend
+     *   origin so the frontend receives a fully-qualified URL regardless of
+     *   which domain it is hosted on.
+     */
+    private function resolveFileUrl(?string $path): ?string
+    {
+        if (!$path) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        return url('/storage/' . $path);
+    }
+
     public function toArray(Request $request): array
     {
         return [
@@ -20,7 +41,7 @@ class CarResource extends JsonResource
             'full_name'       => $this->full_name,
             'availability'    => $this->availability,
             'quantity'        => $this->quantity,
-            'image'           => $this->image ? '/storage/' . $this->image : null,
+            'image'           => $this->resolveFileUrl($this->image),
             'is_available'    => $this->is_available ?? ($this->availability === 'available'),
             // New vehicle fields
             'category'                => $this->category,
@@ -40,10 +61,10 @@ class CarResource extends JsonResource
             'vignette_expiry'         => $this->vignette_expiry?->toDateString(),
             'carte_grise_expiry'      => $this->carte_grise_expiry?->toDateString(),
             // Document file URLs
-            'doc_insurance'           => $this->doc_insurance        ? '/storage/' . $this->doc_insurance        : null,
-            'doc_visite_technique'    => $this->doc_visite_technique ? '/storage/' . $this->doc_visite_technique : null,
-            'doc_vignette'            => $this->doc_vignette         ? '/storage/' . $this->doc_vignette         : null,
-            'doc_carte_grise'         => $this->doc_carte_grise      ? '/storage/' . $this->doc_carte_grise      : null,
+            'doc_insurance'           => $this->resolveFileUrl($this->doc_insurance),
+            'doc_visite_technique'    => $this->resolveFileUrl($this->doc_visite_technique),
+            'doc_vignette'            => $this->resolveFileUrl($this->doc_vignette),
+            'doc_carte_grise'         => $this->resolveFileUrl($this->doc_carte_grise),
             'created_at'              => $this->created_at?->toISOString(),
             'updated_at'              => $this->updated_at?->toISOString(),
         ];

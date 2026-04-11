@@ -716,7 +716,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
 
            {selectedCar && (
              <div className="relative z-10 mt-8 rounded-xl overflow-hidden shadow-lg border border-white/10">
-                <img src={selectedCar.image} alt={selectedCar.name} className="w-full h-40 object-cover" />
+                <img src={selectedCar.image} alt={selectedCar.name} onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&q=80&w=800'; }} className="w-full h-40 object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
                    <p className="text-white font-bold text-lg">${selectedCar.pricePerDay}<span className="text-xs font-normal opacity-80">/day</span></p>
                 </div>
@@ -863,7 +863,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
                           onClick={() => handleCarSelect(car)}
                           className="p-3 rounded-xl border cursor-pointer transition-all active:scale-95 hover:shadow-md border-slate-200 dark:border-white/10 hover:border-brand-blue/40 hover:shadow-brand-blue/5"
                         >
-                          <img src={car.image} alt={car.name} className="w-full h-20 md:h-24 object-cover rounded-lg mb-2" />
+                          <img src={car.image} alt={car.name} onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&q=80&w=800'; }} className="w-full h-20 md:h-24 object-cover rounded-lg mb-2" />
                           <h4 className="font-bold text-brand-navy dark:text-white text-xs md:text-sm leading-tight">{car.name}</h4>
                           <div className="flex justify-between items-center mt-1.5">
                             <span className="text-[10px] text-slate-500">{car.category}</span>
@@ -890,7 +890,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
                     {/* Car detail card */}
                     <div className="rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
                       <div className="relative">
-                        <img src={selectedCar.image} alt={selectedCar.name} className="w-full h-44 object-cover" />
+                        <img src={selectedCar.image} alt={selectedCar.name} onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&q=80&w=800'; }} className="w-full h-44 object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                         <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
                           <div>

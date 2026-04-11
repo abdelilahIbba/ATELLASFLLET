@@ -11,9 +11,11 @@
 // ---------------------------------------------------------------------------
 // Base URL
 // ---------------------------------------------------------------------------
-const BASE_URL = import.meta.env.PROD
-  ? 'https://atellasfleet-backend.onrender.com/api'
-  : (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
+// Prefer the explicit env var (set at build time via Dockerfile ARG or Vercel env).
+// Fall back to the hardcoded production URL only when nothing is configured.
+const BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
+  (import.meta.env.PROD ? 'https://atellasfleet-backend.onrender.com/api' : '/api');
 
 // ---------------------------------------------------------------------------
 // Token helpers

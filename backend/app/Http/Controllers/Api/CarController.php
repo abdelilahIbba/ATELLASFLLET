@@ -65,6 +65,7 @@ class CarController extends Controller
             'availability' => 'required|in:available,unavailable',
             'quantity'     => 'required|integer|min:0',
             'image'        => 'nullable|image|max:2048',
+            'image_url'    => 'nullable|url|max:2048',
             // New vehicle fields
             'category'                => 'nullable|string|max:100',
             'features'                => 'nullable|array',
@@ -90,7 +91,10 @@ class CarController extends Controller
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('cars', 'public');
+        } elseif (!empty($validated['image_url'])) {
+            $validated['image'] = $validated['image_url'];
         }
+        unset($validated['image_url']);
         foreach (['doc_insurance', 'doc_visite_technique', 'doc_vignette', 'doc_carte_grise'] as $docField) {
             if ($request->hasFile($docField)) {
                 $validated[$docField] = $request->file($docField)->store('cars/docs', 'public');
@@ -119,6 +123,7 @@ class CarController extends Controller
             'availability' => 'sometimes|required|in:available,unavailable',
             'quantity'     => 'sometimes|required|integer|min:0',
             'image'        => 'nullable|image|max:2048',
+            'image_url'    => 'nullable|url|max:2048',
             // New vehicle fields
             'category'                => 'nullable|string|max:100',
             'features'                => 'nullable|array',
@@ -144,7 +149,10 @@ class CarController extends Controller
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('cars', 'public');
+        } elseif (!empty($validated['image_url'])) {
+            $validated['image'] = $validated['image_url'];
         }
+        unset($validated['image_url']);
         foreach (['doc_insurance', 'doc_visite_technique', 'doc_vignette', 'doc_carte_grise'] as $docField) {
             if ($request->hasFile($docField)) {
                 $validated[$docField] = $request->file($docField)->store('cars/docs', 'public');

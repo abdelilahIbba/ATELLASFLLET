@@ -15,6 +15,8 @@ services:
     envVars:
       - key: APP_ENV
         value: production
+      - key: APP_URL
+        value: https://atellasfleet-backend.onrender.com
       - key: APP_KEY
         value: base64:WYca75xdyoPYqgs3cNuyoeeP0PQ4isrUUqqMUcB7EZE=
       - key: DB_CONNECTION

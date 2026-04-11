@@ -40,7 +40,7 @@ const FleetTable: React.FC<FleetTableProps> = ({ vehicles, onEdit, onDelete }) =
                     <tr key={vehicle.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                         <td className="p-4">
                             <div className="flex items-center gap-4">
-                                <img src={vehicle.image} alt={vehicle.name} className="w-16 h-10 object-cover rounded-lg border border-slate-200 dark:border-white/10" />
+                                <img src={vehicle.image} alt={vehicle.name} onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&q=80&w=800'; }} className="w-16 h-10 object-cover rounded-lg border border-slate-200 dark:border-white/10" />
                                 <div>
                                     <p className="font-bold text-brand-navy dark:text-white flex items-center gap-2">
                                         {vehicle.name}
