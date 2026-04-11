@@ -399,7 +399,7 @@ const carFromApi = (c: Record<string, any>): Vehicle => ({
   year: c.year ?? new Date().getFullYear(),
   fuel_type: c.fuel_type ?? 'Essence',
   category: (c.category as Vehicle['category']) ?? 'Sedan',
-  image: (c.image as string) ?? 'https://images.unsplash.com/photo-1542282088-fe8426682b8f?auto=format&fit=crop&q=80&w=800',
+  image: (c.image as string) || '',
   plate: c.plate ?? '',
   unitPlates: Array.isArray(c.unit_plates) ? c.unit_plates : [],
   branch: c.branch ?? '',
@@ -523,6 +523,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   const [vehicleModalTab, setVehicleModalTab] = useState<'details' | 'documents' | 'infractions'>('details');
   const [clientModalTab, setClientModalTab] = useState<'profile' | 'kyc'>('profile');
   const [imageInputType, setImageInputType] = useState<'url' | 'upload'>('url');
+  /** Live preview URL for the image URL input in the vehicle form */
+  const [imageUrlPreview, setImageUrlPreview] = useState<string>('');
   /** Per-unit plates for vehicle form (index 0 = unit #1) */
   const [modalUnitPlates, setModalUnitPlates] = useState<string[]>(['']);
   /** Current quantity value in vehicle form (controls how many plate inputs are shown) */
@@ -752,6 +754,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     setVehicleModalTab('details'); // Reset tab
     setClientModalTab('profile'); // Reset tab
     setImageInputType('url');
+    setImageUrlPreview((item as any)?.image || '');
     setDocFileNames({});
     setModalInfractions([]);
     setInfFormVisible(false);
@@ -772,6 +775,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   const closeModal = () => {
     setModalType(null);
     setSelectedItem(null);
+    setImageUrlPreview('');
     setDocFileNames({});
     setModalInfractions([]);
     setInfFormVisible(false);
@@ -1650,11 +1654,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                          </div>
                                          
                                          {imageInputType === 'url' ? (
-                                             <div className="flex gap-2">
-                                                 <input name="image" defaultValue={selectedItem?.image || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="https://..."/>
-                                                 <div className="w-12 h-11 bg-slate-100 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0">
-                                                     <ImageIcon className="w-5 h-5 text-slate-400" />
+                                             <div className="space-y-2">
+                                                 <div className="flex gap-2">
+                                                     <input
+                                                         name="image"
+                                                         defaultValue={selectedItem?.image || ''}
+                                                         onChange={e => setImageUrlPreview(e.target.value.trim())}
+                                                         className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"
+                                                         placeholder="https://example.com/image.jpg"
+                                                     />
+                                                     <div className="w-12 h-11 bg-slate-100 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                                                         {imageUrlPreview ? (
+                                                             <img
+                                                                 src={imageUrlPreview}
+                                                                 alt="Aperçu"
+                                                                 className="w-full h-full object-cover"
+                                                                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex'; }}
+                                                             />
+                                                         ) : null}
+                                                         <span style={{display: imageUrlPreview ? 'none' : 'flex'}} className="w-full h-full items-center justify-center">
+                                                             <ImageIcon className="w-5 h-5 text-slate-400" />
+                                                         </span>
+                                                     </div>
                                                  </div>
+                                                 {imageUrlPreview && (
+                                                     <div className="w-full h-28 rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5">
+                                                         <img
+                                                             src={imageUrlPreview}
+                                                             alt="Aperçu image"
+                                                             className="w-full h-full object-cover"
+                                                             onError={e => {
+                                                                 const el = e.currentTarget.parentElement!;
+                                                                 el.innerHTML = '<p class="w-full h-full flex items-center justify-center text-xs text-red-500 font-bold p-2 text-center">URL invalide — l\'image ne peut pas être chargée. Assurez-vous d\'entrer un lien direct vers un fichier image.</p>';
+                                                             }}
+                                                         />
+                                                     </div>
+                                                 )}
                                              </div>
                                          ) : (
                                              <div className="w-full h-32 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl bg-slate-50 dark:bg-white/5 flex flex-col items-center justify-center cursor-pointer hover:border-brand-blue transition-colors group relative overflow-hidden">

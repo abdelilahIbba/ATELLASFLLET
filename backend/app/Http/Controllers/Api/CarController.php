@@ -92,7 +92,7 @@ class CarController extends Controller
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('cars', 'public');
         } elseif (!empty($validated['image_url'])) {
-            $validated['image'] = $validated['image_url'];
+            $validated['image'] = $this->normalizeImageUrl($validated['image_url']);
         }
         unset($validated['image_url']);
         foreach (['doc_insurance', 'doc_visite_technique', 'doc_vignette', 'doc_carte_grise'] as $docField) {
@@ -150,7 +150,7 @@ class CarController extends Controller
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('cars', 'public');
         } elseif (!empty($validated['image_url'])) {
-            $validated['image'] = $validated['image_url'];
+            $validated['image'] = $this->normalizeImageUrl($validated['image_url']);
         }
         unset($validated['image_url']);
         foreach (['doc_insurance', 'doc_visite_technique', 'doc_vignette', 'doc_carte_grise'] as $docField) {
@@ -165,6 +165,23 @@ class CarController extends Controller
             'message' => 'Car updated successfully.',
             'car'     => new CarResource($car->fresh()),
         ]);
+    }
+
+    /**
+     * Normalize an image URL received from the frontend.
+     *
+     * When CarResource resolves a storage path to an absolute URL (e.g.,
+     * http://localhost:8080/storage/cars/file.jpg), the frontend may echo that
+     * absolute URL back.  We detect this and convert it back to the relative
+     * storage path so it works correctly across environments.
+     */
+    private function normalizeImageUrl(string $url): string
+    {
+        $storageBase = url('/storage') . '/';
+        if (str_starts_with($url, $storageBase)) {
+            return ltrim(str_replace(url('/storage'), '', $url), '/');
+        }
+        return $url;
     }
 
     /**
