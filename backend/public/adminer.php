@@ -9,8 +9,23 @@
  */
 
 $token = getenv('ADMINER_TOKEN');
+$cookieName = 'adminer_access';
+$cookieValue = hash('sha256', (string) $token);
+$hasValidCookie = isset($_COOKIE[$cookieName]) && hash_equals($cookieValue, (string) $_COOKIE[$cookieName]);
+$hasValidToken = !empty($token) && isset($_GET['token']) && hash_equals($token, (string) $_GET['token']);
 
-if (empty($token) || !isset($_GET['token']) || !hash_equals($token, $_GET['token'])) {
+if ($hasValidToken) {
+    setcookie($cookieName, $cookieValue, [
+        'expires' => time() + 3600,
+        'path' => '/adminer.php',
+        'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
+    $_COOKIE[$cookieName] = $cookieValue;
+}
+
+if (empty($token) || (!$hasValidToken && !$hasValidCookie)) {
     http_response_code(403);
     echo '<h3>403 Forbidden</h3>';
     exit;
