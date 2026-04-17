@@ -20,16 +20,19 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // ── Admin account ──────────────────────────────────────
-        User::updateOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'abdelilah@mail.ma'],
             [
                 'name'       => 'Abdelilah',
-                'password'   => Hash::make('abdelilah@mail.ma'),
-                'role'       => 'admin',
+                'password'   => Hash::make('abdelilah@0987'),
                 'status'     => 'Active',
                 'kyc_status' => 'Verified',
             ]
         );
+        
+        // Ensure admin role is set since it's not fillable by default
+        $admin->role = 'admin';
+        $admin->save();
 
         // ── Fleet, reviews, fines, maintenance ─────────────────
         $this->call([
