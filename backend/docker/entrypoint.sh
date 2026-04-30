@@ -35,7 +35,13 @@ chown -R www-data:www-data /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage
 chmod -R 775 /var/www/html/bootstrap/cache
 
+# ── Route Laravel logs to stderr (visible in Render / Docker logs) ────
+export LOG_CHANNEL=${LOG_CHANNEL:-stderr}
+
 # ── Cache config / routes / views (no DB required) ────────────────────
+echo "[*] Clearing any stale caches..."
+php artisan optimize:clear --quiet || true
+
 echo "[*] Optimizing Laravel caches..."
 php artisan config:cache
 php artisan route:cache  || echo "[WARN] route:cache failed, continuing without route cache"

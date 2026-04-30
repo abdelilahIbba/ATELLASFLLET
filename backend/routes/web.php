@@ -12,13 +12,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Admin\ContactController;
 
-// ── Render / uptime health check ─────────────────────────────────────
-// Must respond 200 quickly — no DB access so the service is reachable
-// even when the database is temporarily unavailable.
-Route::get('/health', function () {
-    return response()->json(['status' => 'ok'], 200);
-});
-
 // Public routes
 Route::get('/', [WelcomeController::class, 'index'])->name('home');
 Route::get('/cars', [CarController::class, 'showAll'])->name('cars.showAll');

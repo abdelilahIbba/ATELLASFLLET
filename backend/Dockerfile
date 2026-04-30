@@ -111,9 +111,9 @@ RUN chown -R www-data:www-data /var/www/html \
 # Expose port 80 for Nginx
 EXPOSE 80
 
-# Health check — verifies both nginx and PHP-FPM are accepting requests
-HEALTHCHECK --interval=15s --timeout=5s --start-period=30s \
-    CMD curl -sf http://localhost/up > /dev/null || exit 1
+# Health check — nginx serves /health directly (no PHP, always fast)
+HEALTHCHECK --interval=15s --timeout=5s --start-period=60s \
+    CMD curl -sf http://localhost/health > /dev/null || exit 1
 
 # Set entrypoint to handle initialization
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
