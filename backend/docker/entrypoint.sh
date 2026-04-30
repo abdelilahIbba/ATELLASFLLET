@@ -40,12 +40,20 @@ export LOG_CHANNEL=${LOG_CHANNEL:-stderr}
 
 # ── Cache config / routes / views (no DB required) ────────────────────
 echo "[*] Clearing any stale caches..."
+# Remove cached files by hand first — artisan bootstrap itself can fail when
+# services.php references dev-only providers absent in the --no-dev vendor build.
+rm -f /var/www/html/bootstrap/cache/config.php \
+      /var/www/html/bootstrap/cache/routes*.php \
+      /var/www/html/bootstrap/cache/services.php \
+      /var/www/html/bootstrap/cache/packages.php \
+      /var/www/html/bootstrap/cache/events.php
 php artisan optimize:clear --quiet || true
 
 echo "[*] Optimizing Laravel caches..."
-php artisan config:cache
-php artisan route:cache  || echo "[WARN] route:cache failed, continuing without route cache"
-php artisan view:cache   || echo "[WARN] view:cache failed, continuing without view cache"
+# All cache commands are non-fatal: a missing cache is slower but never causes 500.
+php artisan config:cache || echo "[WARN] config:cache failed — running with dynamic config"
+php artisan route:cache  || echo "[WARN] route:cache failed — running with dynamic routes"
+php artisan view:cache   || echo "[WARN] view:cache failed — running with dynamic views"
 
 # ── Create storage symlink if needed (no DB required) ─────────────────
 if [ ! -L /var/www/html/public/storage ]; then

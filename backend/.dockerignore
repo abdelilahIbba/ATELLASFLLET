@@ -22,6 +22,9 @@ vendor
 .env.*
 !.env.example
 
+# Stale bootstrap cache — always regenerated at container startup
+bootstrap/cache/*.php
+
 # IDE files
 .vscode
 .idea
