@@ -8,5 +8,8 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     autoDeploy: false
-    healthCheckPath: /health
+    # /up is Laravel's built-in health route (bootstrap/app.php health:'/up').
+    # It returns 200 without any DB query, so it survives DB cold-starts/quotas.
+    # nginx also handles /health directly (return 200) as a secondary check.
+    healthCheckPath: /up
     plan: free
