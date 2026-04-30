@@ -37,7 +37,8 @@ chmod -R 775 /var/www/html/bootstrap/cache
 echo "[*] Waiting for database connection..."
 DB_RETRY=0
 DB_MAX_RETRIES=20
-until php artisan db:show 2>/tmp/db_check_err; do
+# Redirect BOTH stdout and stderr — artisan prints formatted exceptions to stdout.
+until php artisan db:show >/tmp/db_check_err 2>&1; do
     DB_ERR=$(cat /tmp/db_check_err 2>/dev/null)
 
     # Detect permanent / non-transient errors — retrying will never help.
