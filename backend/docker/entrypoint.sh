@@ -1,6 +1,10 @@
 #!/bin/sh
 # Docker entrypoint script for Laravel
 # Handles initialization tasks before starting the application
+#
+# Design principle: the app ALWAYS starts (so /health passes and Render marks
+# the instance live).  DB-dependent steps (migrate) are attempted but never
+# allowed to block or kill the container.
 
 set -e
 
@@ -31,53 +35,43 @@ chown -R www-data:www-data /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage
 chmod -R 775 /var/www/html/bootstrap/cache
 
-# Wait for database to be ready
-# Max 20 retries × 3 s = 60 s ceiling.  Permanent errors (quota exceeded,
-# bad credentials, unknown host) abort immediately instead of looping forever.
-echo "[*] Waiting for database connection..."
-DB_RETRY=0
-DB_MAX_RETRIES=20
-# Redirect BOTH stdout and stderr — artisan prints formatted exceptions to stdout.
-until php artisan db:show >/tmp/db_check_err 2>&1; do
-    DB_ERR=$(cat /tmp/db_check_err 2>/dev/null)
-
-    # Detect permanent / non-transient errors — retrying will never help.
-    if echo "$DB_ERR" | grep -qiE \
-        "quota|compute time|password authentication failed|role .+ does not exist|database .+ does not exist|no pg_hba\.conf entry|could not translate host name"; then
-        echo "[FATAL] Permanent database error — aborting startup:"
-        cat /tmp/db_check_err
-        exit 1
-    fi
-
-    DB_RETRY=$((DB_RETRY + 1))
-    if [ "$DB_RETRY" -ge "$DB_MAX_RETRIES" ]; then
-        echo "[FATAL] Database not ready after $DB_MAX_RETRIES retries. Last error:"
-        cat /tmp/db_check_err
-        exit 1
-    fi
-
-    echo "Database not ready (attempt $DB_RETRY/$DB_MAX_RETRIES), waiting 3 seconds..."
-    sleep 3
-done
-echo "[OK] Database connection established"
-
-# Clear and cache configuration for production
+# ── Cache config / routes / views (no DB required) ────────────────────
 echo "[*] Optimizing Laravel caches..."
 php artisan config:cache
-php artisan route:cache || echo "[WARN] route:cache failed, continuing without route cache"
-php artisan view:cache || echo "[WARN] view:cache failed, continuing without view cache"
+php artisan route:cache  || echo "[WARN] route:cache failed, continuing without route cache"
+php artisan view:cache   || echo "[WARN] view:cache failed, continuing without view cache"
 
-# Run database migrations
-echo "[*] Running database migrations..."
-php artisan migrate --force --no-interaction
-
-# Create storage link if it doesn't exist
+# ── Create storage symlink if needed (no DB required) ─────────────────
 if [ ! -L /var/www/html/public/storage ]; then
     echo "[*] Creating storage symlink..."
     php artisan storage:link
 fi
 
-echo "[OK] Initialization complete! Starting application services..."
+# ── Database migrations — non-blocking ────────────────────────────────
+# We try once, with a short connection timeout.  If the DB is unavailable
+# (cold-start wake-up, quota issue, network blip) we log the error and
+# continue.  The app will still serve /health so Render marks it live.
+# Re-run via Render Shell: php artisan migrate --force
+echo "[*] Attempting database migrations..."
+# Temporarily disable set -e so a migration failure doesn't kill the container
+set +e
+php artisan migrate --force --no-interaction >/tmp/migrate_out 2>&1
+MIGRATE_EXIT=$?
+set -e
+
+if [ "$MIGRATE_EXIT" -eq 0 ]; then
+    echo "[OK] Migrations complete."
+else
+    echo "[WARN] Migrations failed (exit $MIGRATE_EXIT). App will still start."
+    echo "[WARN] Last migration output:"
+    tail -10 /tmp/migrate_out
+    echo "[WARN] Re-run manually via Render Shell: php artisan migrate --force"
+fi
+
+echo "[OK] Initialization complete — starting application services..."
+
+# Execute the main command (supervisor)
+exec "$@"
 
 # Execute the main command (supervisor)
 exec "$@"
