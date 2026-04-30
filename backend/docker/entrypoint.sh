@@ -32,10 +32,31 @@ chmod -R 775 /var/www/html/storage
 chmod -R 775 /var/www/html/bootstrap/cache
 
 # Wait for database to be ready
+# Max 20 retries × 3 s = 60 s ceiling.  Permanent errors (quota exceeded,
+# bad credentials, unknown host) abort immediately instead of looping forever.
 echo "[*] Waiting for database connection..."
-until php artisan db:show 2>/dev/null; do
-    echo "Database not ready, waiting 2 seconds..."
-    sleep 2
+DB_RETRY=0
+DB_MAX_RETRIES=20
+until php artisan db:show 2>/tmp/db_check_err; do
+    DB_ERR=$(cat /tmp/db_check_err 2>/dev/null)
+
+    # Detect permanent / non-transient errors — retrying will never help.
+    if echo "$DB_ERR" | grep -qiE \
+        "quota|compute time|password authentication failed|role .+ does not exist|database .+ does not exist|no pg_hba\.conf entry|could not translate host name"; then
+        echo "[FATAL] Permanent database error — aborting startup:"
+        cat /tmp/db_check_err
+        exit 1
+    fi
+
+    DB_RETRY=$((DB_RETRY + 1))
+    if [ "$DB_RETRY" -ge "$DB_MAX_RETRIES" ]; then
+        echo "[FATAL] Database not ready after $DB_MAX_RETRIES retries. Last error:"
+        cat /tmp/db_check_err
+        exit 1
+    fi
+
+    echo "Database not ready (attempt $DB_RETRY/$DB_MAX_RETRIES), waiting 3 seconds..."
+    sleep 3
 done
 echo "[OK] Database connection established"
 

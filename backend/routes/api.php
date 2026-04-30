@@ -54,48 +54,6 @@ Route::post('/contact',       [ContactController::class, 'store']);
 // Pickup / drop-off points (public — clients read during booking)
 Route::get('/pickup-points',  [PickupPointController::class, 'index']);
 
-// ─── Temporary diagnostic (remove after fixing 500) ─────────────────
-Route::get('/diag', function () {
-    try {
-        $key = config('app.key');
-        $driver = config('session.driver');
-        $dbDriver = config('database.default');
-        $viewPath = config('view.compiled');
-        $viewPathExists = is_dir($viewPath);
-
-        // Try hitting / internally
-        $response = app()->handle(\Illuminate\Http\Request::create('/', 'GET'));
-        $statusCode = $response->getStatusCode();
-
-        return response()->json([
-            'app_key_set'      => !empty($key),
-            'session_driver'   => $driver,
-            'db_driver'        => $dbDriver,
-            'view_compiled'    => $viewPath,
-            'view_path_exists' => $viewPathExists,
-            'home_status'      => $statusCode,
-            'home_ok'          => $statusCode === 200,
-            'mail_mailer'      => config('mail.default'),
-            'mail_host'        => config('mail.mailers.smtp.host'),
-            'mail_port'        => config('mail.mailers.smtp.port'),
-            'mail_username'    => config('mail.mailers.smtp.username') ? 'SET' : 'NOT SET',
-            'mail_password'    => config('mail.mailers.smtp.password') ? 'SET' : 'NOT SET',
-            'mail_from'        => config('mail.from.address'),
-            'demo_from'        => config('mail.demo_from.address'),
-        ]);
-    } catch (\Throwable $e) {
-        return response()->json([
-            'error'   => $e->getMessage(),
-            'file'    => $e->getFile(),
-            'line'    => $e->getLine(),
-            'class'   => get_class($e),
-            'app_key_set'      => !empty(config('app.key')),
-            'session_driver'   => config('session.driver'),
-            'view_compiled'    => config('view.compiled'),
-        ], 500);
-    }
-});
-
 // ─── Authenticated (any role) ────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
 
