@@ -506,6 +506,14 @@ export const adminContractsApi = {
     api.post<{ message: string; contract: unknown }>(`/admin/contracts/from-booking/${bookingId}`, {}),
   generateInvoice: (contractId: number | string) =>
     api.post<{ message: string; invoice: unknown }>(`/admin/invoices/from-contract/${contractId}`, {}),
+  getPdfArabicUrl: (id: number | string) => {
+    const base = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
+    return `${base}/admin/contracts/${id}/pdf-arabic`;
+  },
+  getArabicPreviewUrl: (id: number | string) => {
+    const base = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
+    return `${base}/admin/contracts/${id}/arabic-preview`;
+  },
 };
 
 // ---------------------------------------------------------------------------

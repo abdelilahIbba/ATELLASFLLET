@@ -177,6 +177,8 @@ Route::middleware(['auth:sanctum', 'api.role:admin,demo_admin'])->prefix('admin'
     // Contracts
     Route::post('/contracts/from-booking/{booking}',  [ContractController::class, 'createFromBooking']);
     Route::get('/contracts/{contract}/pdf',           [ContractController::class, 'downloadPdf']);
+    Route::get('/contracts/{contract}/pdf-arabic',    [ContractController::class, 'downloadArabicPdf']);
+    Route::get('/contracts/{contract}/arabic-preview',[ContractController::class, 'previewArabic']);
     Route::get('/contracts',                          [ContractController::class, 'index']);
     Route::post('/contracts',                         [ContractController::class, 'store']);
     Route::get('/contracts/{contract}',               [ContractController::class, 'show']);

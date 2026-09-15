@@ -20,6 +20,7 @@ import VehicleConditionPanel, {
 } from './VehicleConditionPanel';
 import SignaturePad from './SignaturePad';
 import { adminContractsApi } from '../../../services/api';
+import RlvContractModal from './RlvContractModal';
 
 // ─── Company settings ────────────────────────────────────────────────────────
 
@@ -350,6 +351,7 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
   const [editExpiry,     setEditExpiry]     = useState('');
   const [editNationality,setEditNationality]= useState('');
   const [editAddress,    setEditAddress]    = useState('');
+  const [showRlvModal,   setShowRlvModal]   = useState(false);
 
   // Fetch or auto-create the backend contract for this booking
   useEffect(() => {
@@ -674,6 +676,13 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
                   </p>
                   <div className="flex gap-2">
                     <button
+                      onClick={() => setShowRlvModal(true)}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm"
+                      title="Générer au format RLV Tanger (en arabe)"
+                    >
+                      <FileText className="w-3.5 h-3.5" /> Contrat RLV (Arabe)
+                    </button>
+                    <button
                       onClick={handlePrint}
                       className="flex items-center gap-1.5 px-4 py-2 bg-brand-navy dark:bg-white text-white dark:text-brand-navy rounded-lg text-xs font-bold hover:opacity-90 transition-opacity"
                     >
@@ -736,6 +745,49 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
           </div>
         </motion.div>
       </div>
+
+      {/* RLV Arabic Contract Preview Modal */}
+      {showRlvModal && (
+        <RlvContractModal
+          contract={{
+            id: extras.contractId || String(booking.id),
+            contract_number: extras.contractNumber || String(booking.id),
+            booking_id: String(booking.id),
+            user_id: '',
+            car_id: '',
+            client_name: booking.clientName,
+            client_phone: extras.clientPhone,
+            client_email: extras.clientEmail,
+            client_id_number: editCin || extras.clientIdNumber,
+            client_license_number: editLicense || extras.clientLicenseNumber,
+            client_license_expiry: editExpiry || extras.clientLicenseExpiry,
+            client_address: editAddress || extras.clientAddress,
+            client_nationality: editNationality || extras.clientNationality,
+            vehicle_name: booking.vehicleName,
+            vehicle_plate: extras.vehiclePlate || booking.unitPlate || '',
+            unit_number: booking.unitNumber,
+            start_date: booking.startDate,
+            end_date: booking.endDate,
+            daily_rate: extras.dailyRate || 0,
+            total_amount: booking.amount,
+            deposit_amount: extras.depositAmount || 0,
+            currency: 'MAD',
+            insurance_type: extras.insuranceType,
+            mileage_start: extras.mileageStart,
+            mileage_end: extras.mileageEnd,
+            condition_start: condStart,
+            condition_end: condEnd,
+            status: 'draft',
+            signature_client_start: sigClientStart || undefined,
+            signature_agent_start: sigAgentStart || undefined,
+            signature_client_end: sigClientEnd || undefined,
+            signature_agent_end: sigAgentEnd || undefined,
+            signature_city: sigCity,
+            created_at: new Date().toISOString(),
+          }}
+          onClose={() => setShowRlvModal(false)}
+        />
+      )}
     </AnimatePresence>
   );
 };

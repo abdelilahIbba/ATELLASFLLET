@@ -229,6 +229,29 @@ class ContractController extends Controller
     }
 
     /**
+     * GET /api/admin/contracts/{contract}/pdf-arabic
+     */
+    public function downloadArabicPdf(Contract $contract): \Illuminate\Http\Response
+    {
+        $contract->load(['booking', 'user', 'car']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.contract_arabic', compact('contract'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download("contrat-rlv-{$contract->contract_number}.pdf");
+    }
+
+    /**
+     * GET /api/admin/contracts/{contract}/arabic-preview
+     */
+    public function previewArabic(Contract $contract): \Illuminate\Contracts\View\View
+    {
+        $contract->load(['booking', 'user', 'car']);
+
+        return view('pdf.contract_arabic', compact('contract'));
+    }
+
+    /**
      * Resolve the plate for the specific unit booked.
      */
     private function unitPlate(\App\Models\Booking $booking): string

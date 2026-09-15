@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileSignature, Plus, Search, Eye, Edit, Trash2, Download,
   CheckCircle2, Clock, AlertCircle, XCircle,
-  RefreshCw, X, Receipt, Printer, ChevronDown, ChevronUp, ExternalLink,
+  RefreshCw, X, Receipt, Printer, ChevronDown, ChevronUp, ExternalLink, FileText,
 } from 'lucide-react';
 import { adminContractsApi, adminBookingsApi } from '../../../services/api';
 import ContractModal, { loadCompanySettings } from './ContractModal';
+import RlvContractModal from './RlvContractModal';
 import type { Booking } from '../types';
 // ─── Map a Contract to the Booking shape expected by ContractModal ───────────────────
 
@@ -431,6 +432,7 @@ export const ContractDetail: React.FC<{
   onEdit: () => void;
   onGenerateInvoice: () => void;
 }> = ({ contract, onClose, onEdit, onGenerateInvoice }) => {
+  const [showRlv, setShowRlv] = useState(false);
   const fetchPdfBlob = async (): Promise<string | null> => {
     const token = localStorage.getItem('auth_token');
     const base  = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
@@ -576,6 +578,11 @@ export const ContractDetail: React.FC<{
         </div>
 
         <div className="px-6 py-4 border-t border-slate-100 dark:border-white/5 flex gap-2 flex-wrap flex-shrink-0 bg-slate-50/50 dark:bg-white/[0.02]">
+          <button onClick={() => setShowRlv(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
+            title="Générer / Imprimer le contrat RLV Tanger en arabe">
+            <FileText className="w-4 h-4" /> Contrat RLV (عقد بالعربية)
+          </button>
           <button onClick={handleDownloadPdf}
             className="flex items-center gap-2 px-4 py-2 bg-brand-navy dark:bg-white/10 text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity"
             title="Télécharger le PDF">
@@ -595,6 +602,10 @@ export const ContractDetail: React.FC<{
             <Edit className="w-4 h-4" /> Modifier
           </button>
         </div>
+
+        {showRlv && (
+          <RlvContractModal contract={contract} onClose={() => setShowRlv(false)} />
+        )}
       </motion.div>
     </div>
   );
@@ -615,6 +626,7 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigateInvoi
   const [showForm, setShowForm]     = useState(false);
   const [editContract, setEditContract] = useState<Contract | null>(null);
   const [viewContract, setViewContract] = useState<Contract | null>(null);
+  const [rlvModalContract, setRlvModalContract] = useState<Contract | null>(null);
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null);
   const [generatingFromBooking, setGeneratingFromBooking] = useState<string | null>(null);
   const [activatingContract, setActivatingContract] = useState<string | null>(null);
@@ -869,6 +881,11 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigateInvoi
                           title="Détails">
                           <Eye className="w-3.5 h-3.5" />
                         </button>
+                        <button onClick={() => setRlvModalContract(c)}
+                          className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors font-bold"
+                          title="Contrat RLV Tanger (عقد بالعربية)">
+                          <FileText className="w-3.5 h-3.5" />
+                        </button>
                         <button onClick={() => { setEditContract(c); setShowForm(true); }}
                           className="p-1.5 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-colors"
                           title="Modifier">
@@ -931,6 +948,14 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigateInvoi
           onClose={() => setViewContract(null)}
           company={loadCompanySettings()}
           onSaved={load}
+        />
+      )}
+
+      {/* RLV Arabic Contract Modal */}
+      {rlvModalContract && (
+        <RlvContractModal
+          contract={rlvModalContract}
+          onClose={() => setRlvModalContract(null)}
         />
       )}
     </div>
