@@ -41,8 +41,6 @@ RUN apk add --no-cache \
     nginx \
     supervisor \
     mysql-client \
-    postgresql-client \
-    postgresql-dev \
     curl \
     libpng-dev \
     libjpeg-turbo-dev \
@@ -50,12 +48,9 @@ RUN apk add --no-cache \
     libzip-dev \
     oniguruma-dev \
     icu-dev \
-    && export PATH=$PATH:/usr/bin \
-    && ln -s /usr/bin/pg_config /usr/local/bin/pg_config \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
     pdo_mysql \
-    pdo_pgsql \
     mbstring \
     zip \
     exif \

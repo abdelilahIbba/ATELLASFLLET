@@ -25,7 +25,7 @@ services:
       - ./nginx/entrypoint.sh:/docker-entrypoint-wrapper.sh:ro
       - nginx_ssl:/etc/nginx/ssl
       - ./backend/storage:/var/www/backend/storage:ro
-    entrypoint: /docker-entrypoint-wrapper.sh
+    entrypoint: ["sh", "-c", "tr -d '\\r' < /docker-entrypoint-wrapper.sh > /tmp/entrypoint.sh && chmod +x /tmp/entrypoint.sh && exec /tmp/entrypoint.sh"]
     depends_on:
       backend:
         condition: service_healthy
@@ -79,6 +79,10 @@ services:
       MAIL_FROM_NAME: "Atellas Fleet"
     volumes:
       - ./backend/storage:/var/www/html/storage
+      - ./backend/resources:/var/www/html/resources
+      - ./backend/app:/var/www/html/app
+      - ./backend/routes:/var/www/html/routes
+      - ./backend/public:/var/www/html/public
       - ./.env:/var/www/html/.env:ro
     depends_on:
       db:
