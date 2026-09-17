@@ -21,6 +21,7 @@ import VehicleConditionPanel, {
 import SignaturePad from './SignaturePad';
 import { adminContractsApi } from '../../../services/api';
 import RlvContractModal from './RlvContractModal';
+import RlvContractDocument, { getRlvPrintStyles, RlvContractData } from './RlvContractDocument';
 
 // ─── Company settings ────────────────────────────────────────────────────────
 
@@ -400,31 +401,75 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
     return () => { cancelled = true; };
   }, [booking.id]);
 
-  const contractHtml = generateContractHtml(
-    booking, companySettings,
-    condStart, condEnd,
-    sigClientStart, sigAgentStart,
-    sigClientEnd, sigAgentEnd,
-    sigCity,
-    // Merge editable fields on top of fetched extras so live edits show in preview
-    {
-      ...extras,
-      clientIdNumber:      editCin        || extras.clientIdNumber,
-      clientLicenseNumber: editLicense    || extras.clientLicenseNumber,
-      clientLicenseExpiry: editExpiry     || extras.clientLicenseExpiry,
-      clientNationality:   editNationality|| extras.clientNationality,
-      clientAddress:       editAddress    || extras.clientAddress,
-    },
-  );
+  const printContentRef = React.useRef<HTMLDivElement>(null);
+
+  const rlvContractData: RlvContractData = {
+    id: extras.contractId || String(booking.id),
+    contract_number: extras.contractNumber || String(booking.id),
+    booking_id: String(booking.id),
+    client_name: booking.clientName,
+    client_phone: extras.clientPhone || '',
+    client_email: extras.clientEmail || '',
+    client_id_number: editCin || extras.clientIdNumber || '',
+    client_license_number: editLicense || extras.clientLicenseNumber || '',
+    client_license_expiry: editExpiry || extras.clientLicenseExpiry || '',
+    client_address: editAddress || extras.clientAddress || '',
+    client_nationality: editNationality || extras.clientNationality || '',
+    vehicle_name: booking.vehicleName,
+    vehicle_plate: extras.vehiclePlate || booking.unitPlate || '',
+    unit_number: booking.unitNumber,
+    start_date: booking.startDate,
+    end_date: booking.endDate,
+    daily_rate: extras.dailyRate || 0,
+    total_amount: booking.amount,
+    deposit_amount: extras.depositAmount || 0,
+    currency: 'MAD',
+    insurance_type: extras.insuranceType || '',
+    mileage_start: extras.mileageStart || 0,
+    mileage_end: extras.mileageEnd || 0,
+    condition_start: condStart.damagePoints,
+    condition_end: condEnd.damagePoints,
+    booking_payment_status: booking.paymentStatus,
+    signature_client_start: sigClientStart || undefined,
+    signature_agent_start: sigAgentStart || undefined,
+    signature_client_end: sigClientEnd || undefined,
+    signature_agent_end: sigAgentEnd || undefined,
+    signature_city: sigCity || 'Tanger',
+    created_at: new Date().toISOString(),
+  };
 
   const handlePrint = useCallback(() => {
-    const pw = window.open('', '', 'height=900,width=850');
+    if (!printContentRef.current) return;
+    const pw = window.open('', '', 'height=950,width=850');
     if (!pw) return;
-    pw.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Contrat #${extras.contractNumber ?? booking.id}</title></head><body>${contractHtml}</body></html>`);
+    pw.document.write(`<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <title>Contrat de Location — ${extras.contractNumber ?? booking.id}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    ${getRlvPrintStyles()}
+  </style>
+</head>
+<body>
+  ${printContentRef.current.innerHTML}
+</body>
+</html>`);
     pw.document.close();
-    pw.onload = () => setTimeout(() => pw.print(), 400);
-    setTimeout(() => pw.print(), 700);
-  }, [booking.id, contractHtml, extras.contractNumber]);
+    pw.onload = () => {
+      setTimeout(() => {
+        pw.focus();
+        pw.print();
+      }, 400);
+    };
+    setTimeout(() => {
+      pw.focus();
+      pw.print();
+    }, 800);
+  }, [extras.contractNumber, booking.id]);
 
   // Save conditions + signatures to backend, then print
   const handleSaveAndPrint = useCallback(async () => {
@@ -462,7 +507,7 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
     const token = localStorage.getItem('auth_token');
     const base  = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
     try {
-      const res = await fetch(`${base}/admin/contracts/${extras.contractId}/pdf`, {
+      const res = await fetch(`${base}/admin/contracts/${extras.contractId}/pdf-arabic`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) throw new Error();
@@ -470,7 +515,7 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href     = url;
-      a.download = `contrat-${extras.contractNumber ?? booking.id}.pdf`;
+      a.download = `contrat-rlv-${extras.contractNumber ?? booking.id}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -669,38 +714,36 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
             )}
 
             {step === 3 && (
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-bold text-brand-navy dark:text-white">
-                    Aperçu du contrat final — vérifiez avant impression
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse"></span>
+                    <p className="text-sm font-bold text-brand-navy dark:text-white">
+                      Aperçu officiel — Contrat &amp; Facture RLV Tanger
+                    </p>
+                  </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setShowRlvModal(true)}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm"
-                      title="Générer au format RLV Tanger (en arabe)"
-                    >
-                      <FileText className="w-3.5 h-3.5" /> Contrat RLV (Arabe)
-                    </button>
-                    <button
                       onClick={handlePrint}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-navy dark:bg-white text-white dark:text-brand-navy rounded-lg text-xs font-bold hover:opacity-90 transition-opacity"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-all shadow-sm"
+                      title="Imprimer au format A4"
                     >
-                      <Printer className="w-3.5 h-3.5" /> Imprimer
+                      <Printer className="w-3.5 h-3.5" /> Imprimer (عقد RLV)
                     </button>
                     <button
                       onClick={handleDownloadPdf}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-teal text-white rounded-lg text-xs font-bold hover:bg-teal-600 transition-colors"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-colors shadow-sm"
+                      title="Télécharger le document PDF officiel"
                     >
-                      <Download className="w-3.5 h-3.5" /> PDF
+                      <Download className="w-3.5 h-3.5" /> Télécharger PDF
                     </button>
                   </div>
                 </div>
                 <div
-                  className="bg-white text-black p-8 rounded-xl border border-slate-200 shadow-inner overflow-y-auto"
-                  style={{ minHeight: 400 }}
-                  dangerouslySetInnerHTML={{ __html: contractHtml }}
-                />
+                  className="bg-slate-100 dark:bg-slate-950 p-2 sm:p-4 rounded-xl border border-slate-200 dark:border-white/10 shadow-inner overflow-y-auto max-h-[68vh] custom-scrollbar flex justify-center"
+                >
+                  <RlvContractDocument contract={rlvContractData} documentRef={printContentRef} />
+                </div>
               </div>
             )}
           </div>

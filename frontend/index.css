@@ -1,3 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Fix native <select> / <option> dropdown visibility in dark mode ── */
+@layer base {
+  /* In dark mode, force the native dropdown to use dark color-scheme
+     so the browser renders option backgrounds dark with light text */
+  .dark select {
+    color-scheme: dark;
+  }
+
+  /* Explicit option colors for all browsers */
+  .dark select option {
+    background-color: #1e293b; /* slate-800 */
+    color: #f1f5f9;            /* slate-100 */
+  }
+
+  /* Light mode stays explicit too */
+  select option {
+    background-color: #ffffff;
+    color: #0f172a; /* slate-900 */
+  }
+}

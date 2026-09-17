@@ -522,11 +522,17 @@
 
 @php
     // Logo resolution (Base64 for full portability)
-    $logoFile = public_path('images/rlv-logo.jpg');
+    $logoFile = public_path('images/rlv-emblem.png');
     if (!file_exists($logoFile)) {
-        $logoFile = public_path('rlv-logo.jpg');
+        $logoFile = public_path('rlv-emblem.png');
     }
-    $logoSrc = file_exists($logoFile) ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($logoFile)) : asset('images/rlv-logo.jpg');
+    $logoSrc = file_exists($logoFile) ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoFile)) : '';
+
+    $wordmarkFile = public_path('images/rlv-wordmark.png');
+    if (!file_exists($wordmarkFile)) {
+        $wordmarkFile = public_path('rlv-wordmark.png');
+    }
+    $wordmarkSrc = file_exists($wordmarkFile) ? 'data:image/png;base64,' . base64_encode(file_get_contents($wordmarkFile)) : '';
 
     // Car inspection outline resolution (Base64 for DomPDF & print portability)
     $carImgFile = public_path('images/car-inspection.png');
@@ -569,15 +575,21 @@
         <tr>
             <td class="header-left">
                 <div class="header-logo-wrap">
-                    <img src="{{ $logoSrc }}" alt="RLV Logo" class="header-logo-img">
+                    @if($logoSrc)
+                        <img src="{{ $logoSrc }}" alt="RLV Emblem" class="header-logo-img">
+                    @endif
                 </div>
                 <div class="company-title">RAHIMI LOCATION DE VOITURE</div>
-                <div class="company-addr">📍 LOT EL NAHDA RUE 37 N°12 BLOC 38 , Tanger</div>
-                <div class="company-tel">📞 Tel: 06 77 81 37 18 / 07 77 57 33 79</div>
+                <div class="company-addr">LOT EL NAHDA RUE 37 N°12 BLOC38, Tanger</div>
+                <div class="company-tel">Tel: 06 77 81 37 18 / 07 77 57 33 79</div>
             </td>
             <td class="header-right">
                 <div style="text-align:center; margin-bottom:2px;">
-                    <span class="rlv-brand">RLV</span>
+                    @if($wordmarkSrc)
+                        <img src="{{ $wordmarkSrc }}" alt="RLV" style="height:18px; vertical-align:middle; margin-right:4px;">
+                    @else
+                        <span class="rlv-brand">RLV</span>
+                    @endif
                     <span class="rlv-sub">Location de voiture</span>
                 </div>
                 <div class="legal-ar">

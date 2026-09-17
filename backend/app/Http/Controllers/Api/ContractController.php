@@ -223,9 +223,10 @@ class ContractController extends Controller
     {
         $contract->load(['booking', 'user', 'car']);
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.contract', compact('contract'));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.contract_arabic', compact('contract'))
+            ->setPaper('a4', 'portrait');
 
-        return $pdf->download("contrat-{$contract->contract_number}.pdf");
+        return $pdf->download("contrat-rlv-{$contract->contract_number}.pdf");
     }
 
     /**
