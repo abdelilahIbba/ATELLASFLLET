@@ -4,7 +4,7 @@ import {
   Receipt, Plus, Search, Eye, Edit, Trash2, Download,
   CheckCircle2, Clock, AlertCircle, XCircle, Send,
   RefreshCw, X, CreditCard, Banknote, ArrowRightLeft, FileText,
-  TrendingUp, DollarSign, AlertTriangle,
+  TrendingUp, DollarSign, AlertTriangle, Printer,
 } from 'lucide-react';
 import { adminInvoicesApi } from '../../../services/api';
 
@@ -462,6 +462,86 @@ const InvoiceDetail: React.FC<{
     }
   };
 
+  const handlePrintInvoice = () => {
+    const printWindow = window.open('', '_blank', 'width=900,height=1000');
+    if (!printWindow) {
+      alert('Le popup a été bloqué. Autorisez les popups pour imprimer la facture.');
+      return;
+    }
+
+    const rows = invoice.items.map(item => `
+      <tr>
+        <td>${item.label}</td>
+        <td>${item.quantity}</td>
+        <td>${fmtAmount(item.unit_price)}</td>
+        <td>${fmtAmount(item.line_total)}</td>
+      </tr>
+    `).join('');
+
+    const printHtml = `
+      <!DOCTYPE html>
+      <html lang="fr">
+        <head>
+          <meta charset="UTF-8" />
+          <title>Facture ${invoice.invoice_number}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #0f172a; margin: 24px; }
+            h1 { font-size: 26px; margin-bottom: 8px; }
+            .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+            .card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            th, td { border-bottom: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+            th { font-size: 11px; text-transform: uppercase; color: #64748b; }
+            .totals { width: 320px; margin-left: auto; margin-top: 16px; }
+            .totals-row { display: flex; justify-content: space-between; margin: 6px 0; }
+            .total { font-weight: 700; font-size: 18px; color: #0f766e; }
+            .status { display: inline-block; padding: 6px 10px; border-radius: 9999px; background: #ecfeff; color: #0f766e; font-weight: 700; }
+          </style>
+        </head>
+        <body>
+          <h1>Facture ${invoice.invoice_number}</h1>
+          <span class="status">${STATUS_META[invoice.status]?.label ?? 'Facture'}</span>
+          <div class="meta">
+            <div class="card">
+              <strong>Client</strong><br />
+              ${invoice.client_name}<br />
+              ${invoice.client_email ?? ''}<br />
+              ${invoice.client_phone ?? ''}
+            </div>
+            <div class="card">
+              <strong>Dates</strong><br />
+              Émission : ${fmtDate(invoice.issue_date ?? invoice.created_at)}<br />
+              Échéance : ${fmtDate(invoice.due_date)}
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Qté</th>
+                <th>P.U.</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+
+          <div class="totals">
+            <div class="totals-row"><span>Sous-total HT</span><strong>${fmtAmount(invoice.subtotal)}</strong></div>
+            ${invoice.discount_amount > 0 ? `<div class="totals-row"><span>Remise</span><strong>- ${fmtAmount(invoice.discount_amount)}</strong></div>` : ''}
+            <div class="totals-row"><span>TVA (${invoice.tax_rate}%)</span><strong>${fmtAmount(invoice.tax_amount)}</strong></div>
+            <div class="totals-row total"><span>TOTAL TTC</span><strong>${fmtAmount(invoice.total)}</strong></div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printHtml);
+    printWindow.document.close();
+    setTimeout(() => printWindow.print(), 400);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm">
       <motion.div
@@ -587,6 +667,10 @@ const InvoiceDetail: React.FC<{
           <button onClick={handleDownloadPdf}
             className="flex items-center gap-2 px-4 py-2 bg-brand-navy dark:bg-white/10 text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity">
             <Download className="w-4 h-4" /> PDF
+          </button>
+          <button onClick={handlePrintInvoice}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-700 dark:bg-white/10 text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity">
+            <Printer className="w-4 h-4" /> Imprimer
           </button>
           {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
             <button onClick={onMarkPaid}
