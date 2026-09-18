@@ -630,6 +630,7 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigateInvoi
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null);
   const [generatingFromBooking, setGeneratingFromBooking] = useState<string | null>(null);
   const [activatingContract, setActivatingContract] = useState<string | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null);
   const [pendingOpen, setPendingOpen] = useState(true);
 
   const load = () => {
@@ -691,6 +692,35 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigateInvoi
       alert(err?.message ?? 'Erreur lors de la génération.');
     } finally {
       setGeneratingInvoice(null);
+    }
+  };
+
+  const handleDownloadPdf = async (contract: Contract) => {
+    setDownloadingPdf(contract.id);
+    const token = localStorage.getItem('auth_token');
+    const base = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
+    try {
+      const res = await fetch(`${base}/admin/contracts/${contract.id}/pdf-arabic`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const downloadBlob = new Blob([blob], { type: 'application/octet-stream' });
+      const objUrl = URL.createObjectURL(downloadBlob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = `contrat-rlv-${contract.contract_number}.pdf`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(objUrl);
+      }, 1000);
+    } catch (err: any) {
+      alert('Erreur lors du téléchargement PDF : ' + (err?.message ?? 'Erreur inconnue'));
+    } finally {
+      setDownloadingPdf(null);
     }
   };
 
@@ -885,6 +915,16 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigateInvoi
                           className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors font-bold"
                           title="Contrat RLV Tanger (عقد بالعربية)">
                           <FileText className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDownloadPdf(c)}
+                          disabled={downloadingPdf === c.id}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors disabled:opacity-40"
+                          title="Télécharger PDF (عقد RLV)">
+                          {downloadingPdf === c.id
+                            ? <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            : <Download className="w-3.5 h-3.5" />
+                          }
                         </button>
                         <button onClick={() => { setEditContract(c); setShowForm(true); }}
                           className="p-1.5 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-colors"

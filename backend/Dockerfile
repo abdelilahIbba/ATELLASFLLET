@@ -25,13 +25,15 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 
 # Install PHP dependencies (production only, optimized)
+# --ignore-platform-reqs: the builder image lacks ext-gd, but the final image has it
 RUN composer install \
     --no-dev \
     --no-interaction \
     --no-progress \
     --no-scripts \
     --prefer-dist \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --ignore-platform-reqs
 
 # Stage 3: Final production image
 FROM php:8.2-fpm-alpine

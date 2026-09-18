@@ -231,15 +231,42 @@ class ContractController extends Controller
 
     /**
      * GET /api/admin/contracts/{contract}/pdf-arabic
+     *
+     * Uses mPDF instead of DomPDF because mPDF has native Arabic text shaping
+     * (connected letters, RTL, bidirectional text). DomPDF renders Arabic as
+     * disconnected, reversed letters.
      */
     public function downloadArabicPdf(Contract $contract): \Illuminate\Http\Response
     {
         $contract->load(['booking', 'user', 'car']);
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.contract_arabic', compact('contract'))
-            ->setPaper('a4', 'portrait');
+        // Render the Blade template to HTML
+        $html = view('pdf.contract_arabic', compact('contract'))->render();
 
-        return $pdf->download("contrat-rlv-{$contract->contract_number}.pdf");
+        // Create mPDF instance with Arabic support
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'             => 'utf-8',
+            'format'           => 'A4',
+            'orientation'      => 'P',
+            'tempDir'          => storage_path('app/mpdf-tmp'),
+            'autoArabic'       => true,
+            'autoLangToFont'   => true,
+            'default_font'     => 'dejavusans',
+            'margin_left'      => 6,
+            'margin_right'     => 6,
+            'margin_top'       => 4,
+            'margin_bottom'    => 4,
+        ]);
+
+        // Suppress non-fatal "Undefined array key -1" warning in mPDF table rendering
+        @$mpdf->WriteHTML($html);
+
+        $filename = "contrat-rlv-{$contract->contract_number}.pdf";
+
+        return new \Illuminate\Http\Response($mpdf->Output($filename, \Mpdf\Output\Destination::STRING_RETURN), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 
     /**

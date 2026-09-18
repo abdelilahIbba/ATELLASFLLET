@@ -4,10 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>عقد الكراء — Contrat de Location <?php echo e($contract->contract_number); ?></title>
+<<<<<<< HEAD
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
+=======
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+
+>>>>>>> 24c7ca9 (maintanace contrat)
         @page {
             size: A4 portrait;
             margin: 4mm 6mm;
@@ -20,7 +30,11 @@
             print-color-adjust: exact;
         }
         body {
+<<<<<<< HEAD
             font-family: 'Cairo', 'Montserrat', 'DejaVu Sans', Arial, Tahoma, sans-serif;
+=======
+            font-family: 'Cairo', 'DejaVu Sans', Arial, Tahoma, sans-serif;
+>>>>>>> 24c7ca9 (maintanace contrat)
             font-size: 8px;
             color: #000;
             background: #fff;
@@ -53,10 +67,16 @@
         .header-logo-img {
             max-width: 100%;
             max-height: 38px;
+<<<<<<< HEAD
             object-fit: contain;
         }
         .company-title {
             font-family: 'Montserrat', sans-serif;
+=======
+        }
+        .company-title {
+            font-family: 'Cairo', sans-serif;
+>>>>>>> 24c7ca9 (maintanace contrat)
             font-size: 11px;
             font-weight: 800;
             letter-spacing: 1px;
@@ -66,7 +86,11 @@
         }
         .company-addr {
             font-size: 7.5px;
+<<<<<<< HEAD
             font-weight: 600;
+=======
+            font-weight: 700;
+>>>>>>> 24c7ca9 (maintanace contrat)
             color: #222;
             text-align: center;
             margin-top: 1px;
@@ -85,7 +109,11 @@
             border-left: 1px solid #ccc;
         }
         .rlv-brand {
+<<<<<<< HEAD
             font-family: 'Montserrat', sans-serif;
+=======
+            font-family: 'Cairo', sans-serif;
+>>>>>>> 24c7ca9 (maintanace contrat)
             font-size: 16px;
             font-weight: 900;
             color: #e11d48;
@@ -93,7 +121,11 @@
             display: inline-block;
         }
         .rlv-sub {
+<<<<<<< HEAD
             font-family: 'Montserrat', sans-serif;
+=======
+            font-family: 'Cairo', sans-serif;
+>>>>>>> 24c7ca9 (maintanace contrat)
             font-size: 13px;
             font-weight: 700;
             color: #111;
@@ -105,7 +137,11 @@
             direction: rtl;
             text-align: justify;
             line-height: 1.25;
+<<<<<<< HEAD
             font-weight: 600;
+=======
+            font-weight: 700;
+>>>>>>> 24c7ca9 (maintanace contrat)
             margin-top: 2px;
             font-family: 'Cairo', Tahoma, sans-serif;
         }
@@ -129,7 +165,11 @@
         .title-cell-fr {
             display: table-cell;
             width: 35%;
+<<<<<<< HEAD
             font-family: 'Montserrat', sans-serif;
+=======
+            font-family: 'Cairo', sans-serif;
+>>>>>>> 24c7ca9 (maintanace contrat)
             font-size: 13px;
             font-weight: 800;
             vertical-align: middle;
@@ -258,6 +298,7 @@
             font-weight: 800;
             font-family: monospace;
         }
+<<<<<<< HEAD
         .lbl-dual {
             display: flex;
             justify-content: space-between;
@@ -265,6 +306,27 @@
         }
         .lbl-dual .fr { font-weight: 700; font-size: 7.2px; }
         .lbl-dual .ar { font-weight: 700; font-size: 7.4px; direction: rtl; font-family: 'Cairo', sans-serif; }
+=======
+        /* DomPDF: use table layout instead of flex for dual labels */
+        .lbl-dual {
+            display: table;
+            width: 100%;
+        }
+        .lbl-dual .fr {
+            display: table-cell;
+            text-align: left;
+            font-weight: 700;
+            font-size: 7.2px;
+        }
+        .lbl-dual .ar {
+            display: table-cell;
+            text-align: right;
+            font-weight: 700;
+            font-size: 7.4px;
+            direction: rtl;
+            font-family: 'Cairo', sans-serif;
+        }
+>>>>>>> 24c7ca9 (maintanace contrat)
 
         /* ═══ KILOMETRAGE SECTION ═══ */
         .km-section {
@@ -272,20 +334,35 @@
             border-bottom: 1.5px solid #000;
             padding: 2px 3px;
         }
+<<<<<<< HEAD
         .km-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
+=======
+        /* DomPDF: use table layout instead of flex */
+        .km-row {
+            display: table;
+            width: 100%;
+>>>>>>> 24c7ca9 (maintanace contrat)
             margin-bottom: 2px;
         }
         .km-row:last-child {
             margin-bottom: 0;
         }
         .km-label-box {
+<<<<<<< HEAD
             font-size: 6.8px;
             font-weight: 700;
             line-height: 1.15;
             flex: 1;
+=======
+            display: table-cell;
+            font-size: 6.8px;
+            font-weight: 700;
+            line-height: 1.15;
+            vertical-align: middle;
+>>>>>>> 24c7ca9 (maintanace contrat)
         }
         .km-label-box .ar {
             display: block;
@@ -294,11 +371,23 @@
             font-weight: 700;
             font-family: 'Cairo', sans-serif;
         }
+<<<<<<< HEAD
         .km-digits {
             display: flex;
             gap: 1px;
         }
         .km-digit-cell {
+=======
+        /* DomPDF: inline-block cells instead of flex */
+        .km-digits {
+            display: table-cell;
+            text-align: right;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .km-digit-cell {
+            display: inline-block;
+>>>>>>> 24c7ca9 (maintanace contrat)
             width: 13px;
             height: 13px;
             border: 1px solid #000;
@@ -308,13 +397,22 @@
             font-weight: 800;
             font-family: monospace;
             background: #fff;
+<<<<<<< HEAD
         }
 
         /* ═══ CONDUCTEUR SUPPLEMENTAIRE ═══ */
+=======
+            margin-left: 1px;
+        }
+
+        /* ═══ CONDUCTEUR SUPPLEMENTAIRE ═══ */
+        /* DomPDF: table layout instead of flex */
+>>>>>>> 24c7ca9 (maintanace contrat)
         .supp-header {
             background: #f1f5f9;
             border-bottom: 1px solid #000;
             padding: 2px 4px;
+<<<<<<< HEAD
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -328,6 +426,24 @@
             font-size: 8px;
             font-weight: 800;
             direction: rtl;
+=======
+            display: table;
+            width: 100%;
+        }
+        .supp-title-fr {
+            display: table-cell;
+            font-size: 7.8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-align: left;
+        }
+        .supp-title-ar {
+            display: table-cell;
+            font-size: 8px;
+            font-weight: 800;
+            direction: rtl;
+            text-align: right;
+>>>>>>> 24c7ca9 (maintanace contrat)
             font-family: 'Cairo', sans-serif;
         }
 
@@ -338,10 +454,15 @@
             border: 1.5px solid #000;
             margin-bottom: 2mm;
         }
+<<<<<<< HEAD
+=======
+        /* DomPDF: table layout instead of flex */
+>>>>>>> 24c7ca9 (maintanace contrat)
         .pay-header {
             background: #f1f5f9;
             border-bottom: 1px solid #777;
             padding: 2px 5px;
+<<<<<<< HEAD
             display: flex;
             justify-content: space-between;
             font-weight: 800;
@@ -351,10 +472,37 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+=======
+            display: table;
+            width: 100%;
+            font-weight: 800;
+            font-size: 8px;
+        }
+        .pay-header > span {
+            display: table-cell;
+        }
+        .pay-header > span:last-child {
+            text-align: right;
+        }
+        /* DomPDF: table layout instead of flex */
+        .pay-item {
+            display: table;
+            width: 100%;
+>>>>>>> 24c7ca9 (maintanace contrat)
             padding: 1.5px 4px;
             border-bottom: 1px dotted #ccc;
             font-size: 7.5px;
         }
+<<<<<<< HEAD
+=======
+        .pay-item > span {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        .pay-item > span:last-child {
+            text-align: right;
+        }
+>>>>>>> 24c7ca9 (maintanace contrat)
         .chk-box {
             display: inline-block;
             width: 10px;
@@ -381,6 +529,7 @@
             margin-top: 1px;
             font-size: 6.8px;
         }
+<<<<<<< HEAD
         .sig-client-row {
             padding: 2px 4px;
             border-top: 1px solid #777;
@@ -390,6 +539,24 @@
             font-size: 7.5px;
             font-weight: 800;
         }
+=======
+        /* DomPDF: table layout instead of flex */
+        .sig-client-row {
+            padding: 2px 4px;
+            border-top: 1px solid #777;
+            display: table;
+            width: 100%;
+            font-size: 7.5px;
+            font-weight: 800;
+        }
+        .sig-client-row > span {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        .sig-client-row > span:last-child {
+            text-align: right;
+        }
+>>>>>>> 24c7ca9 (maintanace contrat)
         .sig-client-area {
             min-height: 28px;
             text-align: center;
@@ -397,14 +564,31 @@
         }
 
         /* TOTALS (RIGHT SIDE) */
+<<<<<<< HEAD
         .tot-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
+=======
+        /* DomPDF: table layout instead of flex */
+        .tot-row {
+            display: table;
+            width: 100%;
+>>>>>>> 24c7ca9 (maintanace contrat)
             padding: 2.5px 6px;
             border-bottom: 1px solid #777;
             font-size: 7.8px;
         }
+<<<<<<< HEAD
+=======
+        .tot-row > span {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        .tot-row > span:last-child {
+            text-align: right;
+        }
+>>>>>>> 24c7ca9 (maintanace contrat)
         .tot-row.grand {
             font-weight: 900;
             font-size: 8.5px;
@@ -462,11 +646,22 @@
             font-size: 7px;
             font-weight: 700;
         }
+<<<<<<< HEAD
         .insp-oui-non {
             display: inline-flex;
             gap: 4px;
             margin-left: 3px;
         }
+=======
+        /* DomPDF: inline with margin instead of inline-flex */
+        .insp-oui-non {
+            display: inline;
+            margin-left: 3px;
+        }
+        .insp-oui-non > span {
+            margin-right: 4px;
+        }
+>>>>>>> 24c7ca9 (maintanace contrat)
         .insp-notice {
             font-size: 6px;
             color: #555;
@@ -517,11 +712,16 @@
             }
         }
     </style>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 24c7ca9 (maintanace contrat)
 </head>
 <body>
 
 <?php
     // Logo resolution (Base64 for full portability)
+<<<<<<< HEAD
     $logoFile = public_path('images/rlv-emblem.png');
     if (!file_exists($logoFile)) {
         $logoFile = public_path('rlv-emblem.png');
@@ -533,6 +733,13 @@
         $wordmarkFile = public_path('rlv-wordmark.png');
     }
     $wordmarkSrc = file_exists($wordmarkFile) ? 'data:image/png;base64,' . base64_encode(file_get_contents($wordmarkFile)) : '';
+=======
+    $logoFile = public_path('images/rlv-logo.jpg');
+    if (!file_exists($logoFile)) {
+        $logoFile = public_path('rlv-logo.jpg');
+    }
+    $logoSrc = file_exists($logoFile) ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($logoFile)) : asset('images/rlv-logo.jpg');
+>>>>>>> 24c7ca9 (maintanace contrat)
 
     // Car inspection outline resolution (Base64 for DomPDF & print portability)
     $carImgFile = public_path('images/car-inspection.png');
@@ -575,21 +782,32 @@
         <tr>
             <td class="header-left">
                 <div class="header-logo-wrap">
+<<<<<<< HEAD
                     <?php if($logoSrc): ?>
                         <img src="<?php echo e($logoSrc); ?>" alt="RLV Emblem" class="header-logo-img">
                     <?php endif; ?>
                 </div>
                 <div class="company-title">RAHIMI LOCATION DE VOITURE</div>
                 <div class="company-addr">LOT EL NAHDA RUE 37 N°12 BLOC38, Tanger</div>
+=======
+                    <img src="<?php echo e($logoSrc); ?>" alt="RLV Logo" class="header-logo-img">
+                </div>
+                <div class="company-title">RAHIMI LOCATION DE VOITURE</div>
+                <div class="company-addr">LOT EL NAHDA RUE 37 N&deg;12 BLOC 38, Tanger</div>
+>>>>>>> 24c7ca9 (maintanace contrat)
                 <div class="company-tel">Tel: 06 77 81 37 18 / 07 77 57 33 79</div>
             </td>
             <td class="header-right">
                 <div style="text-align:center; margin-bottom:2px;">
+<<<<<<< HEAD
                     <?php if($wordmarkSrc): ?>
                         <img src="<?php echo e($wordmarkSrc); ?>" alt="RLV" style="height:18px; vertical-align:middle; margin-right:4px;">
                     <?php else: ?>
                         <span class="rlv-brand">RLV</span>
                     <?php endif; ?>
+=======
+                    <span class="rlv-brand">RLV</span>
+>>>>>>> 24c7ca9 (maintanace contrat)
                     <span class="rlv-sub">Location de voiture</span>
                 </div>
                 <div class="legal-ar">
