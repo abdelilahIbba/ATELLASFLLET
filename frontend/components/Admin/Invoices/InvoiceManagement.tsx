@@ -478,6 +478,8 @@ const InvoiceDetail: React.FC<{
       </tr>
     `).join('');
 
+    const assetBase = window.location.origin;
+
     const printHtml = `
       <!DOCTYPE html>
       <html lang="fr">
@@ -487,6 +489,15 @@ const InvoiceDetail: React.FC<{
           <style>
             body { font-family: Arial, sans-serif; color: #0f172a; margin: 24px; }
             h1 { font-size: 26px; margin-bottom: 8px; }
+            .company-header { border: 1px solid #cbd5e1; display: grid; grid-template-columns: 38% 62%; margin-bottom: 22px; }
+            .company-left { border-right: 1px solid #cbd5e1; padding: 14px 18px; text-align: center; }
+            .company-right { padding: 14px 18px; }
+            .company-logo { max-height: 58px; max-width: 128px; display: block; margin: 0 auto 6px; }
+            .company-wordmark { max-height: 30px; max-width: 110px; vertical-align: middle; margin-right: 6px; }
+            .company-title { font-size: 14px; font-weight: 800; letter-spacing: 0.4px; }
+            .company-line { font-size: 11px; color: #334155; line-height: 1.35; }
+            .company-legal { font-size: 10px; color: #475569; line-height: 1.45; margin-top: 6px; text-align: justify; }
+            .invoice-title { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
             .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
             .card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; }
             table { width: 100%; border-collapse: collapse; margin-top: 16px; }
@@ -499,8 +510,31 @@ const InvoiceDetail: React.FC<{
           </style>
         </head>
         <body>
-          <h1>Facture ${invoice.invoice_number}</h1>
-          <span class="status">${STATUS_META[invoice.status]?.label ?? 'Facture'}</span>
+          <div class="company-header">
+            <div class="company-left">
+              <img src="${assetBase}/rlv-emblem.png" class="company-logo" alt="RLV" />
+              <div class="company-title">RAHIMI LOCATION DE VOITURE</div>
+              <div class="company-line">LOT EL NAHDA RUE 37 N°12 BLOC 38, Tanger</div>
+              <div class="company-line">Tel: 06 77 81 37 18 / 07 77 57 33 79</div>
+            </div>
+            <div class="company-right">
+              <div>
+                <img src="${assetBase}/rlv-wordmark.png" class="company-wordmark" alt="RLV" />
+                <strong style="font-size: 16px;">Location de voiture</strong>
+              </div>
+              <div class="company-legal">
+                Le Locataire s'expose à des poursuites juridiques 24 heures après la date convenue au départ si le véhicule n'est toujours pas retourné et cela sans que RLV ait été informé d'une prolongation de location et ait reçu la somme supplémentaire due. Le véhicule ne doit être conduit que par le locataire.
+              </div>
+            </div>
+          </div>
+
+          <div class="invoice-title">
+            <div>
+              <h1>Facture ${invoice.invoice_number}</h1>
+              <span class="status">${STATUS_META[invoice.status]?.label ?? 'Facture'}</span>
+            </div>
+          </div>
+
           <div class="meta">
             <div class="card">
               <strong>Client</strong><br />
