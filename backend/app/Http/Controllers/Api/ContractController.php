@@ -240,8 +240,37 @@ class ContractController extends Controller
     {
         $contract->load(['booking', 'user', 'car']);
 
-        // Render the Blade template to HTML
-        $html = view('pdf.contract_arabic', compact('contract'))->render();
+        $filename = "contrat-rlv-{$contract->contract_number}.pdf";
+
+        return new \Illuminate\Http\Response($this->renderArabicPdf($contract, $filename), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    /**
+     * GET /api/admin/contracts/{contract}/arabic-preview
+     */
+    public function previewArabic(Contract $contract): \Illuminate\Http\Response
+    {
+        $contract->load(['booking', 'user', 'car']);
+
+        $filename = "contrat-rlv-{$contract->contract_number}.pdf";
+
+        return new \Illuminate\Http\Response($this->renderArabicPdf($contract, $filename), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"{$filename}\"",
+        ]);
+    }
+
+    private function renderArabicPdf(Contract $contract, string $filename): string
+    {
+        // Render the Blade template to HTML without CSS @page; mPDF gets page
+        // size and margins from its own configuration below.
+        $html = view('pdf.contract_arabic', [
+            'contract' => $contract,
+            'forMpdf'  => true,
+        ])->render();
 
         // Create mPDF instance with Arabic support
         $mpdf = new \Mpdf\Mpdf([
@@ -252,31 +281,19 @@ class ContractController extends Controller
             'autoArabic'       => true,
             'autoLangToFont'   => true,
             'default_font'     => 'dejavusans',
-            'margin_left'      => 6,
-            'margin_right'     => 6,
-            'margin_top'       => 4,
-            'margin_bottom'    => 4,
+            'margin_left'      => 0,
+            'margin_right'     => 0,
+            'margin_top'       => 0,
+            'margin_bottom'    => 0,
         ]);
+
+        $mpdf->SetTitle("Contrat de Location {$contract->contract_number}");
+        $mpdf->SetDisplayMode('fullpage');
 
         // Suppress non-fatal "Undefined array key -1" warning in mPDF table rendering
         @$mpdf->WriteHTML($html);
 
-        $filename = "contrat-rlv-{$contract->contract_number}.pdf";
-
-        return new \Illuminate\Http\Response($mpdf->Output($filename, \Mpdf\Output\Destination::STRING_RETURN), 200, [
-            'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ]);
-    }
-
-    /**
-     * GET /api/admin/contracts/{contract}/arabic-preview
-     */
-    public function previewArabic(Contract $contract): \Illuminate\Contracts\View\View
-    {
-        $contract->load(['booking', 'user', 'car']);
-
-        return view('pdf.contract_arabic', compact('contract'));
+        return $mpdf->Output($filename, \Mpdf\Output\Destination::STRING_RETURN);
     }
 
     /**
