@@ -231,25 +231,69 @@ class ContractController extends Controller
 
     /**
      * GET /api/admin/contracts/{contract}/pdf-arabic
+     *
+     * Uses mPDF instead of DomPDF because mPDF has native Arabic text shaping
+     * (connected letters, RTL, bidirectional text). DomPDF renders Arabic as
+     * disconnected, reversed letters.
      */
     public function downloadArabicPdf(Contract $contract): \Illuminate\Http\Response
     {
         $contract->load(['booking', 'user', 'car']);
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.contract_arabic', compact('contract'))
-            ->setPaper('a4', 'portrait');
+        $filename = "contrat-rlv-{$contract->contract_number}.pdf";
 
-        return $pdf->download("contrat-rlv-{$contract->contract_number}.pdf");
+        return new \Illuminate\Http\Response($this->renderArabicPdf($contract, $filename), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
     }
 
     /**
      * GET /api/admin/contracts/{contract}/arabic-preview
      */
-    public function previewArabic(Contract $contract): \Illuminate\Contracts\View\View
+    public function previewArabic(Contract $contract): \Illuminate\Http\Response
     {
         $contract->load(['booking', 'user', 'car']);
 
-        return view('pdf.contract_arabic', compact('contract'));
+        $filename = "contrat-rlv-{$contract->contract_number}.pdf";
+
+        return new \Illuminate\Http\Response($this->renderArabicPdf($contract, $filename), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"{$filename}\"",
+        ]);
+    }
+
+    private function renderArabicPdf(Contract $contract, string $filename): string
+    {
+        // Render the Blade template to HTML without CSS @page; mPDF gets page
+        // size and margins from its own configuration below.
+        $html = view('pdf.contract_arabic', [
+            'contract' => $contract,
+            'forMpdf'  => true,
+        ])->render();
+
+        // Create mPDF instance with Arabic support
+        $mpdf = new \Mpdf\Mpdf([
+            'mode'             => 'utf-8',
+            'format'           => 'A4',
+            'orientation'      => 'P',
+            'tempDir'          => storage_path('app/mpdf-tmp'),
+            'autoArabic'       => true,
+            'autoLangToFont'   => true,
+            'default_font'     => 'dejavusans',
+            'margin_left'      => 0,
+            'margin_right'     => 0,
+            'margin_top'       => 0,
+            'margin_bottom'    => 0,
+        ]);
+
+        $mpdf->SetTitle("Contrat de Location {$contract->contract_number}");
+        $mpdf->SetDisplayMode('fullpage');
+
+        // Suppress non-fatal "Undefined array key -1" warning in mPDF table rendering
+        @$mpdf->WriteHTML($html);
+
+        return $mpdf->Output($filename, \Mpdf\Output\Destination::STRING_RETURN);
     }
 
     /**

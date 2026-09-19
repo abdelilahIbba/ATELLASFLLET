@@ -45,6 +45,10 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      extra_hosts:
+        - "dl-cdn.alpinelinux.org:199.232.170.132"
+        - "pecl.php.net:141.227.142.242"
+        - "pear.php.net:109.203.101.62"
     container_name: atellasfleet-backend
     restart: unless-stopped
     expose:

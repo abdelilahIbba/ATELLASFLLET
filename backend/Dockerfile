@@ -61,6 +61,7 @@ RUN apk add --no-cache \
 
 # Install Redis extension for caching (optional but recommended)
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+    && pecl channel-update pecl.php.net \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del .build-deps
