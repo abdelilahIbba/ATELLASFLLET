@@ -57,6 +57,8 @@ class ClientController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $this->normalizeOptionalContractFields($request);
+
         $request->validate([
             'name'                       => ['required', 'string', 'max:255'],
             'email'                      => ['required', 'string', 'email', 'max:255', 'unique:users'],
@@ -64,6 +66,14 @@ class ClientController extends Controller
             'national_id'                => ['sometimes', 'nullable', 'string', 'max:50', 'unique:users'],
             'driver_license_number'      => ['sometimes', 'nullable', 'string', 'max:50', 'unique:users'],
             'driver_license_expiry_date' => ['sometimes', 'nullable', 'date'],
+            'date_of_birth'              => ['sometimes', 'nullable', 'date'],
+            'profession'                 => ['sometimes', 'nullable', 'string', 'max:255'],
+            'address_morocco'            => ['sometimes', 'nullable', 'string', 'max:500'],
+            'address_abroad'             => ['sometimes', 'nullable', 'string', 'max:500'],
+            'driver_license_issued_at'   => ['sometimes', 'nullable', 'string', 'max:255'],
+            'passport_number'            => ['sometimes', 'nullable', 'string', 'max:100'],
+            'passport_issued_at'         => ['sometimes', 'nullable', 'string', 'max:255'],
+            'passport_issued_date'       => ['sometimes', 'nullable', 'date'],
             'status'                     => ['sometimes', 'nullable', 'in:Active,Blacklisted,VIP'],
             'kyc_status'                 => ['sometimes', 'nullable', 'in:Verified,Pending,Missing'],
             'password'                   => ['required', 'confirmed', Rules\Password::defaults()],
@@ -80,6 +90,14 @@ class ClientController extends Controller
             'national_id'                => $request->national_id,
             'driver_license_number'      => $request->driver_license_number,
             'driver_license_expiry_date' => $request->driver_license_expiry_date,
+            'date_of_birth'              => $request->date_of_birth,
+            'profession'                 => $request->profession,
+            'address_morocco'            => $request->address_morocco,
+            'address_abroad'             => $request->address_abroad,
+            'driver_license_issued_at'   => $request->driver_license_issued_at,
+            'passport_number'            => $request->passport_number,
+            'passport_issued_at'         => $request->passport_issued_at,
+            'passport_issued_date'       => $request->passport_issued_date,
             'status'                     => $request->input('status', 'Active'),
             'kyc_status'                 => $request->input('kyc_status', 'Missing'),
             'password'                   => Hash::make($request->password),
@@ -115,6 +133,8 @@ class ClientController extends Controller
      */
     public function update(Request $request, User $user): JsonResponse
     {
+        $this->normalizeOptionalContractFields($request);
+
         $request->validate([
             'name'                       => ['sometimes', 'required', 'string', 'max:255'],
             'email'                      => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,' . $user->id],
@@ -122,6 +142,14 @@ class ClientController extends Controller
             'national_id'                => ['sometimes', 'nullable', 'string', 'max:50', 'unique:users,national_id,' . $user->id],
             'driver_license_number'      => ['sometimes', 'nullable', 'string', 'max:50', 'unique:users,driver_license_number,' . $user->id],
             'driver_license_expiry_date' => ['sometimes', 'nullable', 'date'],
+            'date_of_birth'              => ['sometimes', 'nullable', 'date'],
+            'profession'                 => ['sometimes', 'nullable', 'string', 'max:255'],
+            'address_morocco'            => ['sometimes', 'nullable', 'string', 'max:500'],
+            'address_abroad'             => ['sometimes', 'nullable', 'string', 'max:500'],
+            'driver_license_issued_at'   => ['sometimes', 'nullable', 'string', 'max:255'],
+            'passport_number'            => ['sometimes', 'nullable', 'string', 'max:100'],
+            'passport_issued_at'         => ['sometimes', 'nullable', 'string', 'max:255'],
+            'passport_issued_date'       => ['sometimes', 'nullable', 'date'],
             // KYC / Status
             'status'                     => ['sometimes', 'nullable', 'in:Active,Blacklisted,VIP'],
             'kyc_status'                 => ['sometimes', 'nullable', 'in:Verified,Pending,Missing'],
@@ -134,6 +162,9 @@ class ClientController extends Controller
         $data = $request->only([
             'name', 'email', 'phone', 'national_id',
             'driver_license_number', 'driver_license_expiry_date',
+            'date_of_birth', 'profession', 'address_morocco', 'address_abroad',
+            'driver_license_issued_at', 'passport_number', 'passport_issued_at',
+            'passport_issued_date',
             'status', 'kyc_status',
         ]);
 
@@ -179,5 +210,28 @@ class ClientController extends Controller
     {
         $user->delete();
         return response()->json(['message' => 'Client deleted.']);
+    }
+
+    private function normalizeOptionalContractFields(Request $request): void
+    {
+        foreach ([
+            'phone',
+            'national_id',
+            'driver_license_number',
+            'driver_license_expiry_date',
+            'date_of_birth',
+            'profession',
+            'address_morocco',
+            'address_abroad',
+            'driver_license_issued_at',
+            'passport_number',
+            'passport_issued_at',
+            'passport_issued_date',
+            'kyc_status',
+        ] as $field) {
+            if ($request->has($field) && $request->input($field) === '') {
+                $request->merge([$field => null]);
+            }
+        }
     }
 }

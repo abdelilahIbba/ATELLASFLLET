@@ -24,6 +24,15 @@ class User extends Authenticatable
         'phone',
         'national_id',
         'driver_license_number',
+        'driver_license_expiry_date',
+        'date_of_birth',
+        'profession',
+        'address_morocco',
+        'address_abroad',
+        'driver_license_issued_at',
+        'passport_number',
+        'passport_issued_at',
+        'passport_issued_date',
         'password',
         // New KYC fields
         'status',
@@ -55,6 +64,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
+            'driver_license_expiry_date' => 'date',
+            'date_of_birth'     => 'date',
+            'passport_issued_date' => 'date',
             'demo_permissions'  => 'array',
             'demo_expires_at'   => 'date',
         ];

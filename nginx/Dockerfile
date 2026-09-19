@@ -1,5 +1,7 @@
 FROM nginx:1.27-alpine
 
+RUN apk add --no-cache openssl
+
 # Copy nginx config
 COPY default.conf /etc/nginx/conf.d/default.conf
 
