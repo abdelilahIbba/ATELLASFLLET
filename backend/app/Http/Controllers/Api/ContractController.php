@@ -188,9 +188,16 @@ class ContractController extends Controller
             'client_phone'            => $booking->user->phone ?? '',
             'client_email'            => $booking->user->email ?? '',
             'client_id_number'        => $booking->user->national_id ?? '',
+            'client_date_of_birth'    => $booking->user->date_of_birth ?? null,
+            'client_profession'       => $booking->user->profession ?? null,
             'client_license_number'   => $booking->user->driver_license_number ?? '',
+            'client_license_issued_at'=> $booking->user->driver_license_issued_at ?? null,
             'client_license_expiry'   => $booking->user->driver_license_expiry_date ?? null,
-            'client_nationality'      => 'Marocaine',
+            'client_passport_number'  => $booking->user->passport_number ?? null,
+            'client_passport_issued_at' => $booking->user->passport_issued_at ?? null,
+            'client_passport_issued_date' => $booking->user->passport_issued_date ?? null,
+            'client_address'          => $booking->user->address_morocco ?? null,
+            'client_address_abroad'   => $booking->user->address_abroad ?? null,
             'vehicle_name'            => $booking->car->full_name
                                           ?? trim(($booking->car->year ?? '') . ' ' . ($booking->car->make ?? '') . ' ' . ($booking->car->model ?? '')),
             'vehicle_plate'           => $this->unitPlate($booking),
@@ -238,10 +245,37 @@ class ContractController extends Controller
      */
     public function downloadArabicPdf(Contract $contract): \Illuminate\Http\Response
     {
+        $filename = "contrat-rlv-{$contract->contract_number}.pdf";
+
+        return new \Illuminate\Http\Response($this->renderArabicPdf($contract, $filename), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    /**
+     * GET /api/admin/contracts/{contract}/arabic-preview
+     */
+    public function previewArabic(Contract $contract): \Illuminate\Http\Response
+    {
         $contract->load(['booking', 'user', 'car']);
 
-        // Render the Blade template to HTML
-        $html = view('pdf.contract_arabic', compact('contract'))->render();
+        $filename = "contrat-rlv-{$contract->contract_number}.pdf";
+
+        return new \Illuminate\Http\Response($this->renderArabicPdf($contract, $filename), 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "inline; filename=\"{$filename}\"",
+        ]);
+    }
+
+    private function renderArabicPdf(Contract $contract, string $filename): string
+    {
+        // Render the Blade template to HTML without CSS @page; mPDF gets page
+        // size and margins from its own configuration below.
+        $html = view('pdf.contract_arabic', [
+            'contract' => $contract,
+            'forMpdf'  => true,
+        ])->render();
 
         // Create mPDF instance with Arabic support
         $mpdf = new \Mpdf\Mpdf([
@@ -252,31 +286,19 @@ class ContractController extends Controller
             'autoArabic'       => true,
             'autoLangToFont'   => true,
             'default_font'     => 'dejavusans',
-            'margin_left'      => 6,
-            'margin_right'     => 6,
-            'margin_top'       => 4,
-            'margin_bottom'    => 4,
+            'margin_left'      => 0,
+            'margin_right'     => 0,
+            'margin_top'       => 0,
+            'margin_bottom'    => 0,
         ]);
+
+        $mpdf->SetTitle("Contrat de Location {$contract->contract_number}");
+        $mpdf->SetDisplayMode('fullpage');
 
         // Suppress non-fatal "Undefined array key -1" warning in mPDF table rendering
         @$mpdf->WriteHTML($html);
 
-        $filename = "contrat-rlv-{$contract->contract_number}.pdf";
-
-        return new \Illuminate\Http\Response($mpdf->Output($filename, \Mpdf\Output\Destination::STRING_RETURN), 200, [
-            'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ]);
-    }
-
-    /**
-     * GET /api/admin/contracts/{contract}/arabic-preview
-     */
-    public function previewArabic(Contract $contract): \Illuminate\Contracts\View\View
-    {
-        $contract->load(['booking', 'user', 'car']);
-
-        return view('pdf.contract_arabic', compact('contract'));
+        return $mpdf->Output($filename, \Mpdf\Output\Destination::STRING_RETURN);
     }
 
     /**

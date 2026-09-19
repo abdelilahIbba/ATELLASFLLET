@@ -18,6 +18,17 @@
         table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
         table th { background: #f1f5f9; text-align: left; padding: 6px 8px; font-size: 10px; text-transform: uppercase; color: #64748b; border: 1px solid #e2e8f0; }
         table td { padding: 6px 8px; border: 1px solid #e2e8f0; }
+        .company-header { border: 1px solid #cbd5e1; margin-bottom: 18px; }
+        .company-header td { border: none; vertical-align: middle; }
+        .company-logo-cell { width: 38%; text-align: center; border-right: 1px solid #cbd5e1; padding: 12px 16px; }
+        .company-info-cell { width: 62%; padding: 12px 18px; }
+        .company-logo { max-height: 54px; max-width: 120px; margin-bottom: 4px; }
+        .company-wordmark { max-height: 28px; max-width: 100px; vertical-align: middle; margin-right: 6px; }
+        .company-name { font-size: 13px; font-weight: 800; color: #0f172a; letter-spacing: 0.4px; }
+        .company-line { font-size: 10px; color: #334155; line-height: 1.35; }
+        .company-legal { font-size: 8.5px; color: #475569; line-height: 1.35; margin-top: 5px; text-align: justify; }
+        .invoice-heading { border: none; margin-bottom: 16px; }
+        .invoice-heading td { border: none; vertical-align: top; }
         .section { margin-bottom: 16px; }
         .text-right { text-align: right; }
         .totals-table td { border: none; padding: 3px 8px; }
@@ -26,17 +37,57 @@
     </style>
 </head>
 <body>
+@php
+    $imageData = function (array $paths): string {
+        foreach ($paths as $path) {
+            if (file_exists($path)) {
+                $type = strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'jpg' ? 'jpeg' : strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                return 'data:image/' . $type . ';base64,' . base64_encode(file_get_contents($path));
+            }
+        }
+        return '';
+    };
+
+    $logoSrc = $imageData([public_path('images/rlv-emblem.png'), public_path('rlv-emblem.png')]);
+    $wordmarkSrc = $imageData([public_path('images/rlv-wordmark.png'), public_path('rlv-wordmark.png')]);
+@endphp
+
 <div class="page">
-    {{-- Header --}}
-    <table style="border: none; margin-bottom: 20px;">
+    {{-- Company header --}}
+    <table class="company-header">
+        <tr>
+            <td class="company-logo-cell">
+                @if($logoSrc)
+                    <img src="{{ $logoSrc }}" class="company-logo" alt="RLV">
+                @endif
+                <div class="company-name">RAHIMI LOCATION DE VOITURE</div>
+                <div class="company-line">LOT EL NAHDA RUE 37 N°12 BLOC 38, Tanger</div>
+                <div class="company-line">Tel: 06 77 81 37 18 / 07 77 57 33 79</div>
+            </td>
+            <td class="company-info-cell">
+                <div style="margin-bottom: 4px;">
+                    @if($wordmarkSrc)
+                        <img src="{{ $wordmarkSrc }}" class="company-wordmark" alt="RLV">
+                    @else
+                        <strong style="font-size: 24px; color: #e11d48;">RLV</strong>
+                    @endif
+                    <strong style="font-size: 15px; color: #0f172a;">Location de voiture</strong>
+                </div>
+                <div class="company-legal">
+                    Le Locataire s'expose à des poursuites juridiques 24 heures après la date convenue au départ si le véhicule n'est toujours pas retourné et cela sans que RLV ait été informé d'une prolongation de location et ait reçu la somme supplémentaire due. Le véhicule ne doit être conduit que par le locataire.
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    {{-- Invoice details --}}
+    <table class="invoice-heading">
         <tr>
             <td style="border: none; width: 50%; vertical-align: top;">
-                <strong style="font-size: 14px;">Atellas Fleet S.A.R.L</strong><br>
-                <span style="font-size: 10px; color: #64748b;">Casablanca, Maroc</span>
-            </td>
-            <td style="border: none; text-align: right; vertical-align: top;">
                 <h1>FACTURE</h1>
                 <p style="color: #64748b;">N° {{ $invoice->invoice_number }}</p>
+            </td>
+            <td style="border: none; text-align: right; vertical-align: top;">
                 <span class="badge badge-{{ $invoice->status }}">{{ ucfirst($invoice->status) }}</span>
             </td>
         </tr>
@@ -139,7 +190,7 @@
     @endif
 
     <div class="footer">
-        Atellas Fleet S.A.R.L — Casablanca, Maroc
+        RAHIMI LOCATION DE VOITURE — LOT EL NAHDA RUE 37 N°12 BLOC 38, Tanger — Tel: 06 77 81 37 18 / 07 77 57 33 79
     </div>
 </div>
 </body>

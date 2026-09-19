@@ -34,8 +34,16 @@ export interface Client {
     email: string;
     phone: string;
     cin: string; // Carte Nationale d'Identité (national_id)
+    dateOfBirth?: string;          // date_of_birth
+    profession?: string;
+    addressMorocco?: string;       // address_morocco
+    addressAbroad?: string;        // address_abroad
     driverLicense?: string;        // driver_license_number
+    driverLicenseIssuedAt?: string; // driver_license_issued_at
     driverLicenseExpiry?: string;  // driver_license_expiry_date
+    passportNumber?: string;
+    passportIssuedAt?: string;
+    passportIssuedDate?: string;
     status: 'Active' | 'Blacklisted' | 'VIP';
     kycStatus: 'Verified' | 'Pending' | 'Missing';
     totalSpent: number;

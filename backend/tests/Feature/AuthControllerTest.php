@@ -106,6 +106,20 @@ test('login fails with wrong password', function () {
         ->assertJsonPath('message', 'The provided credentials are incorrect.');
 });
 
+test('login does not crash when stored password hash is malformed', function () {
+    $user = User::factory()->create([
+        'email'    => 'legacy@example.com',
+        'password' => 'not-a-valid-bcrypt-hash',
+    ]);
+
+    $this->postJson('/api/login', ['email' => 'legacy@example.com', 'password' => 'Password1!'])
+        ->assertUnauthorized()
+        ->assertJsonPath('message', 'The provided credentials are incorrect.');
+
+    $user->refresh();
+    expect($user->email)->toBe('legacy@example.com');
+});
+
 test('login fails with non-existent email', function () {
     $this->postJson('/api/login', ['email' => 'nobody@example.com', 'password' => 'Password1!'])
         ->assertUnauthorized()

@@ -18,27 +18,61 @@ class AuthController extends Controller
      */
     public function login(Request $request): JsonResponse
     {
-        $request->validate([
-            'email'    => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
-        ]);
+        try {
+            $request->validate([
+                'email'    => ['required', 'string', 'email'],
+                'password' => ['required', 'string'],
+            ]);
 
-        $user = User::where('email', $request->email)->first();
+            Log::info('Login attempt for email', ['email' => $request->email]);
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            Log::warning('Failed login attempt', ['email' => $request->email, 'ip' => $request->ip()]);
+            // Eager load bookings to avoid N+1 and relationship errors
+            $user = User::with('bookings')->where('email', $request->email)->first();
+
+            if (!$user) {
+                Log::warning('User not found', ['email' => $request->email]);
+                return response()->json([
+                    'message' => 'The provided credentials are incorrect.',
+                ], 401);
+            }
+
+            try {
+                $passwordValid = Hash::check($request->password, $user->password);
+            } catch (\RuntimeException $e) {
+                Log::warning('Malformed password hash encountered during login', [
+                    'email' => $request->email,
+                    'error' => $e->getMessage(),
+                ]);
+                $passwordValid = false;
+            }
+
+            if (!$passwordValid) {
+                Log::warning('Password mismatch', ['email' => $request->email]);
+                return response()->json([
+                    'message' => 'The provided credentials are incorrect.',
+                ], 401);
+            }
+
+            Log::info('User authenticated successfully', ['email' => $request->email, 'user_id' => $user->id]);
+
+            $token = $user->createToken('api-token')->plainTextToken;
+
             return response()->json([
-                'message' => 'The provided credentials are incorrect.',
-            ], 401);
+                'message' => 'Login successful.',
+                'user'    => new UserResource($user),
+                'token'   => $token,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Login error', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'message' => 'Server error: ' . $e->getMessage(),
+            ], 500);
         }
-
-        $token = $user->createToken('api-token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Login successful.',
-            'user'    => new UserResource($user),
-            'token'   => $token,
-        ]);
     }
 
     /**
