@@ -249,7 +249,19 @@ class ContractController extends Controller
 
         $filename = "contrat-rlv-{$contract->contract_number}.pdf";
 
-        return new \Illuminate\Http\Response($this->renderArabicPdf($contract, $filename), 200, [
+        try {
+            $pdfContent = $this->renderArabicPdf($contract, $filename);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Arabic contract PDF generation failed', [
+                'contract_id' => $contract->id,
+                'error'       => $e->getMessage(),
+            ]);
+
+            return response($e->getMessage(), 500)
+                ->header('Content-Type', 'text/plain');
+        }
+
+        return new \Illuminate\Http\Response($pdfContent, 200, [
             'Content-Type'        => 'application/pdf',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
@@ -264,7 +276,19 @@ class ContractController extends Controller
 
         $filename = "contrat-rlv-{$contract->contract_number}.pdf";
 
-        return new \Illuminate\Http\Response($this->renderArabicPdf($contract, $filename), 200, [
+        try {
+            $pdfContent = $this->renderArabicPdf($contract, $filename);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Arabic contract PDF preview failed', [
+                'contract_id' => $contract->id,
+                'error'       => $e->getMessage(),
+            ]);
+
+            return response($e->getMessage(), 500)
+                ->header('Content-Type', 'text/plain');
+        }
+
+        return new \Illuminate\Http\Response($pdfContent, 200, [
             'Content-Type'        => 'application/pdf',
             'Content-Disposition' => "inline; filename=\"{$filename}\"",
         ]);
@@ -272,6 +296,10 @@ class ContractController extends Controller
 
     private function renderArabicPdf(Contract $contract, string $filename): string
     {
+        if (! class_exists(\Mpdf\Mpdf::class)) {
+            throw new \RuntimeException('mPDF is not installed. Run composer require mpdf/mpdf.');
+        }
+
         // Render the Blade template to HTML without CSS @page; mPDF gets page
         // size and margins from its own configuration below.
         $html = view('pdf.contract_arabic', [
