@@ -142,8 +142,16 @@ interface Client {
   email: string;
   phone: string;
   cin: string;
+  dateOfBirth?: string;
+  profession?: string;
+  addressMorocco?: string;
+  addressAbroad?: string;
   driverLicense?: string;
+  driverLicenseIssuedAt?: string;
   driverLicenseExpiry?: string;
+  passportNumber?: string;
+  passportIssuedAt?: string;
+  passportIssuedDate?: string;
   status: 'Active' | 'Blacklisted' | 'VIP';
   kycStatus: 'Verified' | 'Pending' | 'Missing';
   totalSpent: number;
@@ -376,8 +384,16 @@ const clientFromApi = (u: Record<string, any>): Client => ({
   email: u.email ?? '',
   phone: u.phone ?? '',
   cin: u.national_id ?? '',
+  dateOfBirth: u.date_of_birth?.slice(0, 10) ?? '',
+  profession: u.profession ?? '',
+  addressMorocco: u.address_morocco ?? '',
+  addressAbroad: u.address_abroad ?? '',
   driverLicense: u.driver_license_number ?? '',
+  driverLicenseIssuedAt: u.driver_license_issued_at ?? '',
   driverLicenseExpiry: u.driver_license_expiry_date?.slice(0, 10) ?? '',
+  passportNumber: u.passport_number ?? '',
+  passportIssuedAt: u.passport_issued_at ?? '',
+  passportIssuedDate: u.passport_issued_date?.slice(0, 10) ?? '',
   status: (u.status as Client['status']) ?? 'Active',
   kycStatus: (u.kyc_status as Client['kycStatus']) ?? 'Missing',
   totalSpent: Number(u.total_spent ?? 0),
@@ -1133,9 +1149,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     // rules don't reject them (API routes don't apply ConvertEmptyStringsToNull).
     const optionalFields = [
       'phone', 'national_id', 'driver_license_number',
-      'driver_license_expiry_date', 'kyc_status',
+      'driver_license_expiry_date', 'date_of_birth', 'profession',
+      'address_morocco', 'address_abroad', 'driver_license_issued_at',
+      'passport_number', 'passport_issued_at', 'passport_issued_date',
+      'kyc_status',
     ];
     optionalFields.forEach(key => {
+      if (selectedItem) return;
       if (formData.get(key) === '') formData.delete(key);
     });
     // Remove empty file inputs (no file selected)
@@ -2100,6 +2120,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                      </div>
                                  </div>
 
+                                     <div className="grid grid-cols-2 gap-4">
+                                       <div>
+                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Date de Naissance <span className="font-semibold normal-case text-slate-400">(optionnel)</span></label>
+                                         <input name="date_of_birth" type="date" defaultValue={selectedItem?.dateOfBirth || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" />
+                                       </div>
+                                       <div>
+                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Profession <span className="font-semibold normal-case text-slate-400">(optionnel)</span></label>
+                                         <input name="profession" defaultValue={selectedItem?.profession || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Profession" />
+                                       </div>
+                                     </div>
+
                                  <div className="grid grid-cols-2 gap-4">
                                      <div>
                                          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
@@ -2110,6 +2141,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                          <input name="phone" defaultValue={selectedItem?.phone || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="+212 6xx-xxxxxx"/>
                                      </div>
                                  </div>
+
+                                     <div className="grid grid-cols-2 gap-4">
+                                       <div>
+                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Adresse au Maroc <span className="font-semibold normal-case text-slate-400">(optionnel)</span></label>
+                                         <input name="address_morocco" defaultValue={selectedItem?.addressMorocco || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Adresse au Maroc" />
+                                       </div>
+                                       <div>
+                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Adresse à l'Etranger <span className="font-semibold normal-case text-slate-400">(optionnel)</span></label>
+                                         <input name="address_abroad" defaultValue={selectedItem?.addressAbroad || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Adresse à l'Etranger" />
+                                       </div>
+                                     </div>
 
                                  {/* Driver license */}
                                  <div className="grid grid-cols-2 gap-4">
@@ -2122,6 +2164,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                          <input name="driver_license_expiry_date" type="date" defaultValue={selectedItem?.driverLicenseExpiry || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/>
                                      </div>
                                  </div>
+
+                                     <div className="grid grid-cols-2 gap-4">
+                                       <div>
+                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Délivré à <span className="font-semibold normal-case text-slate-400">(permis, optionnel)</span></label>
+                                         <input name="driver_license_issued_at" defaultValue={selectedItem?.driverLicenseIssuedAt || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Ville de délivrance" />
+                                       </div>
+                                       <div>
+                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Passport N° <span className="font-semibold normal-case text-slate-400">(optionnel)</span></label>
+                                         <input name="passport_number" defaultValue={selectedItem?.passportNumber || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono" placeholder="N° passeport" />
+                                       </div>
+                                     </div>
+
+                                     <div className="grid grid-cols-2 gap-4">
+                                       <div>
+                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Délivré à <span className="font-semibold normal-case text-slate-400">(passport, optionnel)</span></label>
+                                         <input name="passport_issued_at" defaultValue={selectedItem?.passportIssuedAt || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Ville de délivrance" />
+                                       </div>
+                                       <div>
+                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Le <span className="font-semibold normal-case text-slate-400">(passport, optionnel)</span></label>
+                                         <input name="passport_issued_date" type="date" defaultValue={selectedItem?.passportIssuedDate || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" />
+                                       </div>
+                                     </div>
 
                                  {/* Password — only for new client */}
                                  {!selectedItem && (

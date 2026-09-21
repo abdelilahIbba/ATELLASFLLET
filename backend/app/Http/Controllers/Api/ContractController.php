@@ -188,9 +188,16 @@ class ContractController extends Controller
             'client_phone'            => $booking->user->phone ?? '',
             'client_email'            => $booking->user->email ?? '',
             'client_id_number'        => $booking->user->national_id ?? '',
+            'client_date_of_birth'    => $booking->user->date_of_birth ?? null,
+            'client_profession'       => $booking->user->profession ?? null,
             'client_license_number'   => $booking->user->driver_license_number ?? '',
+            'client_license_issued_at'=> $booking->user->driver_license_issued_at ?? null,
             'client_license_expiry'   => $booking->user->driver_license_expiry_date ?? null,
-            'client_nationality'      => 'Marocaine',
+            'client_passport_number'  => $booking->user->passport_number ?? null,
+            'client_passport_issued_at' => $booking->user->passport_issued_at ?? null,
+            'client_passport_issued_date' => $booking->user->passport_issued_date ?? null,
+            'client_address'          => $booking->user->address_morocco ?? null,
+            'client_address_abroad'   => $booking->user->address_abroad ?? null,
             'vehicle_name'            => $booking->car->full_name
                                           ?? trim(($booking->car->year ?? '') . ' ' . ($booking->car->make ?? '') . ' ' . ($booking->car->model ?? '')),
             'vehicle_plate'           => $this->unitPlate($booking),
@@ -242,7 +249,19 @@ class ContractController extends Controller
 
         $filename = "contrat-rlv-{$contract->contract_number}.pdf";
 
-        return new \Illuminate\Http\Response($this->renderArabicPdf($contract, $filename), 200, [
+        try {
+            $pdfContent = $this->renderArabicPdf($contract, $filename);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Arabic contract PDF generation failed', [
+                'contract_id' => $contract->id,
+                'error'       => $e->getMessage(),
+            ]);
+
+            return response($e->getMessage(), 500)
+                ->header('Content-Type', 'text/plain');
+        }
+
+        return new \Illuminate\Http\Response($pdfContent, 200, [
             'Content-Type'        => 'application/pdf',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ]);
@@ -257,7 +276,19 @@ class ContractController extends Controller
 
         $filename = "contrat-rlv-{$contract->contract_number}.pdf";
 
-        return new \Illuminate\Http\Response($this->renderArabicPdf($contract, $filename), 200, [
+        try {
+            $pdfContent = $this->renderArabicPdf($contract, $filename);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Arabic contract PDF preview failed', [
+                'contract_id' => $contract->id,
+                'error'       => $e->getMessage(),
+            ]);
+
+            return response($e->getMessage(), 500)
+                ->header('Content-Type', 'text/plain');
+        }
+
+        return new \Illuminate\Http\Response($pdfContent, 200, [
             'Content-Type'        => 'application/pdf',
             'Content-Disposition' => "inline; filename=\"{$filename}\"",
         ]);
@@ -265,6 +296,10 @@ class ContractController extends Controller
 
     private function renderArabicPdf(Contract $contract, string $filename): string
     {
+        if (! class_exists(\Mpdf\Mpdf::class)) {
+            throw new \RuntimeException('mPDF is not installed. Run composer require mpdf/mpdf.');
+        }
+
         // Render the Blade template to HTML without CSS @page; mPDF gets page
         // size and margins from its own configuration below.
         $html = view('pdf.contract_arabic', [

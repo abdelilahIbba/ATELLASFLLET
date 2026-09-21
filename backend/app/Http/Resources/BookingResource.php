@@ -20,7 +20,7 @@ class BookingResource extends JsonResource
             'start_date'     => $this->start_date,
             'end_date'       => $this->end_date,
             'status'         => $this->status,
-            'payment_status' => $this->payment_status ?? 'Unpaid',
+            'payment_status' => $this->paymentStatusFromInvoices(),
             'amount'         => (float) $this->amount,
             'notes'             => $this->notes,
             'pickup_latitude'   => $this->pickup_latitude  ? (float) $this->pickup_latitude  : null,
@@ -32,5 +32,21 @@ class BookingResource extends JsonResource
             'created_at'        => $this->created_at?->toISOString(),
             'updated_at'        => $this->updated_at?->toISOString(),
         ];
+    }
+
+    /**
+     * Derive the booking payment status from its linked invoices.
+     * If any invoice is paid, the reservation is considered Paid.
+     * Falls back to the booking's own payment_status column when no invoices exist.
+     */
+    private function paymentStatusFromInvoices(): string
+    {
+        $invoices = $this->invoices;
+
+        if ($invoices && $invoices->isNotEmpty()) {
+            return $invoices->contains('status', 'paid') ? 'Paid' : 'Unpaid';
+        }
+
+        return $this->payment_status ?? 'Unpaid';
     }
 }

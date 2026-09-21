@@ -1,11 +1,6 @@
 #!/bin/sh
 set -e
 
-# Install openssl if not present
-if ! command -v openssl > /dev/null 2>&1; then
-  apk add --no-cache openssl
-fi
-
 # Generate SSL certificate
 SSL_DIR=/etc/nginx/ssl
 mkdir -p "$SSL_DIR"

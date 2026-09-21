@@ -133,7 +133,25 @@ class InvoiceController extends Controller
             $validated = $this->recalculate($validated);
         }
 
+        $previousStatus = $invoice->status;
         $invoice->update($validated);
+
+        // Sync linked booking payment_status when invoice status changes
+        if ($invoice->booking_id && isset($validated['status']) && $validated['status'] !== $previousStatus) {
+            if ($validated['status'] === 'paid') {
+                $invoice->booking()->update(['payment_status' => 'Paid']);
+            } elseif ($previousStatus === 'paid') {
+                $otherPaidInvoices = Invoice::where('booking_id', $invoice->booking_id)
+                    ->where('id', '!=', $invoice->id)
+                    ->where('status', 'paid')
+                    ->exists();
+
+                if (! $otherPaidInvoices) {
+                    $invoice->booking()->update(['payment_status' => 'Unpaid']);
+                }
+            }
+        }
+
         $invoice->load(['contract', 'booking', 'user']);
 
         return response()->json([
@@ -252,6 +270,11 @@ class InvoiceController extends Controller
             'payment_method' => $request->payment_method,
             'paid_at'        => now(),
         ]);
+
+        // Keep the linked reservation's payment status in sync
+        if ($invoice->booking_id) {
+            $invoice->booking()->update(['payment_status' => 'Paid']);
+        }
 
         $invoice->load(['contract', 'booking', 'user']);
 

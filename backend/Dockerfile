@@ -21,6 +21,24 @@ FROM composer:2.7 AS composer-builder
 
 WORKDIR /app
 
+# Install PHP extensions required by packages before composer install
+RUN apk add --no-cache \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    libzip-dev \
+    oniguruma-dev \
+    icu-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+    gd \
+    pdo_mysql \
+    mbstring \
+    zip \
+    exif \
+    bcmath \
+    intl
+
 # Copy composer files
 COPY composer.json composer.lock ./
 

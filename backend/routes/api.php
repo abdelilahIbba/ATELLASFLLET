@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\BookingController;
@@ -89,6 +90,9 @@ Route::middleware(['auth:sanctum', 'api.role:admin,demo_admin'])->prefix('admin'
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    // Analytics & reporting (real data only)
+    Route::get('/analytics', [AnalyticsController::class, 'index']);
 
     // Cars CRUD
     Route::get('/cars',             [CarController::class, 'index']);
