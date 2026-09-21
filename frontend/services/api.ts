@@ -394,6 +394,68 @@ export const adminSettingsApi = {
 };
 
 // ---------------------------------------------------------------------------
+// Admin — Analytics
+// ---------------------------------------------------------------------------
+export interface AnalyticsTrendPoint {
+  name: string;
+  Actual: number;
+  Target: number;
+  Bookings: number;
+  Utilization: number;
+  TargetUtilization: number;
+}
+
+export interface AnalyticsTopCar {
+  id: number;
+  name: string;
+  category: string;
+  rentals_count: number;
+}
+
+export interface AnalyticsSegment {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface AnalyticsVehiclePerformance {
+  name: string;
+  revenue: number;
+  bookings: number;
+  retention: number;
+  maintenance: number;
+}
+
+export interface AnalyticsInsight {
+  title: string;
+  type: string;
+  text: string;
+}
+
+export interface AnalyticsResponse {
+  trend: AnalyticsTrendPoint[];
+  monthlySummary: AnalyticsTrendPoint[];
+  kpis: {
+    totalRevenue: number;
+    revenueTrend: number;
+    utilization: number;
+    utilizationTrend: number;
+    activeBookings: number;
+    bookingsTrend: number;
+    satisfaction: number;
+  };
+  topRequestedCars: AnalyticsTopCar[];
+  clientSegments: AnalyticsSegment[];
+  vehiclePerformance: AnalyticsVehiclePerformance[];
+  insights: AnalyticsInsight[];
+}
+
+export const adminAnalyticsApi = {
+  /** GET /api/admin/analytics — real fleet/booking statistics */
+  get: () => api.get<AnalyticsResponse>('/admin/analytics'),
+};
+
+// ---------------------------------------------------------------------------
 // Admin — Demo Accounts
 // ---------------------------------------------------------------------------
 export interface DemoAccountResource {
@@ -426,13 +488,6 @@ export const adminDemoApi = {
     api.put<{ message: string; data: DemoAccountResource }>(`/admin/demo/${id}/permissions`, { permissions }),
   /** DELETE /api/admin/demo/{id} */
   delete: (id: number | string) => api.delete<void>(`/admin/demo/${id}`),
-};
-
-// ---------------------------------------------------------------------------
-// Admin — Analytics
-// ---------------------------------------------------------------------------
-export const adminAnalyticsApi = {
-  dashboard: () => api.get<unknown>('/admin/analytics/dashboard'),
 };
 
 // ---------------------------------------------------------------------------
