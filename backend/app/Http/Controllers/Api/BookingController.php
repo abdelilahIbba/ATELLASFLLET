@@ -134,7 +134,7 @@ class BookingController extends Controller
      */
     public function index(Request $request): AnonymousResourceCollection
     {
-        $query = Booking::with(['car', 'user']);
+        $query = Booking::with(['car', 'user', 'invoices']);
 
         if ($request->user()->role !== 'admin') {
             $query->where('user_id', $request->user()->id);
@@ -160,7 +160,7 @@ class BookingController extends Controller
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
-        $booking->load(['car', 'user']);
+        $booking->load(['car', 'user', 'invoices']);
 
         return response()->json(['booking' => new BookingResource($booking)]);
     }
@@ -236,7 +236,7 @@ class BookingController extends Controller
      */
     public function adminIndex(Request $request): AnonymousResourceCollection
     {
-        $query = Booking::with(['car', 'user']);
+        $query = Booking::with(['car', 'user', 'invoices']);
 
         if ($request->filled('status'))  $query->where('status', $request->status);
         if ($request->filled('user_id')) $query->where('user_id', $request->user_id);
