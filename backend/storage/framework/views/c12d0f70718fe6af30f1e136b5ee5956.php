@@ -1,1 +1,0 @@
-<h1>ypppp</h1><?php /**PATH /var/www/html/resources/views/Admin/adminPanel.blade.php ENDPATH**/ ?>
