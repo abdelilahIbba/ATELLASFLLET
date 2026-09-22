@@ -11,6 +11,7 @@
 !/storage/framework/sessions/.gitignore
 /storage/framework/views/*
 !/storage/framework/views/.gitignore
+/storage/app/mpdf-tmp/*
 /vendor
 .env
 .env.backup
