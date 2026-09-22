@@ -11,6 +11,7 @@ import {
   Download,
   Car,
   RefreshCw,
+  Zap,
 } from 'lucide-react';
 import { Booking } from '../types';
 import VehicleConditionPanel, {
@@ -321,6 +322,8 @@ interface ContractModalProps {
   onClose: () => void;
   company?: ContractCompanySettings;
   onSaved?: () => void;
+  /** Automated flow: open the RLV PDF preview as soon as the contract is generated */
+  autoOpenPreview?: boolean;
 }
 
 type Step = 0 | 1 | 2 | 3;
@@ -332,7 +335,7 @@ const STEPS: { label: string; shortLabel: string; icon: React.ReactNode }[] = [
   { label: 'Contrat Final', shortLabel: 'Contrat', icon: <FileText className="w-4 h-4" /> },
 ];
 
-const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company, onSaved }) => {
+const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company, onSaved, autoOpenPreview }) => {
   const companySettings = company ?? loadCompanySettings();
 
   const [step, setStep] = useState<Step>(0);
@@ -400,6 +403,14 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
     })();
     return () => { cancelled = true; };
   }, [booking.id]);
+
+  // Automated flow: as soon as the contract has been generated from the booking,
+  // open the RLV PDF preview so the user can print it or download it directly.
+  useEffect(() => {
+    if (autoOpenPreview && !loadingContract && extras.contractId) {
+      setShowRlvModal(true);
+    }
+  }, [autoOpenPreview, loadingContract, extras.contractId]);
 
   const printContentRef = React.useRef<HTMLDivElement>(null);
 
@@ -555,6 +566,11 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue">
                 {booking.clientName}
               </span>
+              {autoOpenPreview && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 flex items-center gap-1">
+                  <Zap className="w-3 h-3" /> Flux automatique
+                </span>
+              )}
               {loadingContract && (
                 <RefreshCw className="w-3.5 h-3.5 text-slate-400 animate-spin" />
               )}
