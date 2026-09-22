@@ -567,6 +567,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   const [bfAmount,   setBfAmount]   = useState('');
   const [bfPickupId,  setBfPickupId]  = useState<number | ''>('');
   const [bfDropoffId, setBfDropoffId] = useState<number | ''>('');
+  /** Selected client in the booking form (pre-filled by the automated flow) */
+  const [bfClientId, setBfClientId] = useState('');
   const [pickupPoints, setPickupPoints] = useState<PickupPoint[]>([]);
   /** Booked periods for the selected vehicle — drives the availability calendar */
   const [bfBookedPeriods, setBfBookedPeriods] = useState<{ total_units: number; booked_periods: { start: string; end: string }[] } | null>(null);
@@ -610,6 +612,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   // --- CONTRACT STATE ---
   const [contractBooking, setContractBooking] = useState<Booking | null>(null);
   const [companyContractSettings, setCompanyContractSettings] = useState<ContractCompanySettings>(() => loadCompanySettings());
+
+  // --- QUICK FLOW STATE (Client → Réservation → Contrat) ---
+  /** Set right after a client is created — drives the automated booking + contract chain */
+  const [quickFlow, setQuickFlow] = useState<{ clientId: string; clientName: string } | null>(null);
+  /** When true, the ContractModal auto-opens the RLV PDF preview once the contract is generated */
+  const [contractAutoPreview, setContractAutoPreview] = useState(false);
 
   // --- NOTIFICATION STATE ---
   const [notifications, setNotifications] = useState<Notification[]>([
@@ -665,6 +673,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   // Sync booking form fields whenever the modal opens or the edited item changes
   useEffect(() => {
     if (modalType !== 'booking_form') return;
+    // Pre-select the newly created client when the automated flow is active
+    setBfClientId(selectedItem?.clientId ?? quickFlow?.clientId ?? '');
     setBfCarId(selectedItem?.carId ?? '');
     setBfStart(selectedItem?.startDate ?? '');
     setBfEnd(selectedItem?.endDate ?? '');
@@ -795,6 +805,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     setDocFileNames({});
     setModalInfractions([]);
     setInfFormVisible(false);
+    // Interrupt the automated flow when a modal is closed manually —
+    // remaining steps stay doable via the normal manual path.
+    setQuickFlow(null);
   };
 
   // --- INFRACTION HANDLERS -----------------------------------------------
@@ -1006,7 +1019,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
         saved = bookingFromApi(res.booking);
         setBookings(prev => [saved, ...prev]);
       }
+      // ── Flux automatisé : réservation créée → génération automatique du contrat ──
+      // (closeModal clears quickFlow, so capture it first)
+      const flow = quickFlow;
       closeModal();
+      if (!selectedItem && flow && String(saved.clientId) === String(flow.clientId)) {
+        setContractAutoPreview(true);
+        handleOpenContract(saved);
+      }
     } catch (err: any) {
       console.error('[Bookings] save failed:', err);
       if (err?.suggested_slot?.start) {
@@ -1176,6 +1196,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
         const res = await adminClientsApi.create(formData) as any;
         saved = clientFromApi(res.client);
         setClients(prev => [saved, ...prev]);
+        // ── Flux automatisé : Client → Réservation → Contrat ──
+        // Redirect to the bookings page and auto-open the reservation modal
+        // with the newly created client pre-selected.
+        setQuickFlow({ clientId: String(saved.id), clientName: saved.name });
+        adminNav('/admin/bookings');
+        openModal('booking_form', null);
+        return;
       }
       closeModal();
     } catch (err: any) {
@@ -2291,6 +2318,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                  <ModalContainer title={selectedItem ? `Modifier Réservation #${selectedItem.id}` : 'Nouvelle Réservation'} onClose={closeModal} width="max-w-2xl">
                      <form key={selectedItem?.id ?? 'new'} onSubmit={handleSaveBooking} className="space-y-5">
 
+                         {/* Automated flow banner (Client → Réservation → Contrat) */}
+                         {quickFlow && !selectedItem && (
+                             <div className="flex items-start gap-3 rounded-xl border border-brand-blue/30 bg-brand-blue/5 dark:bg-brand-blue/10 p-3">
+                                 <Zap className="w-4 h-4 text-brand-blue flex-shrink-0 mt-0.5" />
+                                 <p className="text-xs text-brand-navy dark:text-slate-200 leading-relaxed">
+                                     <strong>Flux automatique</strong> — le client <strong>{quickFlow.clientName}</strong> vient d'être créé et est déjà présélectionné.
+                                     Choisissez le véhicule et la période, puis cliquez « Créer Réservation » : le contrat sera généré automatiquement.
+                                 </p>
+                             </div>
+                         )}
+
                          {/* Client + Car */}
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div>
@@ -2298,7 +2336,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                  {selectedItem ? (
                                      <div className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm font-bold text-brand-navy dark:text-white">{selectedItem.clientName}</div>
                                  ) : (
-                                     <select name="clientId" required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue">
+                                     <select name="clientId" required value={bfClientId} onChange={e => setBfClientId(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue">
                                          <option value="">— Sélectionner un client —</option>
                                          {clients.map(c => <option key={c.id} value={c.id}>{c.name} ({c.email})</option>)}
                                      </select>
@@ -2618,8 +2656,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
          {contractBooking && (
            <ContractModal
              booking={contractBooking}
-             onClose={() => setContractBooking(null)}
+             onClose={() => { setContractBooking(null); setContractAutoPreview(false); }}
              company={companyContractSettings}
+             autoOpenPreview={contractAutoPreview}
            />
          )}
     </div>
