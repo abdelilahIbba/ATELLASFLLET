@@ -1,8 +1,8 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../Layout/Navbar';
 import Footer from '../Layout/Footer';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, MessageSquare, Globe, ArrowRight, CheckCircle2, Building2, Loader2, Clock, RefreshCw } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, MessageSquare, Globe, ArrowRight, CheckCircle2, Building2, Loader2, Clock, RefreshCw, Instagram } from 'lucide-react';
 import { LOCATIONS } from '../../constants';
 import { UserInfo } from '../../types';
 import { contactApi, clientThreadApi } from '../../services/api';
@@ -263,9 +263,9 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
             aria-label="Retour">
             <ArrowRight className="w-5 h-5 rotate-180" />
           </button>
-          <div className="w-10 h-10 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold text-sm shrink-0 shadow">A</div>
+          <div className="w-10 h-10 rounded-full bg-brand-red flex items-center justify-center text-white font-black text-xs shrink-0 shadow">RLV</div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-brand-navy dark:text-white leading-tight truncate">Support Atellas</p>
+            <p className="font-bold text-sm text-brand-navy dark:text-white leading-tight truncate">Support RLV Rahimi Car</p>
             <p className="text-[11px] text-brand-teal font-medium">Canal Prioritaire</p>
           </div>
           <button
@@ -453,7 +453,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
             </motion.span>
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               className="text-5xl md:text-6xl font-bold text-brand-navy dark:text-white font-space mb-6">
-              {currentUser ? <>Messagerie <span className="text-brand-blue">Atellas</span></> : <>Contactez <span className="text-brand-blue">Atellas</span></>}
+              {currentUser ? <>Messagerie <span className="text-brand-red">RLV Rahimi Car</span></> : <>Contactez <span className="text-brand-red">RLV Rahimi Car</span></>}
             </motion.h1>
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
               className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
@@ -725,34 +725,41 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
               className="flex flex-col justify-center">
               <div className="mb-12">
                 <h3 className="text-2xl font-bold text-brand-navy dark:text-white font-space mb-8 flex items-center gap-3">
-                  <Globe className="w-6 h-6 text-brand-teal" /> Siège Mondial
+                  <Globe className="w-6 h-6 text-brand-red" /> Agence Principale à Tanger
                 </h3>
                 <div className="space-y-6">
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-brand-blue/30 transition-colors group">
-                    <div className="w-10 h-10 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-brand-navy dark:text-white shadow-sm group-hover:bg-brand-blue group-hover:text-white transition-colors">
-                      <MapPin className="w-5 h-5" />
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-brand-red/30 transition-colors group">
+                    <div className="w-10 h-10 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-brand-navy dark:text-white shadow-sm group-hover:bg-brand-red group-hover:text-white transition-colors">
+                      <MapPin className="w-5 h-5 text-brand-red" />
                     </div>
                     <div>
-                      <p className="font-bold text-brand-navy dark:text-white text-sm">Bureau Principal</p>
-                      <p className="text-slate-500 text-sm mt-1">15 Hudson Yards, Level 88<br />New York, NY 10001, USA</p>
+                      <p className="font-bold text-brand-navy dark:text-white text-sm">Adresse Agence</p>
+                      <a href="https://maps.app.goo.gl/UuuWUo23BkbPAaDX8" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-brand-red text-sm mt-1 block">
+                        LOT EL NAHDA RUE 37 N°12 BLOC 38<br />Tanger, Maroc
+                      </a>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-brand-blue/30 transition-colors group">
-                    <div className="w-10 h-10 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-brand-navy dark:text-white shadow-sm group-hover:bg-brand-blue group-hover:text-white transition-colors">
-                      <Phone className="w-5 h-5" />
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-brand-red/30 transition-colors group">
+                    <div className="w-10 h-10 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-brand-navy dark:text-white shadow-sm group-hover:bg-brand-red group-hover:text-white transition-colors">
+                      <Phone className="w-5 h-5 text-brand-red" />
                     </div>
                     <div>
-                      <p className="font-bold text-brand-navy dark:text-white text-sm">Conciergerie</p>
-                      <p className="text-slate-500 text-sm mt-1">+1 (888) AERO-FLY<br />Mon-Sun, 24 Hours</p>
+                      <p className="font-bold text-brand-navy dark:text-white text-sm">Téléphone &amp; WhatsApp</p>
+                      <a href="tel:0677813718" className="text-slate-700 dark:text-slate-200 hover:text-brand-red font-bold text-sm mt-1 block">
+                        06 77 81 37 18
+                      </a>
+                      <p className="text-xs text-slate-400">Disponible 7j/7 pour vos réservations</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-brand-blue/30 transition-colors group">
-                    <div className="w-10 h-10 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-brand-navy dark:text-white shadow-sm group-hover:bg-brand-blue group-hover:text-white transition-colors">
-                      <Mail className="w-5 h-5" />
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-brand-red/30 transition-colors group">
+                    <div className="w-10 h-10 rounded-full bg-white dark:bg-white/10 flex items-center justify-center text-brand-navy dark:text-white shadow-sm group-hover:bg-[#E4405F] group-hover:text-white transition-colors">
+                      <Instagram className="w-5 h-5 text-[#E4405F]" />
                     </div>
                     <div>
-                      <p className="font-bold text-brand-navy dark:text-white text-sm">Support Email</p>
-                      <p className="text-slate-500 text-sm mt-1">concierge@atellas.com<br />press@atellas.com</p>
+                      <p className="font-bold text-brand-navy dark:text-white text-sm">Instagram</p>
+                      <a href="https://www.instagram.com/location_rahimi_car/" target="_blank" rel="noopener noreferrer" className="text-brand-red hover:underline font-semibold text-sm mt-1 block">
+                        @location_rahimi_car
+                      </a>
                     </div>
                   </div>
                 </div>

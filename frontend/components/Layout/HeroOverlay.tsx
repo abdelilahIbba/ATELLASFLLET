@@ -22,10 +22,10 @@ const HeroOverlay: React.FC<HeroOverlayProps> = ({ isDark, onViewFleet }) => {
             className="mb-5 md:mb-6"
           >
             <span className="text-xs font-bold tracking-[0.2em] uppercase text-brand-red mb-2 block">
-              Agence Premium à Rabat
+              Agence RLV Rahimi Car · Tanger
             </span>
             <p className="max-w-xl text-sm md:text-base font-medium text-slate-800 dark:text-gray-200 leading-relaxed backdrop-blur-sm bg-white/20 dark:bg-black/25 px-3 py-2.5 rounded-xl border border-white/20 shadow-lg">
-              Location de voitures premium pour particuliers et entreprises : réservation simple, livraison rapide et service professionnel.
+              RLV Rahimi Car : Location de voitures à Tanger pour particuliers et professionnels. Réservation simple, livraison rapide et service de qualité.
             </p>
           </motion.div>
 
@@ -36,7 +36,7 @@ const HeroOverlay: React.FC<HeroOverlayProps> = ({ isDark, onViewFleet }) => {
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.2rem] font-black text-slate-900 dark:text-white leading-[0.9] tracking-tighter mb-6 md:mb-7 font-['Space_Grotesk'] drop-shadow-xl">
               LOCATION <span className="text-brand-red">PREMIUM</span><br className="block" />
-              À RABAT
+              À TANGER
             </h1>
           </motion.div>
 

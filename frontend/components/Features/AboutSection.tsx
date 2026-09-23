@@ -23,7 +23,7 @@ const AboutSection: React.FC = () => {
                     Redéfinir <br/> la Mobilité Moderne
                 </h2>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
-                    Fondée en 2024, Atellas est née d'une conviction simple : le voyage doit être aussi exceptionnel que la destination. Nous comblons le fossé entre la commodité numérique et le luxe physique.
+                    RLV Rahimi Car est née d'une volonté simple : offrir à Tanger une expérience de location de voitures transparente, réactive et de haute qualité, pour les particuliers comme pour les entreprises.
                 </p>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed mb-8">
                     Notre flotte représente la pointe de la technologie automobile. Nous nous engageons pour un avenir durable, avec plus de 60 % de notre flotte composée de véhicules électriques ou hybrides.

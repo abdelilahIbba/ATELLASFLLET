@@ -37,12 +37,12 @@ export interface ContractCompanySettings {
 }
 
 export const DEFAULT_COMPANY_SETTINGS: ContractCompanySettings = {
-  name: 'Atellas Fleet S.A.R.L',
-  address: 'Casablanca, Maroc',
-  phone: '',
-  email: '',
+  name: 'RLV Rahimi Car',
+  address: 'LOT EL NAHDA RUE 37 N°12 BLOC 38, Tanger',
+  phone: '06 77 81 37 18',
+  email: 'contact@rlvrahimicar.ma',
   ice: '',
-  logo: null,
+  logo: '/rlv-banner-clean.png',
   conditionsText:
     'Le Locataire reconnaît avoir reçu le véhicule en bon état tel que décrit ci-dessus.\n' +
     'Le Locataire est responsable du véhicule pendant toute la durée de la location, y compris les amendes et contraventions.\n' +

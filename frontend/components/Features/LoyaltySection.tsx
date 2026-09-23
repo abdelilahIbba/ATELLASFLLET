@@ -23,14 +23,14 @@ const LoyaltySection: React.FC = () => {
                 <div>
                     <span className="text-brand-red font-bold tracking-widest text-xs uppercase mb-2 flex items-center gap-2">
                         <CreditCard className="w-4 h-4" />
-                        Carte NFC Business atellaFleet
+                        Carte NFC Business RLV Rahimi Car
                     </span>
                     <h2 className="text-4xl md:text-5xl font-bold text-white font-space mb-6 leading-tight">
                         Une Solution Corporate <br/> 
                         <span className="text-brand-teal">simple et professionnelle</span>
                     </h2>
                     <p className="text-slate-400 mb-8 leading-relaxed max-w-md">
-                        Conçue pour les entreprises à Rabat, la carte NFC Business facilite la réservation, 
+                        Conçue pour les entreprises à Tanger et dans le Nord, la carte NFC Business facilite la réservation, 
                         le suivi des déplacements et la gestion administrative de votre flotte louée.
                     </p>
 
@@ -67,7 +67,7 @@ const LoyaltySection: React.FC = () => {
                         <div className="absolute top-0 right-0 w-64 h-64 bg-brand-blue/20 blur-[60px] rounded-full"></div>
 
                         <div className="relative z-10 flex justify-between items-start">
-                                <div className="text-2xl font-bold font-space text-white tracking-widest">ATELLAFLEET</div>
+                                <div className="text-2xl font-bold font-space text-white tracking-widest">RLV RAHIMI CAR</div>
                                 <div className="text-xs font-bold text-brand-teal uppercase border border-brand-teal/30 px-2 py-1 rounded">NFC BUSINESS</div>
                         </div>
 
@@ -81,7 +81,7 @@ const LoyaltySection: React.FC = () => {
                             <div className="flex justify-between items-end mt-4">
                                 <div>
                                     <div className="text-[10px] text-slate-400 uppercase mb-1">Compte entreprise</div>
-                                    <div className="text-sm text-white font-bold tracking-wider">SOCIÉTÉ RABAT BUSINESS</div>
+                                    <div className="text-sm text-white font-bold tracking-wider">SOCIÉTÉ TANGER BUSINESS</div>
                                 </div>
                                 <div className="text-right">
                                     <div className="text-[10px] text-slate-400 uppercase mb-1">Support dédié</div>

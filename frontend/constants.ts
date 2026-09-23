@@ -112,8 +112,8 @@ export const SERVICES: Service[] = [
   },
   {
     id: 's2',
-    title: 'Transfert Aéroport Rabat-Salé',
-    description: 'Prise en charge et restitution rapides à l’aéroport pour vos déplacements sans attente.',
+    title: 'Transfert Aéroport Tanger Ibn Battouta',
+    description: 'Prise en charge et restitution rapides à l’aéroport de Tanger pour vos déplacements sans attente.',
     icon: 'Map',
   },
   {
@@ -124,8 +124,8 @@ export const SERVICES: Service[] = [
   },
   {
     id: 's4',
-    title: 'Livraison à Domicile à Rabat',
-    description: 'Nous livrons votre véhicule à Agdal, Hay Riad, Souissi et quartiers professionnels.',
+    title: 'Livraison à Domicile à Tanger',
+    description: 'Nous livrons votre véhicule à Malabata, Centre-ville, Tanger Med et zones d\'affaires.',
     icon: 'Zap',
   },
 ];
@@ -133,7 +133,7 @@ export const SERVICES: Service[] = [
 export const OFFERS = [
   {
     id: 'o1',
-    title: 'Week-end Rabat & Littoral',
+    title: 'Week-end Tanger & Littoral Nord',
     discount: '-15%',
     description: 'Réduction sur les réservations de 3 jours minimum avec kilométrage optimisé.',
     image: 'https://images.unsplash.com/photo-1493238792000-8113da705763?auto=format&fit=crop&q=80&w=800',
@@ -151,31 +151,31 @@ export const TESTIMONIALS = [
   {
     id: 't1',
     name: 'Yassine M.',
-    role: 'Directeur Commercial, Rabat',
-    text: 'Service très professionnel à Rabat. Réservation simple, véhicule propre, restitution rapide.',
+    role: 'Client Particulier, Tanger',
+    text: 'Service très professionnel chez RLV Rahimi Car. Véhicule propre, ponctualité et restitution sans souci.',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100',
   },
   {
     id: 't2',
     name: 'Salma R.',
-    role: 'Responsable RH, Hay Riad',
-    text: 'Nous utilisons atellaFleet pour nos équipes terrain. Gestion claire et facturation centralisée.',
+    role: 'Entreprise Partenaire, Tanger Med',
+    text: 'Nous faisons appel à RLV Rahimi Car pour nos délégations. Disponibilité 7j/7 et véhicules impeccables.',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100',
   },
   {
     id: 't3',
     name: 'Nabil A.',
-    role: 'Consultant, Agdal',
-    text: 'Transfert aéroport Rabat-Salé impeccable. L’équipe est ponctuelle et le suivi est excellent.',
+    role: 'Voyageur d\'affaires, Tanger',
+    text: 'Transfert aéroport Tanger Ibn Battouta à l\'heure exacte. Équipe accueillante et démarche rapide.',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=100',
   },
 ];
 
 export const LOCATIONS = [
-  { city: 'Rabat', address: 'Avenue Fal Ould Oumeir, Agdal' },
-  { city: 'Rabat-Salé Aéroport', address: 'Terminal Arrivées – Service Transfert' },
-  { city: 'Hay Riad', address: 'Zone d’Affaires – Livraison Entreprise' },
-  { city: 'Souissi', address: 'Service Livraison Domicile' },
+  { city: 'Tanger Agence (Lot El Nahda)', address: 'LOT EL NAHDA RUE 37 N°12 BLOC 38' },
+  { city: 'Tanger Aéroport Ibn Battouta', address: 'Terminal Arrivées – Service Transfert' },
+  { city: 'Tanger Ville Gare TGV', address: 'Accueil Voyageurs TGV' },
+  { city: 'Tanger Port Med', address: 'Service Passagers & Ferry' },
 ];
 
 export const GALLERY_IMAGES = [

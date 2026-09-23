@@ -44,12 +44,12 @@ const FleetPage: React.FC<FleetPageProps> = ({ isDark, toggleTheme, onLoginClick
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
             >
-                <span className="text-brand-teal font-bold tracking-[0.2em] text-xs uppercase mb-4 block">atellaFleet Rabat</span>
+                <span className="text-brand-red font-bold tracking-[0.2em] text-xs uppercase mb-4 block">RLV Rahimi Car · Tanger</span>
                 <h1 className="text-5xl md:text-7xl font-bold text-brand-navy dark:text-white font-space mb-6">
-                  Toute la <span className="text-brand-blue">Flotte</span>
+                  Toute la <span className="text-brand-red">Flotte</span>
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 max-w-2xl mx-auto text-lg leading-relaxed">
-                  Découvrez tous nos véhicules disponibles à Rabat : citadines, SUV, berlines et utilitaires pour particuliers et entreprises.
+                  Découvrez tous nos véhicules disponibles à Tanger : citadines, SUV, berlines et utilitaires pour particuliers et professionnels.
                 </p>
             </motion.div>
         </div>

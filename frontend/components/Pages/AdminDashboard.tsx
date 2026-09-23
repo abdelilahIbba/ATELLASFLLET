@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate as useRouterNavigate } from 'react-router-dom';
 import { adminCarsApi, adminClientsApi, adminBookingsApi, adminContactsApi, adminFinesApi, adminPickupPointsApi, carsApi, api } from '../../services/api';
 import type { PickupPoint } from '../../services/api';
@@ -1242,9 +1242,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
          
          {/* Sidebar */}
          <div className="w-64 flex-shrink-0 flex flex-col bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-white/5 p-4 shadow-xl z-20 print:hidden">
-             <div className="px-4 py-4 mb-4 border-b border-slate-100 dark:border-white/5">
-                 <h2 className="text-xl font-bold font-space text-brand-navy dark:text-white tracking-tight">ATLAS <span className="text-brand-teal">FLEET</span></h2>
-                 <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Admin Maroc v3.0</p>
+             <div className="px-4 py-4 mb-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-3">
+                 <img src="/rlv-emblem.png" alt="RLV Logo" className="w-8 h-8 object-contain drop-shadow-sm" />
+                 <div>
+                   <h2 className="text-base font-bold font-space text-brand-navy dark:text-white tracking-tight">RLV <span className="text-brand-red">RAHIMI CAR</span></h2>
+                   <p className="text-[10px] text-slate-400 uppercase tracking-widest">Admin Tanger</p>
+                 </div>
              </div>
 
              {/* Demo badge in sidebar */}
