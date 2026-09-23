@@ -54,6 +54,8 @@ export interface BlogPost {
   date: string;
   readTime: string;
   image: string;
+  status?: 'Published' | 'Draft';
+  views?: number;
   author: {
     name: string;
     avatar: string;

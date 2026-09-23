@@ -26,6 +26,26 @@ return new class extends Migration
             return;
         }
 
+        if ($driver === 'sqlite') {
+            // SQLite: UPDATE ... FROM (supported since 3.33) or correlated subquery
+            DB::statement("
+                UPDATE invoices
+                SET contract_id = (
+                    SELECT c.id FROM contracts c
+                    WHERE c.booking_id = invoices.booking_id
+                    LIMIT 1
+                )
+                WHERE contract_id IS NULL
+                  AND booking_id IS NOT NULL
+                  AND EXISTS (
+                    SELECT 1 FROM contracts c2
+                    WHERE c2.booking_id = invoices.booking_id
+                  )
+            ");
+
+            return;
+        }
+
         // MySQL / MariaDB syntax
         DB::statement("
             UPDATE invoices i

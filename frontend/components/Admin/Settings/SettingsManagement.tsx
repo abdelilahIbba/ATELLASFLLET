@@ -573,10 +573,10 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
                     <div>
                       <h3 className="text-lg font-bold text-brand-navy dark:text-white mb-4">Alertes Email Admin</h3>
                       <div className="space-y-4">
-                        {[
+                        {([
                           { key: 'notifications_new_contact_admin_alert', title: 'Nouveau message client', desc: 'Recevoir un email quand un client envoie un message via le formulaire de contact.' },
                           { key: 'notifications_new_booking_alert', title: 'Nouvelle demande de réservation', desc: 'Recevoir un email quand une nouvelle réservation est créée.' },
-                        ].map(({ key, title, desc }) => (
+                        ] as const).map(({ key, title, desc }) => (
                           <div key={key} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
                             <div>
                               <p className="font-bold text-sm text-brand-navy dark:text-white">{title}</p>

@@ -124,6 +124,8 @@ const sigHtml = (dataUrl: string | null, label: string) =>
 interface ContractExtras {
   contractId:          string | null;
   contractNumber:      string | null;
+  clientPhone:         string | null;
+  clientEmail:         string | null;
   clientIdNumber:      string | null;
   clientLicenseNumber: string | null;
   clientLicenseExpiry: string | null;
@@ -133,13 +135,17 @@ interface ContractExtras {
   dailyRate:           number | null;
   depositAmount:       number | null;
   insuranceType:       string | null;
+  mileageStart:        number | null;
+  mileageEnd:          number | null;
 }
 
 const EMPTY_EXTRAS: ContractExtras = {
   contractId: null, contractNumber: null,
+  clientPhone: null, clientEmail: null,
   clientIdNumber: null, clientLicenseNumber: null, clientLicenseExpiry: null,
   clientNationality: null, clientAddress: null, vehiclePlate: null,
   dailyRate: null, depositAmount: null, insuranceType: null,
+  mileageStart: null, mileageEnd: null,
 };
 
 // ─── Contract HTML generator ─────────────────────────────────────────────────
@@ -374,6 +380,8 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
           const ex: ContractExtras = {
             contractId:          String(raw.id),
             contractNumber:      raw.contract_number ?? null,
+            clientPhone:         raw.client_phone ?? null,
+            clientEmail:         raw.client_email ?? null,
             clientIdNumber:      raw.client_id_number ?? null,
             clientLicenseNumber: raw.client_license_number ?? null,
             clientLicenseExpiry: raw.client_license_expiry?.slice(0, 10) ?? null,
@@ -383,6 +391,8 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
             dailyRate:           raw.daily_rate != null ? parseFloat(raw.daily_rate) : null,
             depositAmount:       raw.deposit_amount != null ? parseFloat(raw.deposit_amount) : null,
             insuranceType:       raw.insurance_type ?? null,
+            mileageStart:        raw.mileage_start != null ? Number(raw.mileage_start) : null,
+            mileageEnd:          raw.mileage_end != null ? Number(raw.mileage_end) : null,
           };
           setExtras(ex);
           // Seed editable fields from backend (user can override)

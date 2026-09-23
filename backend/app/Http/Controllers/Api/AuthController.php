@@ -62,6 +62,9 @@ class AuthController extends Controller
                 'user'    => new UserResource($user),
                 'token'   => $token,
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Let validation errors surface as a normal 422 response
+            throw $e;
         } catch (\Exception $e) {
             Log::error('Login error', [
                 'error' => $e->getMessage(),
