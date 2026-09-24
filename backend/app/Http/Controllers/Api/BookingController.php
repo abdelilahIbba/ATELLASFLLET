@@ -432,6 +432,42 @@ class BookingController extends Controller
         $booking->update($validated);
         $booking->load(['car', 'user']);
 
+        // Update associated draft/active contracts so they follow booking edits.
+        // Completed/cancelled contracts are historical records and must not change.
+        $syncableContracts = $booking->contracts()->whereIn('status', ['draft', 'active'])->get();
+        foreach ($syncableContracts as $contract) {
+            // Calculate new daily rate if amount or dates changed
+            $days = max(1, $booking->start_date->diffInDays($booking->end_date) + 1);
+            $dailyRate = $days > 0 ? round($booking->amount / $days, 2) : $booking->amount;
+
+            $contract->update([
+                'unit_number' => $booking->unit_number,
+                'start_date' => $booking->start_date,
+                'end_date' => $booking->end_date,
+                'total_amount' => $booking->amount,
+                'daily_rate' => $dailyRate,
+                'booking_payment_status' => $booking->payment_status,
+                // Update client information to reflect current user data
+                'client_name' => $booking->user->name ?? '',
+                'client_phone' => $booking->user->phone ?? '',
+                'client_email' => $booking->user->email ?? '',
+                'client_id_number' => $booking->user->national_id ?? '',
+                'client_date_of_birth' => $booking->user->date_of_birth,
+                'client_profession' => $booking->user->profession ?? null,
+                'client_license_number' => $booking->user->driver_license_number ?? '',
+                'client_license_issued_at' => $booking->user->driver_license_issued_at,
+                'client_license_expiry' => $booking->user->driver_license_expiry_date,
+                'client_passport_number' => $booking->user->passport_number ?? null,
+                'client_passport_issued_at' => $booking->user->passport_issued_at,
+                'client_passport_issued_date' => $booking->user->passport_issued_date,
+                'client_address' => $booking->user->address_morocco ?? null,
+                'client_address_abroad' => $booking->user->address_abroad ?? null,
+            ]);
+
+            // Reload relationships for consistent response
+            $contract->load(['booking', 'user', 'car']);
+        }
+
         return response()->json([
             'message' => 'Réservation mise à jour.',
             'booking' => new BookingResource($booking),
@@ -469,6 +505,19 @@ class BookingController extends Controller
 
         $booking->update(['status' => $validated['status']]);
         $booking->load(['car', 'user']);
+
+        // Update associated draft/active contracts when payment_status changes
+        if (isset($validated['payment_status'])) {
+            $syncableContracts = $booking->contracts()->whereIn('status', ['draft', 'active'])->get();
+            foreach ($syncableContracts as $contract) {
+                $contract->update([
+                    'booking_payment_status' => $booking->payment_status,
+                ]);
+
+                // Reload relationships for consistent response
+                $contract->load(['booking', 'user', 'car']);
+            }
+        }
 
         return response()->json([
             'message' => 'Booking status updated.',
