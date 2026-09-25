@@ -39,8 +39,12 @@ import {
   DollarSign,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Filter,
   LogOut,
+  Mail,
+  Sparkles,
   Sun,
   Moon,
   FileText,
@@ -538,6 +542,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   // Modal Tab State for Vehicles & Clients
   const [vehicleModalTab, setVehicleModalTab] = useState<'details' | 'documents' | 'infractions'>('details');
   const [clientModalTab, setClientModalTab] = useState<'profile' | 'kyc'>('profile');
+  const [showClientOptional, setShowClientOptional] = useState(false);
   const [imageInputType, setImageInputType] = useState<'url' | 'upload'>('url');
   /** Live preview URL for the image URL input in the vehicle form */
   const [imageUrlPreview, setImageUrlPreview] = useState<string>('');
@@ -779,6 +784,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     setSelectedItem(item);
     setVehicleModalTab('details'); // Reset tab
     setClientModalTab('profile'); // Reset tab
+    setShowClientOptional(Boolean(item?.dateOfBirth || item?.profession));
     setImageInputType('url');
     setImageUrlPreview((item as any)?.image || '');
     setDocFileNames({});
@@ -2110,128 +2116,214 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
 
                          <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar space-y-4">
 
-                             {/* ── PROFILE TAB ── */}
-                             <div className={clientModalTab === 'profile' ? 'block space-y-5' : 'hidden'}>
-                                 {/* Avatar + status row */}
-                                 <div className="flex items-center gap-6">
-                                     <label className="w-24 h-24 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center border-4 border-white dark:border-[#0B1120] shadow-lg relative group cursor-pointer overflow-hidden shrink-0">
-                                         <input type="file" name="avatar" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-20"
-                                             onChange={e => setDocFileNames(prev => ({ ...prev, avatar: e.target.files?.[0]?.name ?? '' }))} />
-                                         {selectedItem?.avatar
-                                             ? <img src={selectedItem.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                                             : <Users className="w-10 h-10 text-slate-400 z-10" />}
-                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-10">
-                                             <UploadCloud className="w-6 h-6 text-white" />
-                                         </div>
-                                     </label>
-                                     <div>
-                                         <h4 className="text-xl font-bold text-brand-navy dark:text-white">{selectedItem?.name || 'Nouveau Client'}</h4>
-                                         {docFileNames.avatar && <p className="text-[10px] text-green-600 font-bold mt-1">✓ {docFileNames.avatar}</p>}
-                                         <div className="flex items-center gap-2 mt-3">
-                                             <span className="text-xs text-slate-500 uppercase font-bold">Statut :</span>
-                                             <select name="status" defaultValue={selectedItem?.status || 'Active'} className="bg-transparent text-xs font-bold uppercase border border-slate-200 dark:border-white/10 rounded px-2 py-1 outline-none focus:border-brand-blue text-brand-navy dark:text-white">
-                                                 <option value="Active">Actif</option>
-                                                 <option value="VIP">VIP</option>
-                                                 <option value="Blacklisted">Liste Noire</option>
-                                             </select>
-                                         </div>
-                                     </div>
-                                 </div>
+                              {/* -- PROFILE TAB -- */}
+                              <div className={clientModalTab === 'profile' ? 'block space-y-4' : 'hidden'}>
+                                  {/* Avatar + status header */}
+                                  <div className="flex items-center gap-5 p-4 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl">
+                                      <label className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center border-4 border-white dark:border-[#0B1120] shadow-md relative group cursor-pointer overflow-hidden shrink-0">
+                                          <input type="file" name="avatar" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                                              onChange={e => setDocFileNames(prev => ({ ...prev, avatar: e.target.files?.[0]?.name ?? '' }))} />
+                                          {selectedItem?.avatar
+                                              ? <img src={selectedItem.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                              : <Users className="w-8 h-8 text-slate-400 z-10" />}
+                                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity z-10">
+                                              <UploadCloud className="w-5 h-5 text-white" />
+                                          </div>
+                                      </label>
+                                      <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 flex-wrap">
+                                              <h4 className="text-lg font-bold text-brand-navy dark:text-white truncate">{selectedItem?.name || 'Nouveau Client'}</h4>
+                                              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-brand-blue/10 text-brand-blue border border-brand-blue/20">
+                                                  {selectedItem ? 'Édition Profil' : 'Nouvelle Inscription'}
+                                              </span>
+                                          </div>
+                                          {docFileNames.avatar && <p className="text-[10px] text-green-600 font-bold mt-0.5">✓ {docFileNames.avatar}</p>}
+                                          <div className="flex items-center gap-2 mt-2">
+                                              <span className="text-xs text-slate-500 uppercase font-bold">Statut :</span>
+                                              <select name="status" defaultValue={selectedItem?.status || 'Active'} className="bg-white dark:bg-slate-900 text-xs font-bold uppercase border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1 outline-none focus:border-brand-blue text-brand-navy dark:text-white shadow-sm">
+                                                  <option value="Active">Actif</option>
+                                                  <option value="VIP">VIP</option>
+                                                  <option value="Blacklisted">Liste Noire</option>
+                                              </select>
+                                          </div>
+                                      </div>
+                                  </div>
 
-                                 {/* Identity fields */}
-                                 <div className="grid grid-cols-2 gap-4">
-                                     <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nom Complet</label>
-                                         <input name="name" defaultValue={selectedItem?.name || ''} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Prénom Nom"/>
-                                     </div>
-                                     <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">CIN (Carte Nationale)</label>
-                                         <input name="national_id" defaultValue={selectedItem?.cin || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono" placeholder="AB123456"/>
-                                     </div>
-                                 </div>
+                                  {/* Two main columns: Moroccan Identity/Permis vs Passport/International */}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      {/* COLONNE 1 : IDENTITÉ NATIONALE & PERMIS (MAROC) */}
+                                      <div className="bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/90 dark:border-white/10 rounded-2xl p-4 space-y-3.5">
+                                          <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/10 text-brand-navy dark:text-white font-bold text-sm">
+                                              <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                                  <CreditCard className="w-4 h-4" />
+                                              </div>
+                                              <span>Identité & Permis (Maroc)</span>
+                                          </div>
 
-                                     <div className="grid grid-cols-2 gap-4">
-                                       <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Date de Naissance <span className="font-semibold normal-case text-slate-400">(optionnel)</span></label>
-                                         <input name="date_of_birth" type="date" defaultValue={selectedItem?.dateOfBirth || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" />
-                                       </div>
-                                       <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Profession <span className="font-semibold normal-case text-slate-400">(optionnel)</span></label>
-                                         <input name="profession" defaultValue={selectedItem?.profession || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Profession" />
-                                       </div>
-                                     </div>
+                                          {/* Nom Complet */}
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                  Nom Complet <span className="text-red-500">*</span>
+                                              </label>
+                                              <input name="name" defaultValue={selectedItem?.name || ''} required className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Prénom Nom"/>
+                                          </div>
 
-                                 <div className="grid grid-cols-2 gap-4">
-                                     <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
-                                         <input name="email" type="email" defaultValue={selectedItem?.email || ''} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/>
-                                     </div>
-                                     <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Téléphone</label>
-                                         <input name="phone" defaultValue={selectedItem?.phone || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="+212 6xx-xxxxxx"/>
-                                     </div>
-                                 </div>
+                                          {/* CIN */}
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                  CIN (Carte Nationale)
+                                              </label>
+                                              <input name="national_id" defaultValue={selectedItem?.cin || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="AB123456"/>
+                                          </div>
 
-                                     <div className="grid grid-cols-2 gap-4">
-                                       <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Adresse au Maroc <span className="font-semibold normal-case text-slate-400">(optionnel)</span></label>
-                                         <input name="address_morocco" defaultValue={selectedItem?.addressMorocco || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Adresse au Maroc" />
-                                       </div>
-                                       <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Adresse à l'Etranger <span className="font-semibold normal-case text-slate-400">(optionnel)</span></label>
-                                         <input name="address_abroad" defaultValue={selectedItem?.addressAbroad || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Adresse à l'Etranger" />
-                                       </div>
-                                     </div>
+                                          {/* Permis de Conduire & Expiration */}
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                              <div>
+                                                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                      N° Permis de Conduire
+                                                  </label>
+                                                  <input name="driver_license_number" defaultValue={selectedItem?.driverLicense || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono shadow-sm" placeholder="B-123456"/>
+                                              </div>
+                                              <div>
+                                                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                      Expiration Permis
+                                                  </label>
+                                                  <input name="driver_license_expiry_date" type="date" defaultValue={selectedItem?.driverLicenseExpiry || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm"/>
+                                              </div>
+                                          </div>
 
-                                 {/* Driver license */}
-                                 <div className="grid grid-cols-2 gap-4">
-                                     <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">N° Permis de Conduire</label>
-                                         <input name="driver_license_number" defaultValue={selectedItem?.driverLicense || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono" placeholder="B-123456"/>
-                                     </div>
-                                     <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Expiration Permis</label>
-                                         <input name="driver_license_expiry_date" type="date" defaultValue={selectedItem?.driverLicenseExpiry || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/>
-                                     </div>
-                                 </div>
+                                          {/* Permis délivré à */}
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                  Permis Délivré à <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
+                                              </label>
+                                              <input name="driver_license_issued_at" defaultValue={selectedItem?.driverLicenseIssuedAt || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Ville de délivrance (ex: Casablanca)"/>
+                                          </div>
 
-                                     <div className="grid grid-cols-2 gap-4">
-                                       <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Délivré à <span className="font-semibold normal-case text-slate-400">(permis, optionnel)</span></label>
-                                         <input name="driver_license_issued_at" defaultValue={selectedItem?.driverLicenseIssuedAt || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Ville de délivrance" />
-                                       </div>
-                                       <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Passport N° <span className="font-semibold normal-case text-slate-400">(optionnel)</span></label>
-                                         <input name="passport_number" defaultValue={selectedItem?.passportNumber || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono" placeholder="N° passeport" />
-                                       </div>
-                                     </div>
+                                          {/* Adresse au Maroc */}
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                  Adresse au Maroc <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
+                                              </label>
+                                              <input name="address_morocco" defaultValue={selectedItem?.addressMorocco || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Adresse de résidence au Maroc"/>
+                                          </div>
+                                      </div>
 
-                                     <div className="grid grid-cols-2 gap-4">
-                                       <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Délivré à <span className="font-semibold normal-case text-slate-400">(passport, optionnel)</span></label>
-                                         <input name="passport_issued_at" defaultValue={selectedItem?.passportIssuedAt || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Ville de délivrance" />
-                                       </div>
-                                       <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Le <span className="font-semibold normal-case text-slate-400">(passport, optionnel)</span></label>
-                                         <input name="passport_issued_date" type="date" defaultValue={selectedItem?.passportIssuedDate || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" />
-                                       </div>
-                                     </div>
+                                      {/* COLONNE 2 : PASSEPORT & INTERNATIONAL */}
+                                      <div className="bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/90 dark:border-white/10 rounded-2xl p-4 space-y-3.5 flex flex-col">
+                                          <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/10 text-brand-navy dark:text-white font-bold text-sm">
+                                              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                                  <Globe className="w-4 h-4" />
+                                              </div>
+                                              <span>Passeport & International</span>
+                                          </div>
 
-                                 {/* Password — only for new client */}
-                                 {!selectedItem && (
-                                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-200 dark:border-white/10">
-                                         <div>
-                                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Mot de passe</label>
-                                             <input name="password" type="password" required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="••••••••"/>
-                                         </div>
-                                         <div>
-                                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Confirmer le mot de passe</label>
-                                             <input name="password_confirmation" type="password" required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="••••••••"/>
-                                         </div>
-                                     </div>
-                                 )}
-                             </div>
+                                          {/* Passport N° */}
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                  Passeport N° <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
+                                              </label>
+                                              <input name="passport_number" defaultValue={selectedItem?.passportNumber || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="N° de passeport"/>
+                                          </div>
 
+                                          {/* Passeport Délivré à & Le */}
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                              <div>
+                                                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                      Délivré à <span className="font-semibold normal-case text-slate-400">(passeport)</span>
+                                                  </label>
+                                                  <input name="passport_issued_at" defaultValue={selectedItem?.passportIssuedAt || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Ville / Autorité"/>
+                                              </div>
+                                              <div>
+                                                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                      Délivré le <span className="font-semibold normal-case text-slate-400">(date)</span>
+                                                  </label>
+                                                  <input name="passport_issued_date" type="date" defaultValue={selectedItem?.passportIssuedDate || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm"/>
+                                              </div>
+                                          </div>
+
+                                          {/* Adresse à l'Étranger */}
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                  Adresse à l'Étranger <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
+                                              </label>
+                                              <input name="address_abroad" defaultValue={selectedItem?.addressAbroad || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Adresse à l'étranger (si applicable)"/>
+                                          </div>
+
+                                          <div className="p-3 bg-brand-blue/5 border border-brand-blue/10 rounded-xl text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mt-auto">
+                                              <span className="font-bold text-brand-blue">Note :</span> Ces champs sont destinés aux clients non-résidents ou MRE lors de l'établissement du contrat.
+                                          </div>
+                                      </div>
+                                  </div>
+
+                                  {/* Coordonnées & Accès (Email, Téléphone, Mot de passe) */}
+                                  <div className="bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/90 dark:border-white/10 rounded-2xl p-4 space-y-3.5">
+                                      <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/10 text-brand-navy dark:text-white font-bold text-sm">
+                                          <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                              <Mail className="w-4 h-4" />
+                                          </div>
+                                          <span>Coordonnées & Accès</span>
+                                      </div>
+
+                                      <div className={`grid grid-cols-1 ${!selectedItem ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3`}>
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                  Email <span className="text-red-500">*</span>
+                                              </label>
+                                              <input name="email" type="email" defaultValue={selectedItem?.email || ''} required className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="client@exemple.com"/>
+                                          </div>
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                  Téléphone <span className="font-semibold normal-case text-slate-400">(Téléphone Contrat)</span>
+                                              </label>
+                                              <input name="phone" defaultValue={selectedItem?.phone || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="+212 6xx-xxxxxx"/>
+                                          </div>
+                                          {!selectedItem && (
+                                              <div>
+                                                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                      Mot de passe <span className="text-red-500">*</span>
+                                                  </label>
+                                                  <input name="password" type="password" required className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="••••••••"/>
+                                              </div>
+                                          )}
+                                      </div>
+                                  </div>
+
+                                  {/* Informations Complémentaires (Date de naissance, Profession) - Optionnel / Suggestif */}
+                                  <div className="bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/90 dark:border-white/10 rounded-2xl p-4">
+                                      <div className="flex items-center justify-between cursor-pointer select-none" onClick={() => setShowClientOptional(prev => !prev)}>
+                                          <div className="flex items-center gap-2 text-brand-navy dark:text-white font-bold text-sm">
+                                              <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                                                  <Sparkles className="w-4 h-4" />
+                                              </div>
+                                              <span>Informations Complémentaires</span>
+                                              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                                                  Optionnel / Suggestif
+                                              </span>
+                                          </div>
+                                          <button type="button" className="text-slate-400 hover:text-brand-navy dark:hover:text-white transition-colors p-1">
+                                              {showClientOptional ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                          </button>
+                                      </div>
+
+                                      {showClientOptional && (
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3.5 mt-3 border-t border-slate-200 dark:border-white/10 animate-fadeIn">
+                                              <div>
+                                                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                      Date de Naissance <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
+                                                  </label>
+                                                  <input name="date_of_birth" type="date" defaultValue={selectedItem?.dateOfBirth || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" />
+                                              </div>
+                                              <div>
+                                                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
+                                                      Profession <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
+                                                  </label>
+                                                  <input name="profession" defaultValue={selectedItem?.profession || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Profession du client" />
+                                              </div>
+                                          </div>
+                                      )}
+                                  </div>
+                              </div>
                              {/* ── KYC TAB ── */}
                              <div className={clientModalTab === 'kyc' ? 'block space-y-5' : 'hidden'}>
                                  {/* KYC status selector */}
