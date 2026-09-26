@@ -438,7 +438,17 @@ const InvoiceDetail: React.FC<{
   onClose: () => void;
   onEdit: () => void;
   onMarkPaid: () => void;
-}> = ({ invoice, onClose, onEdit, onMarkPaid }) => {
+  onSync?: () => Promise<void>;
+}> = ({ invoice, onClose, onEdit, onMarkPaid, onSync }) => {
+  const [syncing, setSyncing] = useState(false);
+  const canSync = !!invoice.contract_id && !['paid', 'cancelled'].includes(invoice.status);
+
+  const handleSync = async () => {
+    if (!onSync || syncing) return;
+    setSyncing(true);
+    try { await onSync(); } finally { setSyncing(false); }
+  };
+
   const handleDownloadPdf = async () => {
     const token = localStorage.getItem('auth_token');
     const base  = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
@@ -712,6 +722,13 @@ const InvoiceDetail: React.FC<{
               <CheckCircle2 className="w-4 h-4" /> Marquer Payée
             </button>
           )}
+          {canSync && (
+            <button onClick={handleSync} disabled={syncing}
+              title="Recalcule la facture à partir du contrat (période, tarif, frais) après modification de la réservation"
+              className="flex items-center gap-2 px-4 py-2 bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue dark:text-blue-300 text-sm font-bold rounded-xl hover:bg-brand-blue/20 dark:hover:bg-brand-blue/30 transition-colors disabled:opacity-50">
+              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} /> {syncing ? 'Synchronisation…' : 'Synchroniser'}
+            </button>
+          )}
           <button onClick={onEdit}
             className="flex items-center gap-2 px-4 py-2 bg-brand-blue text-white text-sm font-bold rounded-xl hover:opacity-90 transition-opacity">
             <Edit className="w-4 h-4" /> Modifier
@@ -763,6 +780,18 @@ const InvoiceManagement: React.FC = () => {
       setViewInvoice(null);
     } catch (err: any) {
       alert(err?.message ?? 'Erreur.');
+    }
+  };
+
+  const handleSync = async (invoice: Invoice) => {
+    try {
+      const res: any = await adminInvoicesApi.sync(invoice.id);
+      const updated = invoiceFromApi(res.invoice);
+      setInvoices(prev => prev.map(i => i.id === updated.id ? updated : i));
+      setViewInvoice(prev => (prev && prev.id === updated.id ? updated : prev));
+    } catch (err: any) {
+      alert(err?.message ?? 'Erreur lors de la synchronisation.');
+      throw err;
     }
   };
 
@@ -919,6 +948,13 @@ const InvoiceManagement: React.FC = () => {
                           className="p-1.5 text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 rounded-lg transition-colors">
                           <Eye className="w-3.5 h-3.5" />
                         </button>
+                        {inv.contract_id && !['paid', 'cancelled'].includes(inv.status) && (
+                          <button onClick={() => handleSync(inv)}
+                            className="p-1.5 text-slate-400 hover:text-brand-teal hover:bg-brand-teal/10 rounded-lg transition-colors"
+                            title="Synchroniser avec le contrat (période / prix)">
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         {inv.status !== 'paid' && inv.status !== 'cancelled' && (
                           <button onClick={() => setMarkPaidInvoice(inv)}
                             className="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
@@ -977,6 +1013,7 @@ const InvoiceManagement: React.FC = () => {
             onClose={() => setViewInvoice(null)}
             onEdit={() => { setEditInvoice(viewInvoice); setViewInvoice(null); setShowForm(true); }}
             onMarkPaid={() => setMarkPaidInvoice(viewInvoice)}
+            onSync={() => handleSync(viewInvoice)}
           />
         )}
       </AnimatePresence>

@@ -9,6 +9,7 @@ use App\Http\Resources\BookingResource;
 use App\Mail\ReservationConfirmationMail;
 use App\Models\Booking;
 use App\Models\Car;
+use App\Models\Invoice;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -429,6 +430,14 @@ class BookingController extends Controller
             }
         }
 
+        // Recalculate the rental amount when the period changes but no explicit
+        // amount was provided, so the price always follows the new duration.
+        if (!array_key_exists('amount', $validated) && (isset($validated['start_date']) || isset($validated['end_date']))) {
+            $car = $booking->car ?? Car::findOrFail($booking->car_id);
+            $inclusiveDays = max(1, Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1);
+            $validated['amount'] = round($inclusiveDays * (float) $car->daily_price, 2);
+        }
+
         $booking->update($validated);
         $booking->load(['car', 'user']);
 
@@ -466,6 +475,12 @@ class BookingController extends Controller
 
             // Reload relationships for consistent response
             $contract->load(['booking', 'user', 'car']);
+
+            // Keep linked invoices in sync with the new period/amount.
+            // Paid/cancelled invoices are historical records and must not change.
+            $contract->invoices()
+                ->whereNotIn('status', ['paid', 'cancelled'])
+                ->each(fn (Invoice $invoice) => app(InvoiceController::class)->rebuildFromContract($invoice, $contract));
         }
 
         return response()->json([

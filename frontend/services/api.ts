@@ -591,6 +591,8 @@ export const adminInvoicesApi = {
     }),
   createFromContract: (contractId: number | string) =>
     api.post<{ message: string; invoice: unknown }>(`/admin/invoices/from-contract/${contractId}`, {}),
+  sync: (id: number | string) =>
+    api.post<{ message: string; invoice: unknown }>(`/admin/invoices/${id}/sync`, {}),
 };
 
 // ---------------------------------------------------------------------------

@@ -16,7 +16,6 @@ import Footer from './components/Layout/Footer';
 import BookingModal from './components/Booking/BookingModal';
 import AuthModal from './components/Auth/AuthModal';
 import FleetPage from './components/Pages/FleetPage';
-import BookingTrackingPage from './components/Pages/BookingTrackingPage';
 import ContactPage from './components/Pages/ContactPage';
 import AdminDashboard from './components/Pages/AdminDashboard';
 import { Car, Booking, UserInfo } from './types';
@@ -151,7 +150,6 @@ const App: React.FC = () => {
   // Booking State
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingData, setBookingData] = useState<{ car?: Car, location?: string } | undefined>(undefined);
-  const [currentBooking, setCurrentBooking] = useState<Booking | null>(null);
   // When guest tries to book, we store the data and open it after auth
   const [pendingBookingAfterAuth, setPendingBookingAfterAuth] = useState(false);
 
@@ -178,18 +176,16 @@ const App: React.FC = () => {
   };
 
   const handleBookingSuccess = (booking: Booking) => {
-    setCurrentBooking(booking);
-    
     // Auto-login the user with the details provided during booking
     setCurrentUser({
         ...booking.user,
         role: 'client' // Explicitly a client after booking
     });
 
-    // Switch to tracking view automatically
+    // Return to the home view automatically
     setTimeout(() => {
         setIsBookingOpen(false);
-        handleNavigation('tracking');
+        handleNavigation('home');
     }, 2000); 
   };
 
@@ -198,7 +194,7 @@ const App: React.FC = () => {
         if (currentUser.role === 'admin' || currentUser.role === 'demo_admin') {
             handleNavigation('admin');
         } else {
-            handleNavigation('tracking');
+            handleNavigation('home');
         }
     } else {
         setIsAuthOpen(true);
@@ -312,7 +308,7 @@ const App: React.FC = () => {
   const handleNavigation = (path: string) => {
     const routeMap: Record<string, string> = {
       home: '/', fleet: '/flotte', flotte: '/flotte',
-      tracking: '/suivi', contact: '/contact', admin: '/admin',
+      contact: '/contact', admin: '/admin',
     };
     if (routeMap[path]) {
       navigate(routeMap[path]);
@@ -386,20 +382,6 @@ const App: React.FC = () => {
                 onNavigate={handleNavigation}
                 onLogout={handleLogout}
                 currentUser={currentUser}
-              />
-            }
-          />
-          <Route
-            path="/suivi"
-            element={
-              <BookingTrackingPage
-                isDark={isDark}
-                toggleTheme={toggleTheme}
-                onLoginClick={handleLoginClick}
-                onNavigate={handleNavigation}
-                booking={currentBooking}
-                currentUser={currentUser}
-                onLogout={handleLogout}
               />
             }
           />

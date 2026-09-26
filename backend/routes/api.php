@@ -191,6 +191,7 @@ Route::middleware(['auth:sanctum', 'api.role:admin,demo_admin'])->prefix('admin'
 
     // Invoices
     Route::post('/invoices/from-contract/{contract}', [InvoiceController::class, 'createFromContract']);
+    Route::post('/invoices/{invoice}/sync',           [InvoiceController::class, 'syncFromContract']);
     Route::patch('/invoices/{invoice}/mark-paid',     [InvoiceController::class, 'markPaid']);
     Route::get('/invoices/{invoice}/pdf',             [InvoiceController::class, 'downloadPdf']);
     Route::get('/invoices',                           [InvoiceController::class, 'index']);

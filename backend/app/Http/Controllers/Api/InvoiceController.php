@@ -257,6 +257,105 @@ class InvoiceController extends Controller
     }
 
     /**
+     * POST /api/admin/invoices/{invoice}/sync
+     * Rebuild the invoice from its contract (period, daily rate, extra charges).
+     * Used after a reservation/contract was modified post-generation.
+     */
+    public function syncFromContract(Invoice $invoice): JsonResponse
+    {
+        if (in_array($invoice->status, ['paid', 'cancelled'])) {
+            return response()->json([
+                'message' => 'Impossible de synchroniser une facture payée ou annulée.',
+            ], 422);
+        }
+
+        $contract = $invoice->contract;
+        if (!$contract) {
+            return response()->json([
+                'message' => "Cette facture n'est liée à aucun contrat.",
+            ], 422);
+        }
+
+        if (in_array($contract->status, ['completed', 'cancelled'])) {
+            return response()->json([
+                'message' => 'Le contrat lié est clôturé ou annulé — synchronisation impossible.',
+            ], 422);
+        }
+
+        $this->rebuildFromContract($invoice, $contract);
+
+        $invoice->load(['contract', 'booking', 'user']);
+
+        return response()->json([
+            'message' => 'Facture synchronisée avec le contrat.',
+            'invoice' => $invoice,
+        ]);
+    }
+
+    /**
+     * Rebuild an invoice's rental line, client snapshot and totals from a
+     * contract. Preserves the invoice number, manually added lines, discount,
+     * status and payment info. Resets the due date relative to today.
+     */
+    public function rebuildFromContract(Invoice $invoice, Contract $contract): Invoice
+    {
+        $days = max(1, $contract->start_date->diffInDays($contract->end_date) + 1);
+
+        // New rental line generated from the contract's current period/rate
+        $rentalLine = [
+            'label'      => "Location véhicule — {$contract->vehicle_name} ({$days} jours)",
+            'quantity'   => $days,
+            'unit_price' => (float) $contract->daily_rate,
+            'tax_rate'   => 20,
+            'line_total' => round($days * (float) $contract->daily_rate, 2),
+        ];
+
+        // Contract extra charges (authoritative)
+        $extraLines = [];
+        if (is_array($contract->extra_charges)) {
+            foreach ($contract->extra_charges as $charge) {
+                $label  = $charge['label'] ?? 'Frais supplémentaire';
+                $amount = (float) ($charge['amount'] ?? 0);
+                if ($amount > 0) {
+                    $extraLines[] = [
+                        'label'      => $label,
+                        'quantity'   => 1,
+                        'unit_price' => $amount,
+                        'tax_rate'   => 20,
+                        'line_total' => $amount,
+                    ];
+                }
+            }
+        }
+        $extraLabels = array_column($extraLines, 'label');
+
+        // Keep manually added lines (neither the old generated rental line nor
+        // contract extra charges, which are re-added fresh above)
+        $manualLines = collect(is_array($invoice->items) ? $invoice->items : [])
+            ->reject(fn ($item) =>
+                str_starts_with($item['label'] ?? '', 'Location véhicule')
+                || in_array($item['label'] ?? '', $extraLabels))
+            ->values()
+            ->all();
+
+        $data = $this->recalculate([
+            'items'           => array_merge([$rentalLine], $extraLines, $manualLines),
+            'tax_rate'        => $invoice->tax_rate ?? 20,
+            'discount_amount' => $invoice->discount_amount ?? 0,
+        ]);
+
+        $invoice->update(array_merge($data, [
+            'client_name'    => $contract->client_name,
+            'client_email'   => $contract->client_email,
+            'client_phone'   => $contract->client_phone,
+            'client_address' => $contract->client_address,
+            'due_date'       => now()->addDays(7)->toDateString(),
+        ]));
+
+        return $invoice->refresh();
+    }
+
+    /**
      * PATCH /api/admin/invoices/{invoice}/mark-paid
      */
     public function markPaid(Request $request, Invoice $invoice): JsonResponse

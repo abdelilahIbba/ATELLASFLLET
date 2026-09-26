@@ -62,7 +62,6 @@ const Navbar: React.FC<NavbarProps> = ({ isDark, toggleTheme, onLoginClick, onNa
   const navLinks = [
     { name: 'Flotte', href: 'flotte' },
     { name: 'Services', href: '#services' },
-    { name: 'Suivi', href: 'tracking' },
     { name: 'Contact', href: 'contact' },
     { name: 'Agence', href: '#agency' },
   ];
