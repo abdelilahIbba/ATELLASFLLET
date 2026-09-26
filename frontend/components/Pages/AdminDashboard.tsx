@@ -1192,6 +1192,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
       if (selectedItem) return;
       if (formData.get(key) === '') formData.delete(key);
     });
+    // Email & password are optional on creation — backend generates placeholders
+    if (!selectedItem) {
+      if (formData.get('email') === '') formData.delete('email');
+      if (formData.get('password') === '') formData.delete('password');
+    }
     // Remove empty file inputs (no file selected)
     ['avatar', 'doc_id_front', 'doc_id_back', 'doc_license'].forEach(key => {
       const file = formData.get(key);
@@ -2276,9 +2281,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                       <div className={`grid grid-cols-1 ${!selectedItem ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-3`}>
                                           <div>
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
-                                                  Email <span className="text-red-500">*</span>
+                                                  Email <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
                                               </label>
-                                              <input name="email" type="email" defaultValue={selectedItem?.email || ''} required className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="client@exemple.com"/>
+                                              <input name="email" type="email" defaultValue={selectedItem?.email || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="client@exemple.com"/>
                                           </div>
                                           <div>
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
@@ -2289,9 +2294,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                           {!selectedItem && (
                                               <div>
                                                   <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
-                                                      Mot de passe <span className="text-red-500">*</span>
+                                                      Mot de passe <span className="font-semibold normal-case text-slate-400">(optionnel — généré si vide)</span>
                                                   </label>
-                                                  <input name="password" type="password" required className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="••••••••"/>
+                                                  <input name="password" type="password" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="••••••••"/>
                                               </div>
                                           )}
                                       </div>

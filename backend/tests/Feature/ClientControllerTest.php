@@ -64,6 +64,31 @@ test('admin cannot create client with duplicate email', function () {
         ->assertJsonValidationErrors('email');
 });
 
+test('admin can create a client without email, phone or password', function () {
+    $admin = clientAdmin();
+
+    $this->actingAs($admin)->postJson('/api/admin/clients', ['name' => 'Walk-in Client'])
+        ->assertCreated()
+        ->assertJsonPath('message', 'Client created.');
+
+    $client = User::where('name', 'Walk-in Client')->firstOrFail();
+    expect($client->role)->toBe('client')
+        ->and($client->phone)->toBeNull()
+        ->and($client->email)->toEndWith('@noemail.local')
+        ->and($client->password)->not->toBeEmpty(); // random placeholder hashed
+});
+
+test('placeholder emails stay unique across multiple optional-email clients', function () {
+    $admin = clientAdmin();
+
+    $this->actingAs($admin)->postJson('/api/admin/clients', ['name' => 'Client One'])->assertCreated();
+    $this->actingAs($admin)->postJson('/api/admin/clients', ['name' => 'Client Two'])->assertCreated();
+
+    $emails = User::whereIn('name', ['Client One', 'Client Two'])->pluck('email');
+    expect($emails)->toHaveCount(2)
+        ->and($emails->unique())->toHaveCount(2);
+});
+
 // ── Admin: update client ─────────────────────────────────────────────
 test('admin can update a client', function () {
     $admin  = clientAdmin();

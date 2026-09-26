@@ -61,7 +61,7 @@ class ClientController extends Controller
 
         $request->validate([
             'name'                       => ['required', 'string', 'max:255'],
-            'email'                      => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'email'                      => ['sometimes', 'nullable', 'string', 'email', 'max:255', 'unique:users'],
             'phone'                      => ['sometimes', 'nullable', 'string', 'max:20'],
             'national_id'                => ['sometimes', 'nullable', 'string', 'max:50', 'unique:users'],
             'driver_license_number'      => ['sometimes', 'nullable', 'string', 'max:50', 'unique:users'],
@@ -74,16 +74,25 @@ class ClientController extends Controller
             'passport_issued_date'       => ['sometimes', 'nullable', 'date'],
             'status'                     => ['sometimes', 'nullable', 'in:Active,Blacklisted,VIP'],
             'kyc_status'                 => ['sometimes', 'nullable', 'in:Verified,Pending,Missing'],
-            'password'                   => ['required', 'confirmed', Rules\Password::defaults()],
+            'password'                   => ['sometimes', 'nullable', 'confirmed', Rules\Password::defaults()],
             'avatar'                     => ['sometimes', 'nullable', 'image', 'max:2048'],
             'doc_id_front'               => ['sometimes', 'nullable', 'file', 'max:4096', 'mimes:pdf,jpg,jpeg,png'],
             'doc_id_back'                => ['sometimes', 'nullable', 'file', 'max:4096', 'mimes:pdf,jpg,jpeg,png'],
             'doc_license'                => ['sometimes', 'nullable', 'file', 'max:4096', 'mimes:pdf,jpg,jpeg,png'],
         ]);
 
+        // Email & password are optional when an admin creates a client — generate
+        // unique placeholders so the not-null/unique DB constraints stay satisfied.
+        $email    = $request->filled('email')
+            ? $request->email
+            : 'client-' . uniqid() . '@noemail.local';
+        $password = $request->filled('password')
+            ? $request->password
+            : \Illuminate\Support\Str::random(24);
+
         $data = [
             'name'                       => $request->name,
-            'email'                      => $request->email,
+            'email'                      => $email,
             'phone'                      => $request->phone,
             'national_id'                => $request->national_id,
             'driver_license_number'      => $request->driver_license_number,
@@ -96,7 +105,7 @@ class ClientController extends Controller
             'passport_issued_date'       => $request->passport_issued_date,
             'status'                     => $request->input('status', 'Active'),
             'kyc_status'                 => $request->input('kyc_status', 'Missing'),
-            'password'                   => Hash::make($request->password),
+            'password'                   => Hash::make($password),
             'role'                       => 'client',
         ];
 
