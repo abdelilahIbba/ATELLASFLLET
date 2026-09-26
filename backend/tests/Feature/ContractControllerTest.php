@@ -67,6 +67,54 @@ test('admin can generate a contract from a booking', function () {
     expect($contract->contract_number)->toStartWith('CTR-');
 });
 
+test('contract snapshots the client additional driver fields', function () {
+    $admin   = contractAdmin();
+    $client  = contractClient();
+    $client->update([
+        'driver_name'          => 'Omar Chauffeur',
+        'driver_phone'         => '0611111111',
+        'driver_id_number'     => 'CD987654',
+        'driver_permit_number' => 'DRV-9999',
+    ]);
+    $car     = contractCar();
+    $booking = Booking::factory()->create([
+        'user_id' => $client->id,
+        'car_id'  => $car->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->postJson("/api/admin/contracts/from-booking/{$booking->id}")
+        ->assertCreated()
+        ->assertJsonPath('contract.driver_name', 'Omar Chauffeur')
+        ->assertJsonPath('contract.driver_phone', '0611111111')
+        ->assertJsonPath('contract.driver_id_number', 'CD987654')
+        ->assertJsonPath('contract.driver_permit_number', 'DRV-9999');
+
+    $this->assertDatabaseHas('contracts', [
+        'booking_id'           => $booking->id,
+        'driver_name'          => 'Omar Chauffeur',
+        'driver_permit_number' => 'DRV-9999',
+    ]);
+});
+
+test('driver fields are optional on contract creation', function () {
+    $admin   = contractAdmin();
+    $client  = contractClient(); // no driver data
+    $car     = contractCar();
+    $booking = Booking::factory()->create([
+        'user_id' => $client->id,
+        'car_id'  => $car->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->postJson("/api/admin/contracts/from-booking/{$booking->id}")
+        ->assertCreated();
+
+    $contract = Contract::where('booking_id', $booking->id)->first();
+    expect($contract->driver_name)->toBeNull()
+        ->and($contract->driver_permit_number)->toBeNull();
+});
+
 test('contract generation is idempotent for the same booking', function () {
     $admin   = contractAdmin();
     $client  = contractClient();

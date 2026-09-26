@@ -70,6 +70,11 @@ class ClientController extends Controller
             'profession'                 => ['sometimes', 'nullable', 'string', 'max:255'],
             'address_morocco'            => ['sometimes', 'nullable', 'string', 'max:500'],
             'address_abroad'             => ['sometimes', 'nullable', 'string', 'max:500'],
+            'driver_name'                => ['sometimes', 'nullable', 'string', 'max:255'],
+            'driver_phone'               => ['sometimes', 'nullable', 'string', 'max:50'],
+            'driver_id_number'           => ['sometimes', 'nullable', 'string', 'max:100'],
+            'driver_permit_number'       => ['sometimes', 'nullable', 'string', 'max:100'],
+            'driver_passport_number'     => ['sometimes', 'nullable', 'string', 'max:100'],
             'passport_number'            => ['sometimes', 'nullable', 'string', 'max:100'],
             'passport_issued_date'       => ['sometimes', 'nullable', 'date'],
             'status'                     => ['sometimes', 'nullable', 'in:Active,Blacklisted,VIP'],
@@ -101,6 +106,11 @@ class ClientController extends Controller
             'profession'                 => $request->profession,
             'address_morocco'            => $request->address_morocco,
             'address_abroad'             => $request->address_abroad,
+            'driver_name'                => $request->driver_name,
+            'driver_phone'               => $request->driver_phone,
+            'driver_id_number'           => $request->driver_id_number,
+            'driver_permit_number'       => $request->driver_permit_number,
+            'driver_passport_number'     => $request->driver_passport_number,
             'passport_number'            => $request->passport_number,
             'passport_issued_date'       => $request->passport_issued_date,
             'status'                     => $request->input('status', 'Active'),
@@ -151,6 +161,11 @@ class ClientController extends Controller
             'profession'                 => ['sometimes', 'nullable', 'string', 'max:255'],
             'address_morocco'            => ['sometimes', 'nullable', 'string', 'max:500'],
             'address_abroad'             => ['sometimes', 'nullable', 'string', 'max:500'],
+            'driver_name'                => ['sometimes', 'nullable', 'string', 'max:255'],
+            'driver_phone'               => ['sometimes', 'nullable', 'string', 'max:50'],
+            'driver_id_number'           => ['sometimes', 'nullable', 'string', 'max:100'],
+            'driver_permit_number'       => ['sometimes', 'nullable', 'string', 'max:100'],
+            'driver_passport_number'     => ['sometimes', 'nullable', 'string', 'max:100'],
             'passport_number'            => ['sometimes', 'nullable', 'string', 'max:100'],
             'passport_issued_date'       => ['sometimes', 'nullable', 'date'],
             // KYC / Status
@@ -166,6 +181,7 @@ class ClientController extends Controller
             'name', 'email', 'phone', 'national_id',
             'driver_license_number', 'driver_license_expiry_date',
             'date_of_birth', 'profession', 'address_morocco', 'address_abroad',
+            'driver_name', 'driver_phone', 'driver_id_number', 'driver_permit_number', 'driver_passport_number',
             'passport_number', 'passport_issued_date',
             'status', 'kyc_status',
         ]);
@@ -180,6 +196,20 @@ class ClientController extends Controller
         }
 
         $user->update($data);
+
+        // If the additional driver info changed, re-sync it onto the client's
+        // draft/active contracts so contracts already generated pick it up.
+        if (count(array_intersect(['driver_name', 'driver_phone', 'driver_id_number', 'driver_permit_number', 'driver_passport_number'], array_keys($data))) > 0) {
+            $user->contracts()
+                ->whereIn('status', ['draft', 'active'])
+                ->update([
+                    'driver_name'            => $user->driver_name,
+                    'driver_phone'           => $user->driver_phone,
+                    'driver_id_number'       => $user->driver_id_number,
+                    'driver_permit_number'   => $user->driver_permit_number,
+                    'driver_passport_number' => $user->driver_passport_number,
+                ]);
+        }
 
         return response()->json([
             'message' => 'Client updated.',

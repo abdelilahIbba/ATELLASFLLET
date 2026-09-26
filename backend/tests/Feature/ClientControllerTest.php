@@ -89,6 +89,63 @@ test('placeholder emails stay unique across multiple optional-email clients', fu
         ->and($emails->unique())->toHaveCount(2);
 });
 
+test('admin can create a client with optional additional driver info', function () {
+    $admin = clientAdmin();
+
+    $payload = [
+        'name'                 => 'Client Avec Chauffeur',
+        'driver_name'          => 'Omar Chauffeur',
+        'driver_phone'         => '0611111111',
+        'driver_id_number'     => 'CD987654',
+        'driver_permit_number' => 'DRV-9999',
+    ];
+
+    $this->actingAs($admin)->postJson('/api/admin/clients', $payload)
+        ->assertCreated()
+        ->assertJsonPath('client.driver_name', 'Omar Chauffeur')
+        ->assertJsonPath('client.driver_permit_number', 'DRV-9999');
+
+    $this->assertDatabaseHas('users', [
+        'name'                 => 'Client Avec Chauffeur',
+        'driver_name'          => 'Omar Chauffeur',
+        'driver_id_number'     => 'CD987654',
+        'driver_permit_number' => 'DRV-9999',
+    ]);
+});
+
+test('admin can update a client additional driver info', function () {
+    $admin  = clientAdmin();
+    $client = User::factory()->create(['role' => 'client']);
+
+    $this->actingAs($admin)->putJson("/api/admin/clients/{$client->id}", [
+        'driver_name'          => 'Salim Driver',
+        'driver_permit_number' => 'DRV-1111',
+    ])->assertOk()
+      ->assertJsonPath('client.driver_name', 'Salim Driver')
+      ->assertJsonPath('client.driver_permit_number', 'DRV-1111');
+});
+
+test('updating a client driver re-syncs their draft/active contracts', function () {
+    $admin  = clientAdmin();
+    $client = User::factory()->create(['role' => 'client']);
+    $car    = \App\Models\Car::factory()->create(['availability' => 'available', 'quantity' => 2, 'daily_price' => 300]);
+    $booking = \App\Models\Booking::factory()->create(['user_id' => $client->id, 'car_id' => $car->id]);
+
+    $this->actingAs($admin)->postJson("/api/admin/contracts/from-booking/{$booking->id}")->assertCreated();
+    $contract = \App\Models\Contract::where('booking_id', $booking->id)->first();
+    expect($contract->driver_name)->toBeNull();
+
+    // Driver added after the contract existed
+    $this->actingAs($admin)->putJson("/api/admin/clients/{$client->id}", [
+        'driver_name'          => 'Abdelilah Driver',
+        'driver_permit_number' => 'DRV-555',
+    ])->assertOk();
+
+    $contract->refresh();
+    expect($contract->driver_name)->toBe('Abdelilah Driver')
+        ->and($contract->driver_permit_number)->toBe('DRV-555');
+});
+
 // ── Admin: update client ─────────────────────────────────────────────
 test('admin can update a client', function () {
     $admin  = clientAdmin();

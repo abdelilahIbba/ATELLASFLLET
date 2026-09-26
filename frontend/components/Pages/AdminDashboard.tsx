@@ -150,6 +150,11 @@ interface Client {
   profession?: string;
   addressMorocco?: string;
   addressAbroad?: string;
+  driverName?: string;
+  driverPhone?: string;
+  driverIdNumber?: string;
+  driverLicenseNumber?: string;
+  driverPassportNumber?: string;
   driverLicense?: string;
   driverLicenseExpiry?: string;
   passportNumber?: string;
@@ -390,6 +395,11 @@ const clientFromApi = (u: Record<string, any>): Client => ({
   profession: u.profession ?? '',
   addressMorocco: u.address_morocco ?? '',
   addressAbroad: u.address_abroad ?? '',
+  driverName: u.driver_name ?? '',
+  driverPhone: u.driver_phone ?? '',
+  driverIdNumber: u.driver_id_number ?? '',
+  driverLicenseNumber: u.driver_permit_number ?? '',
+  driverPassportNumber: u.driver_passport_number ?? '',
   driverLicense: u.driver_license_number ?? '',
   driverLicenseExpiry: u.driver_license_expiry_date?.slice(0, 10) ?? '',
   passportNumber: u.passport_number ?? '',
@@ -1185,11 +1195,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
       'phone', 'national_id', 'driver_license_number',
       'driver_license_expiry_date', 'date_of_birth', 'profession',
       'address_morocco', 'address_abroad',
+      'driver_name', 'driver_phone', 'driver_id_number', 'driver_permit_number',
+      'driver_passport_number',
       'passport_number', 'passport_issued_date',
       'kyc_status',
     ];
     optionalFields.forEach(key => {
-      if (selectedItem) return;
       if (formData.get(key) === '') formData.delete(key);
     });
     // Email & password are optional on creation — backend generates placeholders
@@ -2265,6 +2276,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
 
                                           <div className="p-3 bg-brand-blue/5 border border-brand-blue/10 rounded-xl text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mt-auto">
                                               <span className="font-bold text-brand-blue">Note :</span> Ces champs sont destinés aux clients non-résidents ou MRE lors de l'établissement du contrat.
+                                          </div>
+                                      </div>
+                                  </div>
+
+                                  {/* Conducteur Supplémentaire (optionnel) */}
+                                  <div className="bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/90 dark:border-white/10 rounded-2xl p-4 space-y-3.5">
+                                      <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/10 text-brand-navy dark:text-white font-bold text-sm">
+                                          <div className="w-7 h-7 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
+                                              <Car className="w-4 h-4" />
+                                          </div>
+                                          <span>Conducteur Supplémentaire</span>
+                                          <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                                              Optionnel
+                                          </span>
+                                      </div>
+                                      <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                                          Si le client loue avec un conducteur dédié, ses informations seront reportées sur le contrat.
+                                      </p>
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">Nom & Prénom</label>
+                                              <input name="driver_name" defaultValue={selectedItem?.driverName || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Nom du conducteur"/>
+                                          </div>
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">Téléphone</label>
+                                              <input name="driver_phone" defaultValue={selectedItem?.driverPhone || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="+212 6xx-xxxxxx"/>
+                                          </div>
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">CIN</label>
+                                              <input name="driver_id_number" defaultValue={selectedItem?.driverIdNumber || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="AB123456"/>
+                                          </div>
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">N° Permis</label>
+                                              <input name="driver_permit_number" defaultValue={selectedItem?.driverLicenseNumber || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono shadow-sm" placeholder="B-123456"/>
+                                          </div>
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">Passeport N°</label>
+                                              <input name="driver_passport_number" defaultValue={selectedItem?.driverPassportNumber || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="N° de passeport"/>
                                           </div>
                                       </div>
                                   </div>

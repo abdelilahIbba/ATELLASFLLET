@@ -12,6 +12,11 @@ export interface RlvContractData {
   client_license_expiry?: string;
   client_address?: string;
   client_nationality?: string;
+  driver_name?: string;
+  driver_phone?: string;
+  driver_id_number?: string;
+  driver_permit_number?: string;
+  driver_passport_number?: string;
   vehicle_name?: string;
   vehicle_plate?: string;
   unit_number?: number;
@@ -256,11 +261,11 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
             <span className="uppercase tracking-wider">Le Conducteur Supplémentaire</span>
             <span dir="rtl">السائق المرخـص</span>
           </div>
-          <FieldRow labelFr="Nom &amp; Prénom :" value="" labelAr="الاسم الشخصي و العائلي" />
-          <FieldRow labelFr="Permis de conduire N° :" value="" labelAr="رخصة السياقة رقم" />
-          <FieldRow labelFr="Délivré à :" value="" labelAr="إصدارها في" />
-          <FieldRow labelFr="Passeport N° :" value="" labelAr="رقم جواز السفر" />
-          <FieldRow labelFr="C.I.N n° :" value="" labelAr="البطاقة الوطنية" />
+          <FieldRow labelFr="Nom &amp; Prénom :" value={contract.driver_name} labelAr="الاسم الشخصي و العائلي" />
+          <FieldRow labelFr="Permis de conduire N° :" value={contract.driver_permit_number} labelAr="رخصة السياقة رقم" />
+          <FieldRow labelFr="Téléphone :" value={contract.driver_phone} labelAr="رقم الهاتف" />
+          <FieldRow labelFr="C.I.N n° :" value={contract.driver_id_number} labelAr="البطاقة الوطنية" />
+          <FieldRow labelFr="Passeport N° :" value={contract.driver_passport_number} labelAr="رقم جواز السفر" />
         </div>
       </div>
 
