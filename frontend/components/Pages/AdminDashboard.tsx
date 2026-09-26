@@ -147,10 +147,8 @@ interface Client {
   addressMorocco?: string;
   addressAbroad?: string;
   driverLicense?: string;
-  driverLicenseIssuedAt?: string;
   driverLicenseExpiry?: string;
   passportNumber?: string;
-  passportIssuedAt?: string;
   passportIssuedDate?: string;
   status: 'Active' | 'Blacklisted' | 'VIP';
   kycStatus: 'Verified' | 'Pending' | 'Missing';
@@ -389,10 +387,8 @@ const clientFromApi = (u: Record<string, any>): Client => ({
   addressMorocco: u.address_morocco ?? '',
   addressAbroad: u.address_abroad ?? '',
   driverLicense: u.driver_license_number ?? '',
-  driverLicenseIssuedAt: u.driver_license_issued_at ?? '',
   driverLicenseExpiry: u.driver_license_expiry_date?.slice(0, 10) ?? '',
   passportNumber: u.passport_number ?? '',
-  passportIssuedAt: u.passport_issued_at ?? '',
   passportIssuedDate: u.passport_issued_date?.slice(0, 10) ?? '',
   status: (u.status as Client['status']) ?? 'Active',
   kycStatus: (u.kyc_status as Client['kycStatus']) ?? 'Missing',
@@ -1170,8 +1166,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     const optionalFields = [
       'phone', 'national_id', 'driver_license_number',
       'driver_license_expiry_date', 'date_of_birth', 'profession',
-      'address_morocco', 'address_abroad', 'driver_license_issued_at',
-      'passport_number', 'passport_issued_at', 'passport_issued_date',
+      'address_morocco', 'address_abroad',
+      'passport_number', 'passport_issued_date',
       'kyc_status',
     ];
     optionalFields.forEach(key => {
@@ -2194,19 +2190,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
 
                                      <div className="grid grid-cols-2 gap-4">
                                        <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Délivré à <span className="font-semibold normal-case text-slate-400">(permis, optionnel)</span></label>
-                                         <input name="driver_license_issued_at" defaultValue={selectedItem?.driverLicenseIssuedAt || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Ville de délivrance" />
-                                       </div>
-                                       <div>
                                          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Passport N° <span className="font-semibold normal-case text-slate-400">(optionnel)</span></label>
                                          <input name="passport_number" defaultValue={selectedItem?.passportNumber || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono" placeholder="N° passeport" />
-                                       </div>
-                                     </div>
-
-                                     <div className="grid grid-cols-2 gap-4">
-                                       <div>
-                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Délivré à <span className="font-semibold normal-case text-slate-400">(passport, optionnel)</span></label>
-                                         <input name="passport_issued_at" defaultValue={selectedItem?.passportIssuedAt || ''} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Ville de délivrance" />
                                        </div>
                                        <div>
                                          <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Le <span className="font-semibold normal-case text-slate-400">(passport, optionnel)</span></label>

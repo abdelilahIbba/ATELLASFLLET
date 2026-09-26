@@ -22,9 +22,7 @@ class UserResource extends JsonResource
             'profession'                 => $this->profession,
             'address_morocco'            => $this->address_morocco,
             'address_abroad'             => $this->address_abroad,
-            'driver_license_issued_at'   => $this->driver_license_issued_at,
             'passport_number'            => $this->passport_number,
-            'passport_issued_at'         => $this->passport_issued_at,
             'passport_issued_date'       => $this->passport_issued_date?->toDateString(),
             'role'                       => $this->role,
             // Demo-mode fields (only populated for demo_admin users)

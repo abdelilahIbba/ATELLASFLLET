@@ -39,10 +39,8 @@ export interface Client {
     addressMorocco?: string;       // address_morocco
     addressAbroad?: string;        // address_abroad
     driverLicense?: string;        // driver_license_number
-    driverLicenseIssuedAt?: string; // driver_license_issued_at
     driverLicenseExpiry?: string;  // driver_license_expiry_date
     passportNumber?: string;
-    passportIssuedAt?: string;
     passportIssuedDate?: string;
     status: 'Active' | 'Blacklisted' | 'VIP';
     kycStatus: 'Verified' | 'Pending' | 'Missing';
