@@ -1,1 +1,0 @@
-<?php /**PATH /var/www/html/resources/views/cars/show.blade.php ENDPATH**/ ?>

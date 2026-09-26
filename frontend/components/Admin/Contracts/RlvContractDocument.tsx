@@ -99,7 +99,7 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
       }}
     >
       {/* ══ HEADER ══ */}
-      <div className="grid grid-cols-12 gap-2 mb-1.5 pb-1 border-b border-black">
+      <div className="grid grid-cols-12 gap-2 mb-1.5 pb-1 border-b border-black" style={{ borderBottom: '1.5px solid #000', marginBottom: '6px', paddingBottom: '4px' }}>
         {/* Left: Logo & Company Address */}
         <div className="col-span-5 text-center pr-2 flex flex-col justify-between">
           <div className="flex flex-col items-center">
@@ -124,7 +124,7 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
         </div>
 
         {/* Right: Brand Title + Legal Notices */}
-        <div className="col-span-7 pl-2 border-l border-black flex flex-col justify-between">
+        <div className="col-span-7 pl-2 border-l border-black flex flex-col justify-between" style={{ borderLeft: '1px solid #000' }}>
           <div className="text-center mb-0.5 flex items-center justify-center gap-1.5">
             <span className="font-black text-[17px] text-rose-600 tracking-wider">RLV</span>
             <span className="font-bold text-[13px] text-black">Location de voiture</span>
@@ -141,7 +141,7 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
       </div>
 
       {/* ══ TITLE BANNER ══ */}
-      <div className="border-[1.5px] border-black px-3 py-0.5 mb-1 flex items-center justify-between bg-slate-50/60">
+      <div className="border-[1.5px] border-black px-3 py-0.5 mb-1 flex items-center justify-between bg-slate-50/60" style={{ border: '1.5px solid #000', marginBottom: '6px', padding: '4px 10px' }}>
         <span className="font-black text-[12px] text-black uppercase tracking-wide">
           Contrat de Location
         </span>
@@ -159,9 +159,9 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
       </div>
 
       {/* ══ MAIN TWO-COLUMN GRID ══ */}
-      <div className="grid grid-cols-2 border-[1.5px] border-black mb-1">
+      <div className="grid grid-cols-2 border-[1.5px] border-black mb-1" style={{ border: '1.5px solid #000', marginBottom: '8px' }}>
         {/* ── LEFT COLUMN : VEHICULE & CLIENT ── */}
-        <div className="border-r-[1.5px] border-black">
+        <div className="border-r-[1.5px] border-black" style={{ borderRight: '1.5px solid #000' }}>
           {/* Vehicle fields */}
           <FieldRow labelFr="Marque :" value={contract.vehicle_name} labelAr="نوع" />
           <FieldRow labelFr="N° Immatriculation :" value={contract.vehicle_plate} labelAr="رقم التسجيل" />
@@ -252,7 +252,7 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
           </div>
 
           {/* Le Conducteur Supplémentaire */}
-          <div className="bg-slate-100 border-b border-black px-1.5 py-0.5 flex justify-between font-bold text-[7.2px]">
+          <div className="bg-slate-100 border-b border-black px-1.5 py-0.5 flex justify-between font-bold text-[7.2px]" style={{ borderBottom: '1px solid #000', padding: '3px 6px', background: '#f1f5f9' }}>
             <span className="uppercase tracking-wider">Le Conducteur Supplémentaire</span>
             <span dir="rtl">السائق المرخـص</span>
           </div>
@@ -265,11 +265,11 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
       </div>
 
       {/* ══ PAIEMENT & CONDITIONS & TOTALS ══ */}
-      <div className="grid grid-cols-2 border-[1.5px] border-black mb-1">
+      <div className="grid grid-cols-2 border-[1.5px] border-black mb-1" style={{ border: '1.5px solid #000', marginBottom: '8px' }}>
         {/* Left: Paiement + Terms + Signature client */}
-        <div className="border-r-[1.5px] border-black flex flex-col justify-between">
+        <div className="border-r-[1.5px] border-black flex flex-col justify-between" style={{ borderRight: '1.5px solid #000' }}>
           <div>
-            <div className="bg-slate-100 border-b border-black px-1.5 py-0.5 flex justify-between font-bold text-[7.2px]">
+            <div className="bg-slate-100 border-b border-black px-1.5 py-0.5 flex justify-between font-bold text-[7.2px]" style={{ borderBottom: '1px solid #000', padding: '3px 6px', background: '#f1f5f9' }}>
               <span>Paiement</span>
               <span dir="rtl">الأداء</span>
             </div>
@@ -377,7 +377,7 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
       </div>
 
       {/* ══ VEHICLE INSPECTION (BOTTOM) ══ */}
-      <div className="grid grid-cols-12 border-[1.5px] border-black">
+      <div className="grid grid-cols-12 border-[1.5px] border-black" style={{ border: '1.5px solid #000' }}>
         {/* ── DÉPART (Col 5/12) ── */}
         <div className="col-span-5 p-1 border-r border-black flex flex-col justify-between">
           <div>
@@ -484,15 +484,28 @@ interface FieldRowProps {
 
 const FieldRow: React.FC<FieldRowProps> = ({ labelFr, value, labelAr, thickDivider, isBold }) => (
   <div
-    className={`flex items-center justify-between px-1.5 py-0.5 text-[7px] ${
-      thickDivider ? 'border-b-[1.5px] border-black' : 'border-b border-slate-300'
-    }`}
+    className="flex items-center justify-between text-[7px]"
+    style={{
+      padding: '3px 5px',
+      minHeight: '17px',
+      borderBottom: thickDivider ? '1.5px solid #000' : '0.6px solid #aaa',
+    }}
   >
-    <span className="w-[40%] font-bold text-black truncate">{labelFr}</span>
-    <span className={`w-[36%] truncate text-black ${isBold ? 'font-black text-[7.5px]' : 'font-bold'}`}>
+    <span
+      className="font-bold text-black"
+      style={{ width: '40%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+    >{labelFr}</span>
+    <span
+      className={`text-black ${isBold ? 'font-black' : 'font-bold'}`}
+      style={{ width: '36%', fontSize: isBold ? '7.5px' : '7px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+    >
       {value || ''}
     </span>
-    <span className="w-[24%] text-right font-bold text-black truncate" dir="rtl">
+    <span
+      className="font-bold text-black"
+      style={{ width: '24%', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      dir="rtl"
+    >
       {labelAr}
     </span>
   </div>
@@ -593,24 +606,24 @@ export function getRlvPrintStyles(): string {
     .space-x-1 > * + * { margin-left: 2px !important; }
     .space-y-0\.5 > * + * { margin-top: 1px !important; }
     .mx-auto { margin-left: auto !important; margin-right: auto !important; }
-    .mb-0\.5 { margin-bottom: 1px !important; }
-    .mb-1 { margin-bottom: 2px !important; }
-    .mb-1\.5 { margin-bottom: 3px !important; }
-    .mt-0\.5 { margin-top: 1px !important; }
-    .mt-5 { margin-top: 12px !important; }
-    .ml-1 { margin-left: 2px !important; }
-    .mr-1 { margin-right: 2px !important; }
-    .my-0\.5 { margin-top: 1px !important; margin-bottom: 1px !important; }
-    .p-0\.5 { padding: 1px !important; }
-    .p-1 { padding: 2px !important; }
-    .p-1\.5 { padding: 3px !important; }
-    .px-1 { padding-left: 2px !important; padding-right: 2px !important; }
-    .px-1\.5 { padding-left: 3px !important; padding-right: 3px !important; }
-    .px-2 { padding-left: 4px !important; padding-right: 4px !important; }
-    .px-3 { padding-left: 6px !important; padding-right: 6px !important; }
-    .py-0\.5 { padding-top: 1px !important; padding-bottom: 1px !important; }
-    .py-0\.2 { padding-top: 0.5px !important; padding-bottom: 0.5px !important; }
-    .pb-1 { padding-bottom: 2px !important; }
+    .mb-0\.5 { margin-bottom: 2px !important; }
+    .mb-1 { margin-bottom: 4px !important; }
+    .mb-1\.5 { margin-bottom: 6px !important; }
+    .mt-0\.5 { margin-top: 2px !important; }
+    .mt-5 { margin-top: 20px !important; }
+    .ml-1 { margin-left: 4px !important; }
+    .mr-1 { margin-right: 4px !important; }
+    .my-0\.5 { margin-top: 2px !important; margin-bottom: 2px !important; }
+    .p-0\.5 { padding: 2px !important; }
+    .p-1 { padding: 4px !important; }
+    .p-1\.5 { padding: 6px !important; }
+    .px-1 { padding-left: 4px !important; padding-right: 4px !important; }
+    .px-1\.5 { padding-left: 6px !important; padding-right: 6px !important; }
+    .px-2 { padding-left: 8px !important; padding-right: 8px !important; }
+    .px-3 { padding-left: 12px !important; padding-right: 12px !important; }
+    .py-0\.5 { padding-top: 2px !important; padding-bottom: 2px !important; }
+    .py-0\.2 { padding-top: 1px !important; padding-bottom: 1px !important; }
+    .pb-1 { padding-bottom: 4px !important; }
     /* ── Sizing ── */
     .w-full { width: 100% !important; }
     .w-1\/2 { width: 50% !important; }
@@ -619,12 +632,12 @@ export function getRlvPrintStyles(): string {
     .w-\[24\%\] { width: 24% !important; }
     .w-\[12\%\] { width: 12% !important; }
     .w-\[13\%\] { width: 13% !important; }
-    .w-2\.5 { width: 6px !important; }
-    .w-3 { width: 7px !important; }
-    .w-20 { width: 48px !important; }
-    .h-2\.5 { height: 6px !important; }
-    .h-3 { height: 7px !important; }
-    .h-9 { height: 22px !important; }
+    .w-2\.5 { width: 7px !important; }
+    .w-3 { width: 8px !important; }
+    .w-20 { width: 52px !important; }
+    .h-2\.5 { height: 7px !important; }
+    .h-3 { height: 8px !important; }
+    .h-9 { height: 26px !important; }
     .h-11 { height: 26px !important; }
     .h-24 { height: 58px !important; }
     .max-h-8 { max-height: 20px !important; }
@@ -688,9 +701,9 @@ export function getRlvPrintStyles(): string {
     .border-r { border-right-width: 1px !important; border-right-style: solid !important; }
     .border-l { border-left-width: 1px !important; border-left-style: solid !important; }
     .border-black { border-color: #000 !important; }
-    .border-slate-200 { border-color: #e2e8f0 !important; }
-    .border-slate-300 { border-color: #cbd5e1 !important; }
-    .border-slate-400 { border-color: #94a3b8 !important; }
+    .border-slate-200 { border-color: #c0c8d4 !important; }
+    .border-slate-300 { border-color: #a0aab8 !important; }
+    .border-slate-400 { border-color: #7a8699 !important; }
     .border-\[1\.5px\] { border-width: 1.5px !important; border-style: solid !important; }
     .border-b-\[1\.5px\] { border-bottom: 1.5px solid !important; }
     .border-r-\[1\.5px\] { border-right: 1.5px solid !important; }

@@ -89,6 +89,7 @@ services:
       - ./backend/app:/var/www/html/app
       - ./backend/routes:/var/www/html/routes
       - ./backend/public:/var/www/html/public
+      - ./backend/database:/var/www/html/database
       - ./.env:/var/www/html/.env:ro
     depends_on:
       db:

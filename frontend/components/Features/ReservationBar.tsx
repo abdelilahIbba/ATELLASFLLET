@@ -8,7 +8,7 @@ interface ReservationBarProps {
 
 const ReservationBar: React.FC<ReservationBarProps> = ({ onBook }) => {
   const [category, setCategory] = useState('Citadine');
-  const [location, setLocation] = useState('Rabat Centre');
+  const [location, setLocation] = useState('Tanger Agence (Lot El Nahda)');
   const [pickupDate, setPickupDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
 
@@ -100,8 +100,10 @@ const ReservationBar: React.FC<ReservationBarProps> = ({ onBook }) => {
                   onChange={(e) => setLocation(e.target.value)}
                   className="block w-full pl-10 pr-10 py-4 text-base font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-white/5 border-0 rounded-xl focus:ring-2 focus:ring-brand-red transition-all cursor-pointer appearance-none hover:bg-slate-100 dark:hover:bg-white/10"
                 >
-                  <option>Rabat Centre</option>
-                  <option>Rabat-Salé Aéroport</option>
+                  <option>Tanger Agence (Lot El Nahda)</option>
+                  <option>Tanger Aéroport Ibn Battouta</option>
+                  <option>Tanger Ville Gare TGV</option>
+                  <option>Tanger Port Med</option>
                     </select>
                 </div>
             </div>

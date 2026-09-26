@@ -33,13 +33,13 @@
             overflow-wrap: anywhere;
         }
         .outer-box {
-            border: 0.35mm solid #111;
-            margin-bottom: 1.8mm;
+            border: 0.65mm solid #000;
+            margin-bottom: 4.5mm;
         }
-        .thin-border { border: 0.2mm solid #222; }
-        .right-border { border-right: 0.35mm solid #111; }
-        .bottom-border { border-bottom: 0.2mm solid #555; }
-        .thick-bottom { border-bottom: 0.35mm solid #111; }
+        .thin-border { border: 0.45mm solid #111; }
+        .right-border { border-right: 0.65mm solid #000; }
+        .bottom-border { border-bottom: 0.4mm solid #333; }
+        .thick-bottom { border-bottom: 0.65mm solid #000; }
         .center { text-align: center; }
         .right { text-align: right; }
         .rtl { direction: rtl; font-family: DejaVu Sans, Tahoma, sans-serif; }
@@ -70,34 +70,34 @@
             font-family: DejaVu Sans Mono, monospace;
         }
         .field-row td {
-            height: 5.35mm;
-            padding: 0.45mm 1.25mm;
-            border-bottom: 0.18mm solid #777;
+            height: 6.8mm;
+            padding: 1mm 1.6mm;
+            border-bottom: 0.32mm solid #888;
         }
         .field-fr { width: 38%; font-size: 9.35pt; font-weight: 700; }
         .field-value { width: 34%; font-size: 9.5pt; font-weight: 700; }
         .field-ar { width: 28%; font-size: 9.35pt; font-weight: 700; text-align: right; direction: rtl; }
         .section-title td {
-            height: 5.4mm;
+            height: 6.5mm;
             background: #f4f6f8;
-            padding: 0.55mm 1.25mm;
-            border-bottom: 0.25mm solid #222;
+            padding: 0.9mm 1.6mm;
+            border-bottom: 0.45mm solid #111;
             font-size: 9.5pt;
             font-weight: 800;
         }
         .date-grid th, .date-grid td {
-            height: 5.35mm;
-            border: 0.18mm solid #555;
-            padding: 0.4mm 0.8mm;
+            height: 6.5mm;
+            border: 0.35mm solid #444;
+            padding: 0.7mm 0.8mm;
             text-align: center;
             font-size: 9.05pt;
         }
         .date-grid th { background: #f4f6f8; font-weight: 800; }
         .date-label { text-align: left !important; }
         .km-table td {
-            height: 6.05mm;
-            padding: 0.35mm 1mm;
-            border-bottom: 0.18mm solid #777;
+            height: 7.5mm;
+            padding: 0.8mm 1.2mm;
+            border-bottom: 0.3mm solid #777;
         }
         .km-label { font-size: 8.85pt; line-height: 1.14; }
         .digit {
@@ -111,7 +111,7 @@
             font-size: 9.15pt;
             font-family: DejaVu Sans Mono, monospace;
         }
-        .pay-table td { height: 5.75mm; padding: 0.45mm 1.25mm; border-bottom: 0.18mm solid #777; }
+        .pay-table td { height: 6.8mm; padding: 1mm 1.6mm; border-bottom: 0.3mm solid #777; }
         .check {
             display: inline-block;
             width: 4mm;
@@ -122,10 +122,10 @@
             margin-right: 1mm;
             font-size: 8.8pt;
         }
-        .terms { height: 11mm; padding: 0.85mm 1.45mm; line-height: 1.2; }
-        .signature-box { height: 19mm; padding: 1mm; text-align: center; }
+        .terms { height: 14mm; padding: 1.5mm 1.8mm; line-height: 1.3; }
+        .signature-box { height: 22mm; padding: 1.5mm; text-align: center; }
         .signature-img { max-height: 13mm; max-width: 48mm; }
-        .total-row td { height: 5.95mm; padding: 0.55mm 1.5mm; border-bottom: 0.18mm solid #777; }
+        .total-row td { height: 7mm; padding: 1mm 1.8mm; border-bottom: 0.3mm solid #777; }
         .total-main td { font-size: 10.2pt; font-weight: 900; background: #f7f7f7; }
         .inspection td { vertical-align: top; }
         .inspection-cell { height: 62mm; padding: 1.1mm; }

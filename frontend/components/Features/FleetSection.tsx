@@ -74,7 +74,7 @@ const FleetSection: React.FC<FleetSectionProps> = ({ onBook, maxVisible, showVie
           <div className="text-left w-full md:w-auto">
             <span className="text-brand-teal font-bold tracking-widest text-xs uppercase mb-2 block">Nos Véhicules</span>
             <h2 className="text-4xl md:text-6xl font-bold text-brand-navy dark:text-white font-space leading-none transition-colors duration-700">
-              Notre Flotte <br /><span className="text-brand-blue">à Rabat</span>
+              Notre Flotte <br /><span className="text-brand-red">à Tanger</span>
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-4 max-w-xl">
               Des modèles fiables et demandés au Maroc, adaptés aux besoins quotidiens, professionnels et longue durée.

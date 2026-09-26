@@ -3,12 +3,12 @@ import { CheckCircle2 } from 'lucide-react';
 
 const WhyChooseUs: React.FC = () => {
   const values = [
-    'Service local à Rabat et régions proches',
+    'Service local à Tanger et régions du Nord',
     'Tarification claire sans frais cachés',
-    'Support client réactif 7j/7',
+    'Support client réactif 7j/7 (06 77 81 37 18)',
     'Véhicules contrôlés et entretenus',
     'Solutions dédiées aux entreprises',
-    'Livraison domicile et aéroport'
+    'Livraison domicile et aéroport Ibn Battouta'
   ];
 
   return (
@@ -16,11 +16,11 @@ const WhyChooseUs: React.FC = () => {
       <div className="w-full lg:px-16 xl:px-20 2xl:px-28 mx-auto px-6">
         <div className="max-w-4xl">
             <h2 className="text-3xl md:text-4xl font-bold text-brand-navy dark:text-white font-space mb-4">
-                Pourquoi choisir atellaFleet ?
+                Pourquoi choisir RLV Rahimi Car ?
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base leading-relaxed mb-10">
-                Une agence de location à Rabat pensée pour la performance opérationnelle : processus simples,
-                véhicules fiables et accompagnement professionnel.
+                Votre agence de confiance à Tanger : réservation simple, véhicules fiables,
+                livraison flexible et accueil chaleureux au Nord du Maroc.
             </p>
         </div>
 
