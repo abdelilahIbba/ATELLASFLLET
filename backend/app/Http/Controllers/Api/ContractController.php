@@ -300,6 +300,10 @@ class ContractController extends Controller
             throw new \RuntimeException('mPDF is not installed. Run composer require mpdf/mpdf.');
         }
 
+        // Raise limits for this heavy operation
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(120);
+
         // Render the Blade template to HTML without CSS @page; mPDF gets page
         // size and margins from its own configuration below.
         $html = view('pdf.contract_arabic', [
@@ -307,20 +311,31 @@ class ContractController extends Controller
             'forMpdf'  => true,
         ])->render();
 
+        $tempDir = storage_path('app/mpdf-tmp');
+        if (!is_dir($tempDir)) {
+            @mkdir($tempDir, 0775, true);
+        }
+
         // Create mPDF instance with Arabic support
         $mpdf = new \Mpdf\Mpdf([
-            'mode'             => 'utf-8',
-            'format'           => 'A4',
-            'orientation'      => 'P',
-            'tempDir'          => storage_path('app/mpdf-tmp'),
-            'autoArabic'       => true,
-            'autoLangToFont'   => true,
-            'default_font'     => 'dejavusans',
-            'margin_left'      => 0,
-            'margin_right'     => 0,
-            'margin_top'       => 0,
-            'margin_bottom'    => 0,
+            'mode'              => 'utf-8',
+            'format'            => 'A4',
+            'orientation'       => 'P',
+            'tempDir'           => $tempDir,
+            'autoArabic'        => true,
+            'autoLangToFont'    => true,
+            'default_font'      => 'dejavusans',
+            'margin_left'       => 0,
+            'margin_right'      => 0,
+            'margin_top'        => 0,
+            'margin_bottom'     => 0,
+            // Performance: disable all remote resource fetching
+            'curlAllowUnsafeSslRequests' => false,
+            'enableImports'     => false,
         ]);
+
+        // Block any external HTTP requests (speeds up rendering dramatically)
+        $mpdf->SetBasePath('');
 
         $mpdf->SetTitle("Contrat de Location {$contract->contract_number}");
         $mpdf->SetDisplayMode('fullpage');
