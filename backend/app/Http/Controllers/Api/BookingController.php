@@ -475,6 +475,7 @@ class BookingController extends Controller
                 'driver_phone' => $booking->user->driver_phone ?? null,
                 'driver_id_number' => $booking->user->driver_id_number ?? null,
                 'driver_permit_number' => $booking->user->driver_permit_number ?? null,
+                'driver_passport_number' => $booking->user->driver_passport_number ?? null,
             ]);
 
             // Reload relationships for consistent response

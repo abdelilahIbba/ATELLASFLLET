@@ -212,7 +212,7 @@
         ['Permis de conduire N° :', $contract->driver_permit_number ?: $contract->client_license_number, 'رخصة السياقة رقم'],
         ['Téléphone :', $contract->driver_phone ?: $contract->client_phone, 'رقم الهاتف'],
         ['C.I.N n° :', $contract->driver_id_number ?: $contract->client_id_number, 'البطاقة الوطنية'],
-        ['Passeport N° :', $contract->driver_name ? '' : $contract->client_passport_number, 'رقم جواز السفر'],
+        ['Passeport N° :', $contract->driver_passport_number ?: ($contract->driver_name ? '' : $contract->client_passport_number), 'رقم جواز السفر'],
     ];
 @endphp
 

@@ -26,6 +26,7 @@ class UserResource extends JsonResource
             'driver_phone'               => $this->driver_phone,
             'driver_id_number'           => $this->driver_id_number,
             'driver_permit_number'       => $this->driver_permit_number,
+            'driver_passport_number'     => $this->driver_passport_number,
             'passport_number'            => $this->passport_number,
             'passport_issued_date'       => $this->passport_issued_date?->toDateString(),
             'role'                       => $this->role,

@@ -154,6 +154,7 @@ interface Client {
   driverPhone?: string;
   driverIdNumber?: string;
   driverLicenseNumber?: string;
+  driverPassportNumber?: string;
   driverLicense?: string;
   driverLicenseExpiry?: string;
   passportNumber?: string;
@@ -398,6 +399,7 @@ const clientFromApi = (u: Record<string, any>): Client => ({
   driverPhone: u.driver_phone ?? '',
   driverIdNumber: u.driver_id_number ?? '',
   driverLicenseNumber: u.driver_permit_number ?? '',
+  driverPassportNumber: u.driver_passport_number ?? '',
   driverLicense: u.driver_license_number ?? '',
   driverLicenseExpiry: u.driver_license_expiry_date?.slice(0, 10) ?? '',
   passportNumber: u.passport_number ?? '',
@@ -1194,6 +1196,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
       'driver_license_expiry_date', 'date_of_birth', 'profession',
       'address_morocco', 'address_abroad',
       'driver_name', 'driver_phone', 'driver_id_number', 'driver_permit_number',
+      'driver_passport_number',
       'passport_number', 'passport_issued_date',
       'kyc_status',
     ];
@@ -2307,6 +2310,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                           <div>
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">N° Permis</label>
                                               <input name="driver_permit_number" defaultValue={selectedItem?.driverLicenseNumber || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono shadow-sm" placeholder="B-123456"/>
+                                          </div>
+                                          <div>
+                                              <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">Passeport N°</label>
+                                              <input name="driver_passport_number" defaultValue={selectedItem?.driverPassportNumber || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="N° de passeport"/>
                                           </div>
                                       </div>
                                   </div>

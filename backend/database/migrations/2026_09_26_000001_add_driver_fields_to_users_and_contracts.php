@@ -21,6 +21,9 @@ return new class extends Migration
             if (!Schema::hasColumn('users', 'driver_permit_number')) {
                 $table->string('driver_permit_number', 100)->nullable()->after('driver_id_number');
             }
+            if (!Schema::hasColumn('users', 'driver_passport_number')) {
+                $table->string('driver_passport_number', 100)->nullable()->after('driver_permit_number');
+            }
         });
 
         Schema::table('contracts', function (Blueprint $table) {
@@ -36,17 +39,20 @@ return new class extends Migration
             if (!Schema::hasColumn('contracts', 'driver_permit_number')) {
                 $table->string('driver_permit_number', 100)->nullable()->after('driver_id_number');
             }
+            if (!Schema::hasColumn('contracts', 'driver_passport_number')) {
+                $table->string('driver_passport_number', 100)->nullable()->after('driver_permit_number');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['driver_name', 'driver_phone', 'driver_id_number', 'driver_permit_number']);
+            $table->dropColumn(['driver_name', 'driver_phone', 'driver_id_number', 'driver_permit_number', 'driver_passport_number']);
         });
 
         Schema::table('contracts', function (Blueprint $table) {
-            $table->dropColumn(['driver_name', 'driver_phone', 'driver_id_number', 'driver_permit_number']);
+            $table->dropColumn(['driver_name', 'driver_phone', 'driver_id_number', 'driver_permit_number', 'driver_passport_number']);
         });
     }
 };

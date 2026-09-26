@@ -42,7 +42,8 @@ export interface Client {
     driverName?: string;           // driver_name
     driverPhone?: string;          // driver_phone
     driverIdNumber?: string;       // driver_id_number (CIN)
-    driverLicenseNumber?: string;  // driver_license_number
+    driverLicenseNumber?: string;  // driver_permit_number
+    driverPassportNumber?: string; // driver_passport_number
     driverLicense?: string;        // driver_license_number
     driverLicenseExpiry?: string;  // driver_license_expiry_date
     passportNumber?: string;

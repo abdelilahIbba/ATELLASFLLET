@@ -34,6 +34,7 @@ class Contract extends Model
         'driver_phone',
         'driver_id_number',
         'driver_permit_number',
+        'driver_passport_number',
         'vehicle_name',
         'vehicle_plate',
         'vehicle_color',

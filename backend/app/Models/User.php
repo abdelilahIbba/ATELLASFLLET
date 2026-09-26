@@ -34,6 +34,7 @@ class User extends Authenticatable
         'driver_phone',
         'driver_id_number',
         'driver_permit_number',
+        'driver_passport_number',
         'driver_license_issued_at',
         'passport_number',
         'passport_issued_at',

@@ -116,6 +116,7 @@ class ContractController extends Controller
             'driver_phone'           => 'nullable|string|max:50',
             'driver_id_number'       => 'nullable|string|max:100',
             'driver_permit_number'   => 'nullable|string|max:100',
+            'driver_passport_number' => 'nullable|string|max:100',
             'vehicle_name'           => 'sometimes|string|max:255',
             'vehicle_plate'          => 'sometimes|string|max:50',
             'unit_number'            => 'nullable|integer',
@@ -206,6 +207,7 @@ class ContractController extends Controller
             'driver_phone'            => $booking->user->driver_phone ?? null,
             'driver_id_number'        => $booking->user->driver_id_number ?? null,
             'driver_permit_number'    => $booking->user->driver_permit_number ?? null,
+            'driver_passport_number'  => $booking->user->driver_passport_number ?? null,
             'vehicle_name'            => $booking->car->full_name
                                           ?? trim(($booking->car->year ?? '') . ' ' . ($booking->car->make ?? '') . ' ' . ($booking->car->model ?? '')),
             'vehicle_plate'           => $this->unitPlate($booking),
@@ -260,10 +262,11 @@ class ContractController extends Controller
             return;
         }
 
-        $contract->driver_name          = $u->driver_name;
-        $contract->driver_phone         = $u->driver_phone;
-        $contract->driver_id_number     = $u->driver_id_number;
-        $contract->driver_permit_number = $u->driver_permit_number;
+        $contract->driver_name            = $u->driver_name;
+        $contract->driver_phone           = $u->driver_phone;
+        $contract->driver_id_number       = $u->driver_id_number;
+        $contract->driver_permit_number   = $u->driver_permit_number;
+        $contract->driver_passport_number = $u->driver_passport_number;
         $contract->save();
     }
 
