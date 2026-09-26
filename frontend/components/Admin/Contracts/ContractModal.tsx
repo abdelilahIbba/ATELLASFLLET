@@ -131,6 +131,10 @@ interface ContractExtras {
   clientLicenseExpiry: string | null;
   clientNationality:   string | null;
   clientAddress:       string | null;
+  driverName:          string | null;
+  driverPhone:         string | null;
+  driverIdNumber:      string | null;
+  driverPermitNumber:  string | null;
   vehiclePlate:        string | null;
   dailyRate:           number | null;
   depositAmount:       number | null;
@@ -143,7 +147,9 @@ const EMPTY_EXTRAS: ContractExtras = {
   contractId: null, contractNumber: null,
   clientPhone: null, clientEmail: null,
   clientIdNumber: null, clientLicenseNumber: null, clientLicenseExpiry: null,
-  clientNationality: null, clientAddress: null, vehiclePlate: null,
+  clientNationality: null, clientAddress: null,
+  driverName: null, driverPhone: null, driverIdNumber: null, driverPermitNumber: null,
+  vehiclePlate: null,
   dailyRate: null, depositAmount: null, insuranceType: null,
   mileageStart: null, mileageEnd: null,
 };
@@ -387,6 +393,10 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
             clientLicenseExpiry: raw.client_license_expiry?.slice(0, 10) ?? null,
             clientNationality:   raw.client_nationality ?? null,
             clientAddress:       raw.client_address ?? null,
+            driverName:          raw.driver_name ?? null,
+            driverPhone:         raw.driver_phone ?? null,
+            driverIdNumber:      raw.driver_id_number ?? null,
+            driverPermitNumber:  raw.driver_permit_number ?? null,
             vehiclePlate:        raw.vehicle_plate ?? null,
             dailyRate:           raw.daily_rate != null ? parseFloat(raw.daily_rate) : null,
             depositAmount:       raw.deposit_amount != null ? parseFloat(raw.deposit_amount) : null,
@@ -436,6 +446,11 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
     client_license_expiry: editExpiry || extras.clientLicenseExpiry || '',
     client_address: editAddress || extras.clientAddress || '',
     client_nationality: editNationality || extras.clientNationality || '',
+    // Conducteur supplémentaire : fallback sur le client (locataire = conducteur)
+    driver_name: extras.driverName || booking.clientName || undefined,
+    driver_phone: extras.driverPhone || extras.clientPhone || undefined,
+    driver_id_number: extras.driverIdNumber || editCin || extras.clientIdNumber || undefined,
+    driver_permit_number: extras.driverPermitNumber || editLicense || extras.clientLicenseNumber || undefined,
     vehicle_name: booking.vehicleName,
     vehicle_plate: extras.vehiclePlate || booking.unitPlate || '',
     unit_number: booking.unitNumber,
@@ -510,6 +525,10 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
           client_license_expiry:  editExpiry     || undefined,
           client_nationality:     editNationality|| undefined,
           client_address:         editAddress    || undefined,
+          driver_name:            extras.driverName          ?? undefined,
+          driver_phone:           extras.driverPhone         ?? undefined,
+          driver_id_number:       extras.driverIdNumber      ?? undefined,
+          driver_permit_number:   extras.driverPermitNumber  ?? undefined,
           status:                 'active',
         });
         onSaved?.();

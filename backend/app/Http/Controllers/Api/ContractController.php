@@ -112,6 +112,10 @@ class ContractController extends Controller
             'client_email'           => 'nullable|email|max:255',
             'client_id_number'       => 'nullable|string|max:100',
             'client_license_number'  => 'nullable|string|max:100',
+            'driver_name'            => 'nullable|string|max:255',
+            'driver_phone'           => 'nullable|string|max:50',
+            'driver_id_number'       => 'nullable|string|max:100',
+            'driver_permit_number'   => 'nullable|string|max:100',
             'vehicle_name'           => 'sometimes|string|max:255',
             'vehicle_plate'          => 'sometimes|string|max:50',
             'unit_number'            => 'nullable|integer',
@@ -198,6 +202,10 @@ class ContractController extends Controller
             'client_passport_issued_date' => $booking->user->passport_issued_date ?? null,
             'client_address'          => $booking->user->address_morocco ?? null,
             'client_address_abroad'   => $booking->user->address_abroad ?? null,
+            'driver_name'             => $booking->user->driver_name ?? null,
+            'driver_phone'            => $booking->user->driver_phone ?? null,
+            'driver_id_number'        => $booking->user->driver_id_number ?? null,
+            'driver_permit_number'    => $booking->user->driver_permit_number ?? null,
             'vehicle_name'            => $booking->car->full_name
                                           ?? trim(($booking->car->year ?? '') . ' ' . ($booking->car->make ?? '') . ' ' . ($booking->car->model ?? '')),
             'vehicle_plate'           => $this->unitPlate($booking),
@@ -229,11 +237,34 @@ class ContractController extends Controller
     public function downloadPdf(Contract $contract): \Illuminate\Http\Response
     {
         $contract->load(['booking', 'user', 'car']);
+        $this->backfillDriverFromClient($contract);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.contract_arabic', compact('contract'))
             ->setPaper('a4', 'portrait');
 
         return $pdf->download("contrat-rlv-{$contract->contract_number}.pdf");
+    }
+
+    /**
+     * If the contract has no driver snapshot but the linked client has driver
+     * info, copy it in (and persist) so older contracts still render the driver.
+     */
+    private function backfillDriverFromClient(Contract $contract): void
+    {
+        if ($contract->driver_name || !$contract->user) {
+            return;
+        }
+
+        $u = $contract->user;
+        if (!$u->driver_name) {
+            return;
+        }
+
+        $contract->driver_name          = $u->driver_name;
+        $contract->driver_phone         = $u->driver_phone;
+        $contract->driver_id_number     = $u->driver_id_number;
+        $contract->driver_permit_number = $u->driver_permit_number;
+        $contract->save();
     }
 
     /**
@@ -246,6 +277,7 @@ class ContractController extends Controller
     public function downloadArabicPdf(Contract $contract): \Illuminate\Http\Response
     {
         $contract->load(['booking', 'user', 'car']);
+        $this->backfillDriverFromClient($contract);
 
         $filename = "contrat-rlv-{$contract->contract_number}.pdf";
 
@@ -273,6 +305,7 @@ class ContractController extends Controller
     public function previewArabic(Contract $contract): \Illuminate\Http\Response
     {
         $contract->load(['booking', 'user', 'car']);
+        $this->backfillDriverFromClient($contract);
 
         $filename = "contrat-rlv-{$contract->contract_number}.pdf";
 

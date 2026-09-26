@@ -206,12 +206,13 @@
         ['Téléphone de Contrat :', $contract->client_phone, 'هاتف الاتصال'],
     ];
 
+    // Conducteur supplémentaire : si aucun conducteur dédié, le client (locataire) est le conducteur
     $driverRows = [
-        ['Nom & Prénom :', '', 'الاسم الشخصي والعائلي'],
-        ['Permis de conduire N° :', '', 'رخصة السياقة رقم'],
-        ['Délivré à :', '', 'اصدارها في'],
-        ['Passeport N° :', '', 'رقم جواز السفر'],
-        ['C.I.N n° :', '', 'البطاقة الوطنية'],
+        ['Nom & Prénom :', $contract->driver_name ?: $contract->client_name, 'الاسم الشخصي والعائلي'],
+        ['Permis de conduire N° :', $contract->driver_permit_number ?: $contract->client_license_number, 'رخصة السياقة رقم'],
+        ['Téléphone :', $contract->driver_phone ?: $contract->client_phone, 'رقم الهاتف'],
+        ['C.I.N n° :', $contract->driver_id_number ?: $contract->client_id_number, 'البطاقة الوطنية'],
+        ['Passeport N° :', $contract->driver_name ? '' : $contract->client_passport_number, 'رقم جواز السفر'],
     ];
 @endphp
 

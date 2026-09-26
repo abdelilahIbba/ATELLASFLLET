@@ -29,6 +29,11 @@ class User extends Authenticatable
         'profession',
         'address_morocco',
         'address_abroad',
+        // Optional additional driver (conducteur supplémentaire)
+        'driver_name',
+        'driver_phone',
+        'driver_id_number',
+        'driver_permit_number',
         'driver_license_issued_at',
         'passport_number',
         'passport_issued_at',
@@ -82,6 +87,11 @@ class User extends Authenticatable
     public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function contracts()
+    {
+        return $this->hasMany(Contract::class);
     }
 
     public function reviews()

@@ -471,6 +471,10 @@ class BookingController extends Controller
                 'client_passport_issued_date' => $booking->user->passport_issued_date,
                 'client_address' => $booking->user->address_morocco ?? null,
                 'client_address_abroad' => $booking->user->address_abroad ?? null,
+                'driver_name' => $booking->user->driver_name ?? null,
+                'driver_phone' => $booking->user->driver_phone ?? null,
+                'driver_id_number' => $booking->user->driver_id_number ?? null,
+                'driver_permit_number' => $booking->user->driver_permit_number ?? null,
             ]);
 
             // Reload relationships for consistent response
