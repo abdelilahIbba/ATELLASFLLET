@@ -566,6 +566,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   const [bfStart,    setBfStart]    = useState('');
   const [bfEnd,      setBfEnd]      = useState('');
   const [bfAmount,   setBfAmount]   = useState('');
+  /** Prix/Jour éditable — pré-rempli depuis le véhicule, modifiable pour tarifs personnalisés */
+  const [bfDailyRate, setBfDailyRate] = useState('');
   const [bfPickupId,  setBfPickupId]  = useState<number | ''>('');
   const [bfDropoffId, setBfDropoffId] = useState<number | ''>('');
   /** Selected client in the booking form (pre-filled by the automated flow) */
@@ -680,6 +682,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     setBfStart(selectedItem?.startDate ?? '');
     setBfEnd(selectedItem?.endDate ?? '');
     setBfAmount(selectedItem?.amount ? String(selectedItem.amount) : '');
+    // Prix/Jour : dérivé de la réservation existante (montant ÷ jours) pour conserver
+    // les tarifs personnalisés ; sinon tarif catalogue du véhicule.
+    if (selectedItem?.amount && selectedItem?.startDate && selectedItem?.endDate) {
+      const ms  = new Date(selectedItem.endDate).getTime() - new Date(selectedItem.startDate).getTime();
+      const d   = Math.max(1, Math.floor(ms / 86400000) + 1);
+      setBfDailyRate(String(Math.round((selectedItem.amount / d) * 100) / 100));
+    } else {
+      const veh = vehicles.find(v => String(v.id) === String(selectedItem?.carId ?? ''));
+      setBfDailyRate(veh?.pricePerDay ? String(veh.pricePerDay) : '');
+    }
     setBfPickupId(selectedItem?.pickupPointId ?? '');
     setBfDropoffId(selectedItem?.dropoffPointId ?? '');
     setBfConflict(null); // clear any previous conflict on modal re-open
@@ -703,14 +715,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   useEffect(() => {
     if (modalType !== 'booking_form' || !bfStart || !bfEnd) return;
     setBfConflict(null); // clear conflict whenever inputs change
-    const vehicle = vehicles.find(v => String(v.id) === String(bfCarId));
-    if (!vehicle?.pricePerDay) return;
+    const rate = parseFloat(bfDailyRate);
+    if (bfDailyRate === '' || isNaN(rate) || rate < 0) return;
     const ms = new Date(bfEnd).getTime() - new Date(bfStart).getTime();
     if (ms < 0) return;
     const days = Math.floor(ms / 86400000) + 1;
-    setBfAmount(String(vehicle.pricePerDay * days));
+    setBfAmount(String(Math.round(rate * days * 100) / 100));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bfCarId, bfStart, bfEnd]);
+  }, [bfDailyRate, bfStart, bfEnd]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -2438,7 +2450,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                  {selectedItem ? (
                                      <div className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm font-bold text-brand-navy dark:text-white">{selectedItem.vehicleName}</div>
                                  ) : (
-                                     <select name="carId" required value={bfCarId} onChange={e => setBfCarId(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue">
+                                     <select name="carId" required value={bfCarId} onChange={e => {
+                                       setBfCarId(e.target.value);
+                                       // Charger le tarif catalogue du véhicule choisi
+                                       const veh = vehicles.find(v => String(v.id) === e.target.value);
+                                       if (veh?.pricePerDay) setBfDailyRate(String(veh.pricePerDay));
+                                     }} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue">
                                          <option value="">— Sélectionner un véhicule —</option>
                                          {vehicles.map(v => <option key={v.id} value={String(v.id)}>{v.name}{v.plate ? ` (${v.plate})` : ''}{v.pricePerDay ? ` · ${v.pricePerDay.toLocaleString('fr-MA')} MAD/j` : ''}</option>)}
                                      </select>
@@ -2516,28 +2533,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                            );
                          })()}
 
-                         {/* Amount + Payment Status */}
-                         <div className="grid grid-cols-2 gap-4">
+                         {/* Prix/Jour + Amount + Payment Status */}
+                         <div className="grid grid-cols-3 gap-4">
                              <div>
-                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Montant (MAD)</label>
-                                 <input name="amount" type="number" step="0.01" min="0" value={bfAmount} onChange={e => setBfAmount(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Auto-calculé"/>
+                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Prix/Jour (MAD)</label>
+                                 <input type="number" step="0.01" min="0" value={bfDailyRate} onChange={e => setBfDailyRate(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Tarif journalier"/>
                                  {(() => {
                                    const vid = bfCarId || (selectedItem?.carId ?? '');
                                    const veh = vehicles.find(v => String(v.id) === String(vid));
-                                   if (!veh?.pricePerDay || !bfStart || !bfEnd) return null;
-                                   const ms = new Date(bfEnd).getTime() - new Date(bfStart).getTime();
-                                   if (ms < 0) return null;
-                                   const days = Math.floor(ms / 86400000) + 1;
+                                   if (!veh?.pricePerDay) return null;
                                    return (
-                                     <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500 flex flex-wrap items-center gap-1">
-                                       <span className="font-semibold text-brand-blue">{days} jour{days > 1 ? 's' : ''}</span>
-                                       <span>×</span>
-                                       <span className="font-semibold text-brand-blue">{veh.pricePerDay.toLocaleString('fr-MA')} MAD/j</span>
-                                       <span>=</span>
-                                       <span className="font-bold text-emerald-500">{(veh.pricePerDay * days).toLocaleString('fr-MA')} MAD</span>
+                                     <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+                                       Tarif catalogue : <span className="font-semibold text-slate-500 dark:text-slate-400">{veh.pricePerDay.toLocaleString('fr-MA')} MAD/j</span>
                                      </p>
                                    );
                                  })()}
+                             </div>
+                             <div>
+                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Montant (MAD)</label>
+                                 <input name="amount" type="number" step="0.01" min="0" value={bfAmount} onChange={e => setBfAmount(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Auto-calculé"/>
                              </div>
                              <div>
                                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Statut Paiement</label>
@@ -2548,6 +2562,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                  </select>
                              </div>
                          </div>
+                         {(() => {
+                           const rate = parseFloat(bfDailyRate);
+                           if (bfDailyRate === '' || isNaN(rate) || !bfStart || !bfEnd) return null;
+                           const ms = new Date(bfEnd).getTime() - new Date(bfStart).getTime();
+                           if (ms < 0) return null;
+                           const days = Math.floor(ms / 86400000) + 1;
+                           return (
+                             <p className="-mt-2 text-xs text-slate-400 dark:text-slate-500 flex flex-wrap items-center gap-1">
+                               <span className="font-semibold text-brand-blue">{days} jour{days > 1 ? 's' : ''}</span>
+                               <span>×</span>
+                               <span className="font-semibold text-brand-blue">{rate.toLocaleString('fr-MA')} MAD/j</span>
+                               <span>=</span>
+                               <span className="font-bold text-emerald-500">{(rate * days).toLocaleString('fr-MA')} MAD</span>
+                             </p>
+                           );
+                         })()}
 
                          {/* Booking Status */}
                          <div>
