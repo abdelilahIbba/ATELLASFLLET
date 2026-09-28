@@ -10,8 +10,12 @@ export interface RlvContractData {
   client_id_number?: string;
   client_license_number?: string;
   client_license_expiry?: string;
+  client_date_of_birth?: string;
+  client_profession?: string;
   client_address?: string;
+  client_address_abroad?: string;
   client_nationality?: string;
+  client_passport_number?: string;
   driver_name?: string;
   driver_phone?: string;
   driver_id_number?: string;
@@ -69,7 +73,7 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
 
   // Formatted contract number
   const cleanNumber = (contract.contract_number || '').replace(/\D/g, '');
-  const formattedContractNum = cleanNumber ? cleanNumber.padStart(5, '0') : contract.contract_number || '00039';
+  const formattedContractNum = cleanNumber ? cleanNumber.padStart(5, '0') : contract.contract_number || '00151';
 
   // KM digits boxes
   const formatKmDigits = (km?: number) => {
@@ -90,426 +94,955 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
   const startCond: any[] = Array.isArray(contract.condition_start) ? contract.condition_start : [];
   const endCond: any[] = Array.isArray(contract.condition_end) ? contract.condition_end : [];
 
+  const licenseExpFormatted = contract.client_license_expiry
+    ? new Date(contract.client_license_expiry).toLocaleDateString('fr-FR')
+    : '';
+
+  const dobFormatted = contract.client_date_of_birth
+    ? new Date(contract.client_date_of_birth).toLocaleDateString('fr-FR')
+    : '';
+
   return (
     <div
       ref={documentRef}
-      className="rlv-sheet bg-white text-black p-3 sm:p-5 mx-auto text-[7.4px] leading-tight select-text"
+      className="rlv-contract-root bg-white text-black p-4 mx-auto select-text"
       style={{
         width: '100%',
         maxWidth: '200mm',
         minHeight: '280mm',
-        maxHeight: '285mm',
         boxSizing: 'border-box',
         fontFamily: "'Cairo', 'Montserrat', Arial, sans-serif",
+        fontSize: '7.8px',
+        lineHeight: 1.22,
+        color: '#000',
+        backgroundColor: '#fff',
       }}
     >
-      {/* ══ HEADER ══ */}
-      <div className="grid grid-cols-12 gap-2 mb-1.5 pb-1 border-b border-black" style={{ borderBottom: '1.5px solid #000', marginBottom: '6px', paddingBottom: '4px' }}>
+      {/* ══════════════════════════════════════════════════
+          1. HEADER (Logo, Company, RLV & Legal Notices)
+      ══════════════════════════════════════════════════ */}
+      <div
+        className="grid grid-cols-12 gap-3 mb-1.5"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(12, 1fr)',
+          gap: '12px',
+          marginBottom: '5px',
+          alignItems: 'start',
+        }}
+      >
         {/* Left: Logo & Company Address */}
-        <div className="col-span-5 text-center pr-2 flex flex-col justify-between">
-          <div className="flex flex-col items-center">
-            <img
-              src="/rlv-emblem.png"
-              alt="Logo RLV"
-              className="h-11 object-contain mx-auto mb-0.5"
-              onError={e => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
-            <h1 className="font-black text-[9.5px] tracking-wider uppercase text-black leading-tight">
-              RAHIMI LOCATION DE VOITURE
-            </h1>
-            <p className="text-[6.8px] font-semibold text-black mt-0.5">
-              LOT EL NAHDA RUE 37 N°12 BLOC38, Tanger
-            </p>
-            <p className="text-[7.2px] font-bold text-black mt-0.5">
-              Tel: 06 77 81 37 18 / 07 77 57 33 79
-            </p>
-          </div>
+        <div
+          className="col-span-5 flex flex-col items-center text-center"
+          style={{ gridColumn: 'span 5', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}
+        >
+          <img
+            src="/rlv-emblem.png"
+            alt="Logo RLV"
+            className="h-12 object-contain mx-auto mb-0.5"
+            style={{ maxHeight: '44px', objectFit: 'contain' }}
+            onError={e => {
+              (e.target as HTMLElement).style.display = 'none';
+            }}
+          />
+          <h1
+            className="font-bold text-[8.5px] tracking-wider uppercase text-black leading-tight mt-0.5"
+            style={{
+              fontWeight: 800,
+              fontSize: '8.5px',
+              letterSpacing: '0.4px',
+              textTransform: 'uppercase',
+              margin: '2px 0 3px 0',
+              fontFamily: "'Montserrat', Arial, sans-serif",
+            }}
+          >
+            RAHIMI LOCATION DE VOITURE
+          </h1>
+          <table
+            style={{
+              margin: '0 auto',
+              borderCollapse: 'collapse',
+              textAlign: 'left',
+              display: 'inline-table',
+            }}
+          >
+            <tbody>
+              <tr>
+                <td style={{ paddingRight: '5px', verticalAlign: 'middle', width: '13px', textAlign: 'center', lineHeight: 1 }}>
+                  <svg width="10" height="12" viewBox="0 0 24 24" fill="#000" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                  </svg>
+                </td>
+                <td
+                  style={{
+                    borderLeft: '1.2px solid #000',
+                    paddingLeft: '5px',
+                    verticalAlign: 'middle',
+                    fontSize: '7.2px',
+                    fontWeight: 700,
+                    color: '#000',
+                    lineHeight: 1.3,
+                    whiteSpace: 'nowrap',
+                    textAlign: 'left',
+                    fontFamily: "'Montserrat', Arial, sans-serif",
+                  }}
+                >
+                  LOT EL NAHDA RUE 37 N°12 BLOC38 , Tanger
+                </td>
+              </tr>
+              <tr>
+                <td style={{ paddingRight: '5px', verticalAlign: 'middle', width: '13px', textAlign: 'center', lineHeight: 1, paddingTop: '1.5px' }}>
+                  <svg width="10" height="12" viewBox="0 0 24 24" fill="#000" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
+                  </svg>
+                </td>
+                <td
+                  style={{
+                    borderLeft: '1.2px solid #000',
+                    paddingLeft: '5px',
+                    verticalAlign: 'middle',
+                    fontSize: '7.5px',
+                    fontWeight: 700,
+                    color: '#000',
+                    lineHeight: 1.3,
+                    whiteSpace: 'nowrap',
+                    textAlign: 'left',
+                    paddingTop: '1.5px',
+                    fontFamily: "'Montserrat', Arial, sans-serif",
+                  }}
+                >
+                  Tel: 06 77 81 37 18 / 07 77 57 33 79
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        {/* Right: Brand Title + Legal Notices */}
-        <div className="col-span-7 pl-2 border-l border-black flex flex-col justify-between" style={{ borderLeft: '1px solid #000' }}>
-          <div className="text-center mb-0.5 flex items-center justify-center gap-1.5">
-            <span className="font-black text-[17px] text-rose-600 tracking-wider">RLV</span>
-            <span className="font-bold text-[13px] text-black">Location de voiture</span>
+        {/* Right: Brand Title (Centered in section) & Legal Warnings below it */}
+        <div
+          className="col-span-7 flex flex-col justify-between pl-1"
+          style={{ gridColumn: 'span 7', display: 'flex', flexDirection: 'column', paddingLeft: '4px' }}
+        >
+          {/* RLV Brand Title centered inside right section */}
+          <div className="w-full flex justify-center mb-1 text-center" style={{ width: '100%', display: 'flex', justifyContent: 'center', textAlign: 'center' }}>
+            <div className="inline-flex flex-col items-center text-center" style={{ width: 'max-content', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div
+                className="font-black text-[27px] tracking-tighter text-black uppercase leading-none"
+                style={{
+                  fontWeight: 900,
+                  fontSize: '27px',
+                  letterSpacing: '-0.8px',
+                  lineHeight: 1,
+                  color: '#000',
+                  fontFamily: "'Montserrat', Arial, sans-serif",
+                }}
+              >
+                RLV
+              </div>
+              <div
+                className="w-full border-t-[2.2px] border-black my-1"
+                style={{
+                  width: '100%',
+                  borderTop: '2.2px solid #000',
+                  margin: '2.5px 0 2px 0',
+                }}
+              />
+              <div
+                className="text-[15.5px] font-bold tracking-wide leading-none whitespace-nowrap"
+                style={{
+                  fontSize: '15.5px',
+                  fontWeight: 800,
+                  color: 'transparent',
+                  WebkitTextStroke: '1.1px #000',
+                  WebkitTextFillColor: 'transparent',
+                  letterSpacing: '0.4px',
+                  lineHeight: 1,
+                  fontFamily: "'Montserrat', Arial, sans-serif",
+                }}
+              >
+                Location de voiture
+              </div>
+            </div>
           </div>
-          <p className="text-[6.6px] text-black text-justify font-bold leading-tight mb-1" dir="rtl">
-            المكتري للسيارة يتابع قضائيا 24 ساعة بعد انتهاء العقد وفي حالة تمديد المدة يجب اخبار شركة R.L.V وأداء مبلغ المدة الاضافية ويبقى المكتري هو المسؤول الوحيد عن أي حادثة بعد تمديد دون اشعار الشركة للمكتري الصلاحية في قيادة السيارة لا غير ولا يسمح له بتسليمها لشخص اخر
+
+          {/* Legal Warnings directly underneath */}
+          <p
+            dir="rtl"
+            className="text-right text-[7.2px] font-bold text-black mb-1 leading-relaxed"
+            style={{
+              direction: 'rtl',
+              textAlign: 'right',
+              fontSize: '7.2px',
+              lineHeight: 1.35,
+              fontWeight: 700,
+              color: '#000',
+              marginBottom: '3px',
+              fontFamily: "'Cairo', Tahoma, sans-serif",
+            }}
+          >
+            المكتري للسيارة يتابع قضائيا 24 ساعة بعد انتهاء العقد وفي حالة تمديد المدة يجب إخبار شركة R.L.V وأداء مبلغ المدة الاضافية.<br />
+            ويبقى المكتري هو المسؤول الوحيد عن أي حادثة بعد تمديد دون اشعار الشركة. للمكتري الصلاحية في قيادة السيارة لا غير ولا يسمح له بتسليمها لشخص آخر.
           </p>
-          <p className="text-[5.9px] text-black text-justify leading-tight">
-            Le Locataire s'expose à des poursuites juridiques 24 heures après la date convenu au départ si le véhicule n'est toujours pas retourné et cela sans que RANDA CAR ait été informé d'un prolongation de location et ait reçue la somme supplémentaire due.<br/>
-            - En cas de Forfait, le locataire est responsable de tous dégâts matériels d'après la deuxième signature .<br/>
-            - Le véhicule ne doit être conduit que par le locataire.
-          </p>
+          <div
+            dir="ltr"
+            className="text-left text-[5.8px] text-gray-800 leading-tight"
+            style={{
+              direction: 'ltr',
+              textAlign: 'left',
+              fontSize: '5.8px',
+              lineHeight: 1.25,
+              color: '#1f2937',
+              fontFamily: "'Montserrat', Arial, sans-serif",
+            }}
+          >
+            <p className="mb-0.5" style={{ marginBottom: '1.5px' }}>
+              Le Locataire s'expose à des poursuites juridiques 24 heures après la date convenu au départ si le véhicule n'est toujours pas retourné et cela sans que R.L.V ait été informé d'une prolongation de location et ait reçu la somme supplémentaire due.
+            </p>
+            <p style={{ margin: '1px 0' }}>- En cas de Forfait, le locataire est responsable de tous dégâts matériels d'après la deuxième signature.</p>
+            <p style={{ margin: '1px 0' }}>- Le véhicule ne doit être conduit que par le locataire.</p>
+          </div>
         </div>
       </div>
 
-      {/* ══ TITLE BANNER ══ */}
-      <div className="border-[1.5px] border-black px-3 py-0.5 mb-1 flex items-center justify-between bg-slate-50/60" style={{ border: '1.5px solid #000', marginBottom: '6px', padding: '4px 10px' }}>
-        <span className="font-black text-[12px] text-black uppercase tracking-wide">
+      {/* ══════════════════════════════════════════════════
+          2. TITLE BANNER: Contrat de Location / عقد الكراء / №
+      ══════════════════════════════════════════════════ */}
+      <div
+        className="flex items-center justify-between mb-1 px-1"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '4px',
+          padding: '2px 4px',
+        }}
+      >
+        <span className="font-black text-[14px] text-black tracking-wide" style={{ fontWeight: 900, fontSize: '14px' }}>
           Contrat de Location
         </span>
-        <span className="font-black text-[13.5px] text-black" dir="rtl">
+        <span className="font-black text-[15px] text-black" dir="rtl" style={{ fontWeight: 900, fontSize: '15px' }}>
           عقـــــد الكـــــراء
         </span>
-        <div className="flex items-center">
-          <span className="text-rose-700 font-black text-[12px] mr-1">
-            Nº
+        <div className="flex items-center" style={{ display: 'flex', alignItems: 'center' }}>
+          <span className="text-[#d91445] font-black text-[13px] mr-1" style={{ color: '#d91445', fontWeight: 900, fontSize: '13px' }}>
+            №
           </span>
-          <span className="border-[1.5px] border-black px-2 py-0.2 font-mono font-black text-[11.5px] bg-white">
+          <span
+            className="font-mono font-black text-[13px] tracking-widest text-[#d91445]"
+            style={{ color: '#d91445', fontWeight: 900, fontSize: '13px', fontFamily: 'monospace' }}
+          >
             {formattedContractNum}
           </span>
         </div>
       </div>
 
-      {/* ══ MAIN TWO-COLUMN GRID ══ */}
-      <div className="grid grid-cols-2 border-[1.5px] border-black mb-1" style={{ border: '1.5px solid #000', marginBottom: '8px' }}>
-        {/* ── LEFT COLUMN : VEHICULE & CLIENT ── */}
-        <div className="border-r-[1.5px] border-black" style={{ borderRight: '1.5px solid #000' }}>
-          {/* Vehicle fields */}
-          <FieldRow labelFr="Marque :" value={contract.vehicle_name} labelAr="نوع" />
-          <FieldRow labelFr="N° Immatriculation :" value={contract.vehicle_plate} labelAr="رقم التسجيل" />
-          <FieldRow labelFr="Lieu de Ivraison :" value={contract.signature_city || 'Tanger'} labelAr="مكان التسجيل" />
-          <FieldRow labelFr="Lieu de Reprise :" value={contract.signature_city || 'Tanger'} labelAr="مكان الاسترجاع" thickDivider />
-
-          {/* Client fields */}
-          <FieldRow labelFr="NOM :" value={contract.client_name} labelAr="الاسم" isBold />
-          <FieldRow labelFr="CIN N° :" value={contract.client_id_number} labelAr="البطاقة الوطنية" />
-          <FieldRow labelFr="Date de Naissance :" value="" labelAr="تاريخ الازدياد" />
-          <FieldRow labelFr="Profession :" value="" labelAr="المهنة" />
-          <FieldRow labelFr="Adresse au Maroc :" value={contract.client_address} labelAr="العنوان بالمغرب" />
-          <FieldRow labelFr="Adresse à l 'Etranger :" value="" labelAr="العنوان بالخارج" />
-          <FieldRow labelFr="Permis de Conduire N° :" value={contract.client_license_number} labelAr="رخصة السياقة رقم" />
-          <FieldRow labelFr="Délivré à :" value="" labelAr="اصدارها في" />
-          <FieldRow
-            labelFr="Le :"
-            value={contract.client_license_expiry ? new Date(contract.client_license_expiry).toLocaleDateString('fr-FR') : ''}
-            labelAr="بتاريخ"
-          />
-          <FieldRow labelFr="Passport N° :" value="" labelAr="رقم جواز السفر" />
-          <FieldRow labelFr="Délivré à :" value="" labelAr="اصدارها في" />
-          <FieldRow labelFr="Le :" value="" labelAr="بتاريخ" />
-          <FieldRow labelFr="Téléphone de Contrat :" value={contract.client_phone} labelAr="هاتف الاتصال" />
-        </div>
-
-        {/* ── RIGHT COLUMN : DATES, KM, CONDUCTEUR SUPPLÉMENTAIRE ── */}
-        <div>
-          {/* Date Grid */}
-          <table className="w-full border-collapse border-b-[1.5px] border-black text-[7.2px]">
-            <thead>
-              <tr className="bg-slate-100 border-b border-black">
-                <th className="border-r border-black p-0.5 text-left w-1/2"></th>
-                <th className="border-r border-black p-0.5 text-center w-[12%] font-black">J</th>
-                <th className="border-r border-black p-0.5 text-center w-[12%] font-black">M</th>
-                <th className="border-r border-black p-0.5 text-center w-[13%] font-black">A</th>
-                <th className="p-0.5 text-center w-[13%] font-black">H</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-slate-300">
-                <td className="border-r border-black px-1 py-0.5 flex justify-between">
-                  <span className="font-bold">Départ</span>
-                  <span className="font-bold" dir="rtl">الانطلاق</span>
-                </td>
-                <td className="border-r border-black p-0.5 text-center font-mono font-bold">{depJ}</td>
-                <td className="border-r border-black p-0.5 text-center font-mono font-bold">{depM}</td>
-                <td className="border-r border-black p-0.5 text-center font-mono font-bold">{depA}</td>
-                <td className="p-0.5 text-center font-mono font-bold">{depH}</td>
-              </tr>
-              <tr className="border-b border-slate-300">
-                <td className="border-r border-black px-1 py-0.5 flex justify-between">
-                  <span className="font-bold">Retour Prevu</span>
-                  <span className="font-bold" dir="rtl">الرجوع الموقع</span>
-                </td>
-                <td className="border-r border-black p-0.5 text-center font-mono font-bold">{retJ}</td>
-                <td className="border-r border-black p-0.5 text-center font-mono font-bold">{retM}</td>
-                <td className="border-r border-black p-0.5 text-center font-mono font-bold">{retA}</td>
-                <td className="p-0.5 text-center font-mono font-bold">{retH}</td>
-              </tr>
-              <tr className="border-b border-slate-300">
-                <td className="border-r border-black px-1 py-0.5 flex justify-between">
-                  <span className="font-bold">Retour Définitif</span>
-                  <span className="font-bold" dir="rtl">الرجوع النهائي</span>
-                </td>
-                <td className="border-r border-black p-0.5 text-center font-mono font-bold"></td>
-                <td className="border-r border-black p-0.5 text-center font-mono font-bold"></td>
-                <td className="border-r border-black p-0.5 text-center font-mono font-bold"></td>
-                <td className="p-0.5 text-center font-mono font-bold"></td>
-              </tr>
-              <tr>
-                <td className="border-r border-black px-1 py-0.5 flex justify-between">
-                  <span className="font-bold">Durée</span>
-                  <span className="font-bold" dir="rtl">المدة</span>
-                </td>
-                <td colSpan={4} className="p-0.5 text-center font-bold bg-slate-50">
-                  {days} Jour{days > 1 ? 's' : ''} / {days} أيام
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          {/* Kilométrage Segmented Section */}
-          <div className="p-1 border-b-[1.5px] border-black space-y-0.5 bg-white">
-            <KmRow labelAr="عدد الكيلومترات عند الرجوع" labelFr="KILOMETRAGE RETOUR:" digits={kmRet} />
-            <KmRow labelAr="عدد الكيلومترات عند الذهاب" labelFr="KILOMETRAGE DEPART:" digits={kmDep} />
-            <KmRow labelAr="عدد الكيلومترات المقطوعة" labelFr="KILOMETRAGE PARCOURU:" digits={kmPar} />
+      {/* ══════════════════════════════════════════════════
+          3. MAIN DATA BOX (Single unified outer border with
+             distinct central vertical divider line & 4 synchronized rows)
+      ══════════════════════════════════════════════════ */}
+      <div
+        className="main-contract-box mb-2"
+        style={{
+          border: '2px solid #000',
+          marginBottom: '8px',
+          backgroundColor: '#fff',
+        }}
+      >
+        {/* ── ROW 1: VEHICLE (Left) | DATES GRID (Right) ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '2px solid #000' }}>
+          {/* Left: Vehicle Section (4 rows) */}
+          <div style={{ borderRight: '2px solid #000' }}>
+            <FieldRow labelFr="Marque :" value={contract.vehicle_name} labelAr="نوع" />
+            <FieldRow labelFr="N° Immatriculation :" value={contract.vehicle_plate} labelAr="رقم التسجيل" />
+            <FieldRow labelFr="Lieu de livraison :" value={contract.signature_city || 'TANGER'} labelAr="مكان التسجيل" />
+            <FieldRow labelFr="Lieu de Reprise :" value={contract.signature_city || 'TANGER'} labelAr="مكان الاسترجاع" isLastInSection />
           </div>
 
-          {/* Le Conducteur Supplémentaire */}
-          <div className="bg-slate-100 border-b border-black px-1.5 py-0.5 flex justify-between font-bold text-[7.2px]" style={{ borderBottom: '1px solid #000', padding: '3px 6px', background: '#f1f5f9' }}>
-            <span className="uppercase tracking-wider">Le Conducteur Supplémentaire</span>
-            <span dir="rtl">السائق المرخـص</span>
-          </div>
-          <FieldRow labelFr="Nom &amp; Prénom :" value={contract.driver_name} labelAr="الاسم الشخصي و العائلي" />
-          <FieldRow labelFr="Permis de conduire N° :" value={contract.driver_permit_number} labelAr="رخصة السياقة رقم" />
-          <FieldRow labelFr="Téléphone :" value={contract.driver_phone} labelAr="رقم الهاتف" />
-          <FieldRow labelFr="C.I.N n° :" value={contract.driver_id_number} labelAr="البطاقة الوطنية" />
-          <FieldRow labelFr="Passeport N° :" value={contract.driver_passport_number} labelAr="رقم جواز السفر" />
-        </div>
-      </div>
-
-      {/* ══ PAIEMENT & CONDITIONS & TOTALS ══ */}
-      <div className="grid grid-cols-2 border-[1.5px] border-black mb-1" style={{ border: '1.5px solid #000', marginBottom: '8px' }}>
-        {/* Left: Paiement + Terms + Signature client */}
-        <div className="border-r-[1.5px] border-black flex flex-col justify-between" style={{ borderRight: '1.5px solid #000' }}>
+          {/* Right: Dates Table (4 rows) */}
           <div>
-            <div className="bg-slate-100 border-b border-black px-1.5 py-0.5 flex justify-between font-bold text-[7.2px]" style={{ borderBottom: '1px solid #000', padding: '3px 6px', background: '#f1f5f9' }}>
-              <span>Paiement</span>
+            <table
+              className="w-full border-collapse text-[7.2px]"
+              style={{ width: '100%', height: '100%', borderCollapse: 'collapse', fontSize: '7.2px' }}
+            >
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #000' }}>
+                  <th style={{ borderRight: '1px solid #000', padding: '2px 4px', textAlign: 'left', width: '50%' }}></th>
+                  <th style={{ borderRight: '1px solid #000', padding: '2px', textAlign: 'center', width: '12%', fontWeight: 900 }}>J</th>
+                  <th style={{ borderRight: '1px solid #000', padding: '2px', textAlign: 'center', width: '12%', fontWeight: 900 }}>M</th>
+                  <th style={{ borderRight: '1px solid #000', padding: '2px', textAlign: 'center', width: '13%', fontWeight: 900 }}>A</th>
+                  <th style={{ padding: '2px', textAlign: 'center', width: '13%', fontWeight: 900 }}>H</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ borderBottom: '0.6px solid #ccc' }}>
+                  <td style={{ borderRight: '1px solid #000', padding: '2px 6px', display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
+                    <span>Départ</span>
+                    <span dir="rtl">الانطلاق</span>
+                  </td>
+                  <td style={{ borderRight: '1px solid #000', textAlign: 'center', fontWeight: 800, fontFamily: 'monospace' }}>{depJ}</td>
+                  <td style={{ borderRight: '1px solid #000', textAlign: 'center', fontWeight: 800, fontFamily: 'monospace' }}>{depM}</td>
+                  <td style={{ borderRight: '1px solid #000', textAlign: 'center', fontWeight: 800, fontFamily: 'monospace' }}>{depA}</td>
+                  <td style={{ textAlign: 'center', fontWeight: 800, fontFamily: 'monospace' }}>{depH}</td>
+                </tr>
+                <tr style={{ borderBottom: '0.6px solid #ccc' }}>
+                  <td style={{ borderRight: '1px solid #000', padding: '2px 6px', display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
+                    <span>Retour Prevu</span>
+                    <span dir="rtl">الرجوع الموقع</span>
+                  </td>
+                  <td style={{ borderRight: '1px solid #000', textAlign: 'center', fontWeight: 800, fontFamily: 'monospace' }}>{retJ}</td>
+                  <td style={{ borderRight: '1px solid #000', textAlign: 'center', fontWeight: 800, fontFamily: 'monospace' }}>{retM}</td>
+                  <td style={{ borderRight: '1px solid #000', textAlign: 'center', fontWeight: 800, fontFamily: 'monospace' }}>{retA}</td>
+                  <td style={{ textAlign: 'center', fontWeight: 800, fontFamily: 'monospace' }}>{retH}</td>
+                </tr>
+                <tr style={{ borderBottom: '0.6px solid #ccc' }}>
+                  <td style={{ borderRight: '1px solid #000', padding: '2px 6px', display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
+                    <span>Retour Définitif</span>
+                    <span dir="rtl">الرجوع النهائي</span>
+                  </td>
+                  <td style={{ borderRight: '1px solid #000', textAlign: 'center', fontFamily: 'monospace' }}>/</td>
+                  <td style={{ borderRight: '1px solid #000', textAlign: 'center', fontFamily: 'monospace' }}>/</td>
+                  <td style={{ borderRight: '1px solid #000', textAlign: 'center', fontFamily: 'monospace' }}>/</td>
+                  <td style={{ textAlign: 'center', fontFamily: 'monospace' }}>/</td>
+                </tr>
+                <tr>
+                  <td style={{ borderRight: '1px solid #000', padding: '2px 6px', display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
+                    <span>Durée</span>
+                    <span dir="rtl">المدة</span>
+                  </td>
+                  <td colSpan={4} style={{ textAlign: 'center', fontWeight: 800, background: '#f8fafc', padding: '2px' }}>
+                    {days} Jour{days > 1 ? 's' : ''} / {days} أيام
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* ── ROW 2: CLIENT INFO (Left) | KILOMETRAGE & CONDUCTEUR (Right) ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '2px solid #000' }}>
+          {/* Left: Client Section (13 rows) */}
+          <div style={{ borderRight: '2px solid #000' }}>
+            <FieldRow labelFr="NOM :" value={contract.client_name} labelAr="الاسم" isBold />
+            <FieldRow labelFr="CIN N° :" value={contract.client_id_number} labelAr="البطاقة الوطنية" />
+            <FieldRow labelFr="Date de Naissance :" value={dobFormatted} labelAr="تاريخ الازدياد" />
+            <FieldRow labelFr="Profession :" value={contract.client_profession} labelAr="المهنة" />
+            <FieldRow labelFr="Adresse au Maroc :" value={contract.client_address} labelAr="العنوان بالمغرب" />
+            <FieldRow labelFr="Adresse à l 'Etranger :" value={contract.client_address_abroad} labelAr="العنوان بالخارج" />
+            <FieldRow labelFr="Permis de Conduire N° :" value={contract.client_license_number} labelAr="رخصة السياقة رقم" />
+            <FieldRow labelFr="Délivré à :" value={contract.signature_city || 'Tanger'} labelAr="اصدارها في" />
+            <FieldRow labelFr="Le :" value={licenseExpFormatted} labelAr="بتاريخ" />
+            <FieldRow labelFr="Passport N° :" value={contract.client_passport_number} labelAr="رقم جواز السفر" />
+            <FieldRow labelFr="Délivré à :" value="" labelAr="اصدارها في" />
+            <FieldRow labelFr="Le :" value="" labelAr="بتاريخ" />
+            <FieldRow labelFr="Téléphone de Contrat :" value={contract.client_phone} labelAr="هاتف الاتصال" isLastInSection />
+          </div>
+
+          {/* Right: Kilométrage Grid + Conducteur Supplémentaire */}
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '2px' }}>
+            {/* Structured Kilométrage Grid with Boxed Rectangular Inputs */}
+            <div style={{ border: '1px solid #000', marginBottom: '3px', background: '#fff' }}>
+              <KmGridRow labelAr="عدد الكيلومترات عند الرجوع" labelFr="KILOMETRAGE RETOUR :" digits={kmRet} />
+              <KmGridRow labelAr="عدد الكيلومترات عند الذهاب" labelFr="KILOMETRAGE DEPART :" digits={kmDep} />
+              <KmGridRow labelAr="عدد الكيلومترات المقطوعة" labelFr="KILOMETRAGE PARCOURU :" digits={kmPar} isLast />
+            </div>
+
+            {/* Framed Solid Box: Le Conducteur Supplémentaire */}
+            <div
+              className="border border-black"
+              style={{
+                border: '1px solid #000',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                flex: 1,
+                background: '#fff',
+              }}
+            >
+              {/* Box Title with solid bottom border */}
+              <div
+                className="flex justify-between items-center font-black px-2 py-0.5 border-b border-black"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '2.5px 8px',
+                  borderBottom: '1px solid #000',
+                  background: '#f8fafc',
+                  fontSize: '8px',
+                  fontWeight: 900,
+                }}
+              >
+                <span className="uppercase">Le Conducteur Supplémentaire</span>
+                <span dir="rtl">السائق المرخـص</span>
+              </div>
+              <FieldRow labelFr="Nom & Prénom :" value={contract.driver_name} labelAr="الاسم الشخصي و العائلي" />
+              <FieldRow labelFr="Permis de conduire N° :" value={contract.driver_permit_number} labelAr="رخصة السياقة رقم" />
+              <FieldRow labelFr="Délivré à :" value={contract.signature_city || 'Tanger'} labelAr="إصدارها في" />
+              <FieldRow labelFr="Passeport N° :" value={contract.driver_passport_number} labelAr="رقم جواز السفر" />
+              <FieldRow labelFr="C.I.N n° :" value={contract.driver_id_number} labelAr="البطاقة الوطنية" isLastInSection />
+            </div>
+          </div>
+        </div>
+
+        {/* ── ROW 3: PAIEMENT (Left) | TOTALS (Right) ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '2px solid #000' }}>
+          {/* Left: Paiement Section */}
+          <div style={{ borderRight: '2px solid #000', display: 'flex', flexDirection: 'column' }}>
+            <div
+              className="flex justify-between items-center font-black px-2 py-0.5"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: '3px 8px',
+                borderBottom: '1px solid #000',
+                background: '#f8fafc',
+                fontSize: '8.2px',
+                fontWeight: 900,
+              }}
+            >
+              <span className="uppercase">Paiement</span>
               <span dir="rtl">الأداء</span>
             </div>
 
-            <div className="p-1 space-y-0.5 text-[6.8px]">
-              <div className="flex items-center justify-between border-b border-slate-200 py-0.5">
-                <div className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 border border-black inline-flex items-center justify-center font-bold text-[7px]">
+            <div style={{ padding: '3px 6px', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', flex: 1 }}>
+              {/* Espèce */}
+              <div
+                className="flex items-center justify-between py-1 border-b border-dotted border-gray-600"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '2.5px 0',
+                  borderBottom: '0.8px dotted #555',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '11px',
+                      height: '11px',
+                      border: '1px solid #000',
+                      fontSize: '8px',
+                      fontWeight: 'bold',
+                    }}
+                  >
                     {contract.booking_payment_status === 'paid' ? '✓' : ''}
                   </span>
-                  <span>* Espèce :</span>
+                  <span style={{ fontWeight: 700 }}>* Espèce :</span>
                 </div>
-                <span className="font-bold" dir="rtl">نقدا</span>
+                <span style={{ flex: 1, borderBottom: '0.8px dotted #555', margin: '0 6px' }}></span>
+                <span style={{ fontWeight: 700 }} dir="rtl">نقدا</span>
               </div>
 
-              <div className="flex items-center justify-between border-b border-slate-200 py-0.5">
-                <div className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 border border-black inline-flex items-center justify-center"></span>
-                  <span>* Chèque :</span>
+              {/* Chèque */}
+              <div
+                className="flex items-center justify-between py-1 border-b border-dotted border-gray-600"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '2.5px 0',
+                  borderBottom: '0.8px dotted #555',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '11px',
+                      height: '11px',
+                      border: '1px solid #000',
+                      fontSize: '8px',
+                    }}
+                  ></span>
+                  <span style={{ fontWeight: 700 }}>* Chèque :</span>
                 </div>
-                <span className="font-bold" dir="rtl">شيكا</span>
+                <span style={{ flex: 1, borderBottom: '0.8px dotted #555', margin: '0 6px' }}></span>
+                <span style={{ fontWeight: 700 }} dir="rtl">شيكا</span>
               </div>
 
-              <div className="flex items-center justify-between py-0.5">
-                <div className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 border border-black inline-flex items-center justify-center font-bold text-[7px]">
+              {/* Caution */}
+              <div
+                className="flex items-center justify-between py-1"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '2.5px 0',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '11px',
+                      height: '11px',
+                      border: '1px solid #000',
+                      fontSize: '8px',
+                      fontWeight: 'bold',
+                    }}
+                  >
                     {(contract.deposit_amount || 0) > 0 ? '✓' : ''}
                   </span>
-                  <span>* Caution :</span>
+                  <span style={{ fontWeight: 700 }}>* Caution :</span>
                   {(contract.deposit_amount || 0) > 0 && (
-                    <strong className="ml-1">{contract.deposit_amount?.toFixed(2)} Dh</strong>
+                    <strong style={{ marginLeft: '4px', fontWeight: 900 }}>
+                      {contract.deposit_amount?.toFixed(2)} Dh
+                    </strong>
                   )}
                 </div>
-                <span className="font-bold" dir="rtl">ضمانة</span>
+                <span style={{ flex: 1, borderBottom: '0.8px dotted #555', margin: '0 6px' }}></span>
+                <span style={{ fontWeight: 700 }} dir="rtl">ضمانة</span>
               </div>
-            </div>
-
-            {/* Conditions acknowledgement */}
-            <div className="border-t border-black p-1 text-[6.2px] leading-snug">
-              <p>
-                Je reconnais avoir pris Connaissance des présentes conditions générales ( recto verso ) que je m 'engage à les respecter
-              </p>
-              <p className="font-bold mt-0.5 text-right text-[6.6px]" dir="rtl">
-                اعترف بعلمي الكامل للقانون العام لكراء السيارات في ظهر هذا العقد والتزم باحترامه
-              </p>
             </div>
           </div>
 
-          <div>
-            {/* Client Signature */}
-            <div className="border-t border-black px-1.5 py-0.5 flex justify-between font-bold text-[7.2px] bg-slate-50">
-              <span>Signature de Client</span>
-              <span dir="rtl">إمضاء الزبون</span>
-            </div>
-            <div className="h-9 flex items-center justify-center p-0.5">
-              {contract.signature_client_start ? (
-                <img
-                  src={contract.signature_client_start}
-                  alt="Signature Client"
-                  className="max-h-8 max-w-[120px] object-contain"
-                />
-              ) : (
-                <span className="text-slate-300 text-[8px] italic">Signature</span>
-              )}
+          {/* Right: Framed Solid Box for Financial Totals */}
+          <div style={{ padding: '3px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div
+              className="border border-black"
+              style={{
+                border: '1px solid #000',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                background: '#fff',
+              }}
+            >
+              {/* Total Hors Taxe */}
+              <div
+                className="flex justify-between items-center border-b border-dotted border-gray-600 px-2 py-1"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '3px 8px',
+                  borderBottom: '0.8px dotted #555',
+                  fontSize: '7.5px',
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>Total Hors Taxe</span>
+                <span style={{ flex: 1, borderBottom: '0.8px dotted #555', margin: '0 6px' }}></span>
+                <span style={{ fontWeight: 800, fontFamily: 'monospace' }}>{totalHT.toFixed(2)} Dh</span>
+              </div>
+
+              {/* Taxe TVA 20% */}
+              <div
+                className="flex justify-between items-center border-b border-dotted border-gray-600 px-2 py-1"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '3px 8px',
+                  borderBottom: '0.8px dotted #555',
+                  fontSize: '7.5px',
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>Taxe TVA 20%</span>
+                <span style={{ flex: 1, borderBottom: '0.8px dotted #555', margin: '0 6px' }}></span>
+                <span style={{ fontWeight: 800, fontFamily: 'monospace' }}>{tvaAmount.toFixed(2)} Dh</span>
+              </div>
+
+              {/* TOTAL DE LOCATION */}
+              <div
+                className="flex justify-between items-center px-2 py-1 bg-slate-50 font-black"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '3.5px 8px',
+                  background: '#f8fafc',
+                  fontSize: '8.2px',
+                  fontWeight: 900,
+                }}
+              >
+                <span className="uppercase">TOTAL DE LOCATION</span>
+                <span style={{ flex: 1, borderBottom: '0.8px dotted #555', margin: '0 6px' }}></span>
+                <span style={{ fontWeight: 900, fontFamily: 'monospace' }}>{totalTTC.toFixed(2)} Dh</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right: Totals + Fait à Tanger + Le Responsable */}
-        <div className="flex flex-col justify-between">
-          <div>
-            <div className="border-b border-slate-300 px-1.5 py-0.5 flex justify-between text-[7.2px]">
-              <span>Total Hors Taxe</span>
-              <span className="font-bold">{totalHT.toFixed(2)} Dh</span>
-            </div>
-            <div className="border-b border-slate-300 px-1.5 py-0.5 flex justify-between text-[7.2px]">
-              <span>Taxe TVA 20%</span>
-              <span className="font-bold">{tvaAmount.toFixed(2)} Dh</span>
-            </div>
-            <div className="border-b-[1.5px] border-black px-1.5 py-0.5 flex justify-between text-[8px] font-black bg-slate-50">
-              <span>TOTAL DE LOCATION</span>
-              <span>{totalTTC.toFixed(2)} Dh</span>
+        {/* ── ROW 4: SIGNATURES (Directly below solid border-b-2) ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+          {/* Left: Terms & Client Signature */}
+          <div style={{ borderRight: '2px solid #000', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ padding: '6px 8px 4px 8px', borderBottom: '0.8px solid #ccc', backgroundColor: '#fff' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'start' }}>
+                <p style={{ fontSize: '6.4px', lineHeight: 1.35, color: '#000', margin: 0 }}>
+                  Je reconnais avoir pris connaissance des présentes conditions générales (recto verso) et m'engage à les respecter.
+                </p>
+                <p
+                  dir="rtl"
+                  style={{
+                    fontSize: '6.8px',
+                    lineHeight: 1.35,
+                    fontWeight: 700,
+                    color: '#000',
+                    textAlign: 'right',
+                    margin: 0,
+                    fontFamily: "'Cairo', Tahoma, sans-serif",
+                  }}
+                >
+                  اعترف بعلمي الكامل للقانون العام لكراء السيارات في ظهر هذا العقد والتزم باحترامه
+                </p>
+              </div>
             </div>
 
-            <div className="border-b border-black px-1.5 py-0.5 text-[7.2px] font-bold">
-              Fait à Tanger le : <span className="font-extrabold">{startDate.toLocaleDateString('fr-FR')}</span>
+            <div style={{ textAlign: 'center', padding: '6px 8px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div
+                className="flex justify-between font-bold text-[8px]"
+                style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '8px', marginBottom: '4px' }}
+              >
+                <span>Signature de Client</span>
+                <span dir="rtl">إمضاء الزبون</span>
+              </div>
+              <div
+                className="flex items-center justify-center"
+                style={{ minHeight: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                {contract.signature_client_start ? (
+                  <img
+                    src={contract.signature_client_start}
+                    alt="Signature Client"
+                    className="max-h-20 max-w-[160px] object-contain"
+                    style={{ maxHeight: '80px', maxWidth: '160px' }}
+                  />
+                ) : (
+                  <div style={{ width: '150px', borderBottom: '1.2px solid #888', margin: 'auto' }}></div>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="p-0.5 text-center">
-            <p className="font-bold text-[7.2px] mb-0.5">Le responsable</p>
-            <div className="h-9 flex items-center justify-center">
-              {contract.signature_agent_start ? (
-                <img
-                  src={contract.signature_agent_start}
-                  alt="Signature Responsable"
-                  className="max-h-8 max-w-[100px] object-contain"
-                />
-              ) : (
-                <div className="w-20 border-b border-slate-400 mt-5"></div>
-              )}
+          {/* Right: Fait à Tanger le & Signature Responsable */}
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '6px 8px' }}>
+            <div style={{ fontWeight: 700, fontSize: '7.8px' }}>
+              Fait à Tanger le : <span style={{ fontWeight: 900 }}>{startDate.toLocaleDateString('fr-FR')}</span>
+            </div>
+
+            <div style={{ textAlign: 'center', margin: '2px 0' }}>
+              <p style={{ fontWeight: 800, fontSize: '7.8px', marginBottom: '2px' }}>Le responsable</p>
+              <div
+                className="flex items-center justify-center"
+                style={{ minHeight: '75px', height: '75px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                {contract.signature_agent_start ? (
+                  <img
+                    src={contract.signature_agent_start}
+                    alt="Signature Responsable"
+                    className="max-h-16 max-w-[140px] object-contain"
+                    style={{ maxHeight: '68px', maxWidth: '140px' }}
+                  />
+                ) : (
+                  <div style={{ width: '140px', borderBottom: '1.2px solid #888', margin: 'auto' }}></div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ fontSize: '7px', borderTop: '0.6px solid #ccc', paddingTop: '3px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 700 }}>Examiné par / فحص من قبل</span>
+              <span style={{ color: '#444', fontWeight: 600 }}>M. ........................................</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ══ VEHICLE INSPECTION (BOTTOM) ══ */}
-      <div className="grid grid-cols-12 border-[1.5px] border-black" style={{ border: '1.5px solid #000' }}>
-        {/* ── DÉPART (Col 5/12) ── */}
-        <div className="col-span-5 p-1 border-r border-black flex flex-col justify-between">
-          <div>
-            <div className="font-black text-[8.5px] mb-0.5 flex items-center gap-1">
-              <span>←</span>
-              <span>DEPART</span>
-            </div>
-            <div className="text-[6.8px] font-bold mb-0.5 flex items-center justify-between">
-              <span>Véhicule En parfait état</span>
-              <span className="space-x-1">
-                <span>[ {startCond.length === 0 ? '✓' : ' '} ] Oui</span>
-                <span>[ {startCond.length > 0 ? '✓' : ' '} ] Non</span>
-              </span>
-            </div>
-            <p className="text-[5.5px] text-slate-600 italic mb-0.5">(Rayer la mention inutile)</p>
-            <p className="text-[6px] font-semibold leading-tight mb-0.5">
-              <strong>Commentaires</strong> (Positionner les numeros a l'endroit précis du dommage, sur la matrice a gauche)
-            </p>
-            <div className="space-y-0.5 text-[6px] mb-0.5">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="truncate">
-                  {i} {startCond[i - 1]?.label ? `· ${startCond[i - 1].label}` : '.........................................................'}
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* Car Diagram */}
-          <CarInspectionImage />
+      {/* ══════════════════════════════════════════════════
+          4. VEHICLE INSPECTION (BOTTOM 5-COLUMN SECTION)
+             Symmetrical: [Car Départ] | [DEPART] | [DOMMAGES] | [RETOUR] | [Car Retour]
+      ══════════════════════════════════════════════════ */}
+      <div
+        className="inspection-box"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '14% 25% 22% 25% 14%',
+          border: '1.5px solid #000',
+          backgroundColor: '#fff',
+          marginTop: '28px',
+        }}
+      >
+        {/* ── 1. Far Left: Car Diagram (Départ) ── */}
+        <div
+          style={{
+            borderRight: '1.5px solid #000',
+            padding: '6px 3px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <CarInspectionSvg />
         </div>
 
-        {/* ── DOMMAGES IDENTIFIÉS ET ACCEPTÉS (Col 2/12) ── */}
-        <div className="col-span-2 p-1 border-r border-black flex flex-col justify-between">
+        {/* ── 2. DEPART Text & Checklist ── */}
+        <div
+          style={{
+            borderRight: '1.5px solid #000',
+            padding: '6px 8px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            fontSize: '7.2px',
+          }}
+        >
           <div>
-            <div className="font-black text-[6.8px] text-center border-b border-black pb-0.5 mb-1 leading-tight uppercase">
-              DOMMAGE IDENTIFIES<br />ET ACCEPTE
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #000', paddingBottom: '3px', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg width="14" height="11" viewBox="0 0 20 14" fill="none" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', display: 'inline-block' }}>
+                  <path fill="none" stroke="#000000" strokeWidth="2.5" d="M18 7 H3 M9 2 L3 7 L9 12" />
+                </svg>
+                <span style={{ fontWeight: 900, fontSize: '10px', letterSpacing: '0.5px' }}>DEPART</span>
+              </div>
+              <div style={{ width: '2px', height: '16px', backgroundColor: '#000' }}></div>
             </div>
-            <div className="text-[6.5px] space-y-0.5 mb-1.5 font-bold">
-              <div>// Eraflure</div>
-              <div>✕ Bosse</div>
-              <div>□ Manque</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+              <span style={{ fontWeight: 700, fontSize: '7.5px', color: '#000' }}>Véhicule En parfait état</span>
+              <div style={{ display: 'inline-flex', border: '1px solid #000', fontSize: '7px', fontWeight: 800 }}>
+                <span style={{ padding: '1px 5px', borderRight: '1px solid #000', backgroundColor: startCond.length === 0 ? '#000' : '#fff', color: startCond.length === 0 ? '#fff' : '#000' }}>
+                  Oui
+                </span>
+                <span style={{ padding: '1px 5px', backgroundColor: startCond.length > 0 ? '#000' : '#fff', color: startCond.length > 0 ? '#fff' : '#000' }}>
+                  Non
+                </span>
+              </div>
+            </div>
+            <p style={{ fontSize: '5.8px', color: '#444', fontStyle: 'italic', marginBottom: '4px' }}>
+              ( Rayer le mention inutile )
+            </p>
+            <p style={{ fontWeight: 800, fontSize: '7.5px', marginBottom: '1px', color: '#000' }}>Commentaires</p>
+            <p style={{ fontSize: '5.6px', color: '#333', marginBottom: '5px', lineHeight: 1.2 }}>
+              Positionner les numeros a l 'endroit précis du dommage, sur la matrice a gauche )
+            </p>
+            <div style={{ fontSize: '7.2px' }}>
+              {[1, 2, 3, 4, 5].map(i => {
+                const dmgText = startCond[i - 1]?.label || startCond[i - 1]?.zone || '';
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-end', margin: '3.5px 0' }}>
+                    <span style={{ fontWeight: 800, width: '12px' }}>{i} -</span>
+                    <span style={{ flex: 1, borderBottom: '0.8px dotted #666', minHeight: '12px', color: '#000', fontWeight: 700, paddingLeft: '4px' }}>
+                      {dmgText ? `· ${dmgText}` : ''}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-          <table className="w-full border-collapse border border-black text-[6.2px] mb-0.5">
+        </div>
+
+        {/* ── 3. Center: DOMMAGES IDENTIFIES ET ACCEPTE ── */}
+        <div
+          style={{
+            borderRight: '1.5px solid #000',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            padding: 0,
+            backgroundColor: '#fff',
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontWeight: 900,
+                fontSize: '7.8px',
+                textAlign: 'center',
+                lineHeight: 1.35,
+                borderBottom: '1.2px solid #000',
+                padding: '6px 4px',
+                textTransform: 'uppercase',
+                fontFamily: "'Montserrat', Arial, sans-serif",
+                letterSpacing: '0.4px',
+              }}
+            >
+              DOMMAGE IDENTIFIES<br />ET ACCEPTE
+            </div>
+            <div style={{ padding: '10px 14px', fontSize: '7.8px', fontWeight: 700, lineHeight: 2 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', whiteSpace: 'nowrap' }}>
+                <span style={{ fontWeight: 900, fontSize: '9.5px', fontFamily: 'monospace', width: '16px' }}>//</span>
+                <span>Eraflure</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px', whiteSpace: 'nowrap' }}>
+                <span style={{ fontWeight: 900, fontSize: '9.5px', fontFamily: 'monospace', width: '16px' }}>✕</span>
+                <span>Bosse</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                <span style={{ display: 'inline-block', width: '11px', height: '11px', border: '1.2px solid #000', marginRight: '6px' }}></span>
+                <span>Manque</span>
+              </div>
+            </div>
+          </div>
+
+          <table
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              borderTop: '1.2px solid #000',
+              fontSize: '7.2px',
+              textAlign: 'center',
+            }}
+          >
             <thead>
-              <tr className="bg-slate-100">
-                <th className="border border-black p-0.5 font-black">Nombre</th>
-                <th className="border border-black p-0.5 font-black">Paraphe</th>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #000' }}>
+                <th style={{ borderRight: '1px solid #000', padding: '3px 1px', fontWeight: 800, width: '38%' }}>Nombre</th>
+                <th style={{ padding: '3px 1px', fontWeight: 800, width: '62%', whiteSpace: 'nowrap' }}>Paraphe Client</th>
               </tr>
             </thead>
             <tbody>
-              {[1, 2, 3, 4].map(r => (
-                <tr key={r} className="h-3">
-                  <td className="border border-black"></td>
-                  <td className="border border-black"></td>
-                </tr>
-              ))}
+              <tr style={{ height: '85px' }}>
+                <td style={{ borderRight: '1px solid #000', verticalAlign: 'middle', fontWeight: 800, fontSize: '9.5px' }}>
+                  {startCond.length || ''}
+                </td>
+                <td style={{ verticalAlign: 'middle', textAlign: 'center' }}></td>
+              </tr>
             </tbody>
           </table>
         </div>
 
-        {/* ── RETOUR (Col 5/12) ── */}
-        <div className="col-span-5 p-1 flex flex-col justify-between">
+        {/* ── 4. RETOUR Text & Checklist ── */}
+        <div
+          style={{
+            borderRight: '1.5px solid #000',
+            padding: '6px 8px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            fontSize: '7.2px',
+          }}
+        >
           <div>
-            <div className="font-black text-[8.5px] mb-0.5 flex items-center justify-end gap-1">
-              <span>RETOUR</span>
-              <span>→</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #000', paddingBottom: '3px', marginBottom: '4px' }}>
+              <div style={{ width: '2px', height: '16px', backgroundColor: '#000' }}></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontWeight: 900, fontSize: '10px', letterSpacing: '0.5px' }}>RETOUR</span>
+                <svg width="14" height="11" viewBox="0 0 20 14" fill="none" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', display: 'inline-block' }}>
+                  <path fill="none" stroke="#000000" strokeWidth="2.5" d="M2 7 H17 M11 2 L17 7 L11 12" />
+                </svg>
+              </div>
             </div>
-            <div className="text-[6.8px] font-bold mb-0.5 flex items-center justify-between">
-              <span>Véhicule En parfait état</span>
-              <span className="space-x-1">
-                <span>[ {endCond.length === 0 ? '✓' : ' '} ] Oui</span>
-                <span>[ {endCond.length > 0 ? '✓' : ' '} ] Non</span>
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2px' }}>
+              <span style={{ fontWeight: 700, fontSize: '7.5px', color: '#000' }}>Véhicule En parfait état</span>
+              <div style={{ display: 'inline-flex', border: '1px solid #000', fontSize: '7px', fontWeight: 800 }}>
+                <span style={{ padding: '1px 5px', borderRight: '1px solid #000', backgroundColor: endCond.length === 0 ? '#000' : '#fff', color: endCond.length === 0 ? '#fff' : '#000' }}>
+                  Oui
+                </span>
+                <span style={{ padding: '1px 5px', backgroundColor: endCond.length > 0 ? '#000' : '#fff', color: endCond.length > 0 ? '#fff' : '#000' }}>
+                  Non
+                </span>
+              </div>
             </div>
-            <p className="text-[5.5px] text-slate-600 italic mb-0.5">(Rayer la mention inutile)</p>
-            <p className="text-[6px] font-semibold leading-tight mb-0.5">
-              <strong>Commentaires</strong> (Positionner les numeros a l'endroit précis du dommage, sur la matrice a gauche)
+            <p style={{ fontSize: '5.8px', color: '#444', fontStyle: 'italic', marginBottom: '4px' }}>
+              ( Rayer le mention inutile )
             </p>
-            <div className="space-y-0.5 text-[6px] mb-0.5">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="truncate">
-                  {i} {endCond[i - 1]?.label ? `· ${endCond[i - 1].label}` : '.........................................................'}
-                </div>
-              ))}
+            <p style={{ fontWeight: 800, fontSize: '7.5px', marginBottom: '1px', color: '#000' }}>Commentaires</p>
+            <p style={{ fontSize: '5.6px', color: '#333', marginBottom: '5px', lineHeight: 1.2 }}>
+              Positionner les numeros a l 'endroit précis du dommage, sur la matrice a gauche )
+            </p>
+            <div style={{ fontSize: '7.2px' }}>
+              {[1, 2, 3, 4, 5].map(i => {
+                const dmgText = endCond[i - 1]?.label || endCond[i - 1]?.zone || '';
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-end', margin: '3.5px 0' }}>
+                    <span style={{ fontWeight: 800, width: '12px' }}>{i} -</span>
+                    <span style={{ flex: 1, borderBottom: '0.8px dotted #666', minHeight: '12px', color: '#000', fontWeight: 700, paddingLeft: '4px' }}>
+                      {dmgText ? `· ${dmgText}` : ''}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-          {/* Car Diagram */}
-          <CarInspectionImage />
+        </div>
+
+        {/* ── 5. Far Right: Car Diagram (Retour) ── */}
+        <div
+          style={{
+            padding: '6px 3px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <CarInspectionSvg />
         </div>
       </div>
     </div>
   );
 };
 
-// ── Sub-components ──
+// ── SUB-COMPONENTS ──
 
 interface FieldRowProps {
   labelFr: string;
   value?: string;
   labelAr: string;
-  thickDivider?: boolean;
+  isLastInSection?: boolean;
   isBold?: boolean;
 }
 
-const FieldRow: React.FC<FieldRowProps> = ({ labelFr, value, labelAr, thickDivider, isBold }) => (
+const FieldRow: React.FC<FieldRowProps> = ({ labelFr, value, labelAr, isLastInSection, isBold }) => (
   <div
-    className="flex items-center justify-between text-[7px]"
+    className={`flex items-center justify-between px-2 py-0.5 ${isLastInSection ? '' : 'border-b border-dotted border-gray-600'}`}
     style={{
-      padding: '3px 5px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '2.2px 6px',
       minHeight: '17px',
-      borderBottom: thickDivider ? '1.5px solid #000' : '0.6px solid #aaa',
+      borderBottom: isLastInSection ? 'none' : '0.8px dotted #4b5563',
+      fontSize: '7.3px',
     }}
   >
     <span
-      className="font-bold text-black"
-      style={{ width: '40%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-    >{labelFr}</span>
+      style={{
+        width: '38%',
+        fontWeight: 700,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        color: '#000',
+      }}
+    >
+      {labelFr}
+    </span>
     <span
-      className={`text-black ${isBold ? 'font-black' : 'font-bold'}`}
-      style={{ width: '36%', fontSize: isBold ? '7.5px' : '7px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      className="flex-1 mx-1 border-b border-dotted border-gray-600"
+      style={{
+        flex: 1,
+        margin: '0 4px',
+        borderBottom: '0.8px dotted #4b5563',
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+        fontWeight: isBold ? 900 : 800,
+        fontSize: isBold ? '7.8px' : '7.2px',
+        minWidth: '40px',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        color: '#000',
+      }}
     >
       {value || ''}
     </span>
     <span
-      className="font-bold text-black"
-      style={{ width: '24%', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
       dir="rtl"
+      style={{
+        width: '24%',
+        textAlign: 'right',
+        fontWeight: 700,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+        color: '#000',
+      }}
     >
       {labelAr}
     </span>
@@ -520,19 +1053,45 @@ interface KmRowProps {
   labelAr: string;
   labelFr: string;
   digits: string[];
+  isLast?: boolean;
 }
 
-const KmRow: React.FC<KmRowProps> = ({ labelAr, labelFr, digits }) => (
-  <div className="flex items-center justify-between text-[6.8px]">
-    <div className="leading-tight">
-      <span className="block font-bold text-black" dir="rtl">{labelAr}</span>
-      <span className="font-bold text-black">{labelFr}</span>
+const KmRow: React.FC<KmRowProps> = ({ labelAr, labelFr, digits, isLast }) => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '1.5px 0',
+      borderBottom: isLast ? 'none' : '0.6px dotted #bbb',
+      fontSize: '6.8px',
+    }}
+  >
+    <div style={{ lineHeight: 1.15 }}>
+      <span className="block font-bold text-black" dir="rtl" style={{ display: 'block', fontWeight: 700 }}>
+        {labelAr}
+      </span>
+      <span className="font-bold text-black" style={{ fontWeight: 700 }}>
+        {labelFr}
+      </span>
     </div>
-    <div className="flex gap-0.5">
+    <div style={{ display: 'flex', gap: '1.5px' }}>
       {digits.map((d, i) => (
         <span
           key={i}
-          className="w-3 h-3 border border-black inline-flex items-center justify-center font-mono font-bold text-[7.5px] bg-white text-black"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '12px',
+            height: '14px',
+            border: '1px solid #000',
+            fontFamily: 'monospace',
+            fontWeight: 800,
+            fontSize: '7.5px',
+            background: '#fff',
+            color: '#000',
+          }}
         >
           {d}
         </span>
@@ -541,22 +1100,181 @@ const KmRow: React.FC<KmRowProps> = ({ labelAr, labelFr, digits }) => (
   </div>
 );
 
-const CarInspectionImage: React.FC = () => (
-  <div className="flex justify-center my-0.5">
-    <img
-      src="/car-inspection.png"
-      alt="Inspection Véhicule"
-      className="h-24 object-contain mx-auto"
-      style={{ maxHeight: '95px' }}
-    />
-  </div>
+interface KmGridRowProps {
+  labelAr: string;
+  labelFr: string;
+  digits: string[];
+  isLast?: boolean;
+}
+
+const KmGridRow: React.FC<KmGridRowProps> = ({ labelAr, labelFr, digits, isLast }) => {
+  const d1 = (digits?.[0] || '') + (digits?.[1] || '');
+  const d2 = (digits?.[2] || '') + (digits?.[3] || '');
+  const d3 = (digits?.[4] || '') + (digits?.[5] || '');
+
+  return (
+    <div
+      className={`flex justify-between items-center py-1.5 ${isLast ? '' : 'border-b border-black'}`}
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '3px 4px',
+        borderBottom: isLast ? 'none' : '1px solid #000',
+      }}
+    >
+      {/* Left: Text Block (Arabic on top, French on bottom) */}
+      <div className="flex flex-col text-left" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.15 }}>
+        <span dir="rtl" className="text-right font-bold text-black text-[7.2px]" style={{ direction: 'rtl', textAlign: 'right', fontWeight: 700, fontSize: '7.2px' }}>
+          {labelAr}
+        </span>
+        <span className="font-bold text-black text-[7.5px] tracking-wide" style={{ fontWeight: 800, fontSize: '7.5px' }}>
+          {labelFr}
+        </span>
+      </div>
+
+      {/* Right: 3-Cell Input Grid with Solid Black Border */}
+      <div
+        className="grid grid-cols-3 border border-black bg-white"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          border: '1px solid #000',
+          width: '105px',
+          height: '19px',
+          backgroundColor: '#fff',
+        }}
+      >
+        <div
+          className="border-r border-black flex items-center justify-center font-mono font-bold text-[8px] text-black"
+          style={{ borderRight: '1px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', fontWeight: 700, fontSize: '8px', color: '#000' }}
+        >
+          {d1.trim()}
+        </div>
+        <div
+          className="border-r border-black flex items-center justify-center font-mono font-bold text-[8px] text-black"
+          style={{ borderRight: '1px solid #000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', fontWeight: 700, fontSize: '8px', color: '#000' }}
+        >
+          {d2.trim()}
+        </div>
+        <div
+          className="flex items-center justify-center font-mono font-bold text-[8px] text-black"
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', fontWeight: 700, fontSize: '8px', color: '#000' }}
+        >
+          {d3.trim()}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Symmetrical Vector Car Inspection Graphic (Matching Image 0) ──
+const CarInspectionSvg: React.FC = () => (
+  <svg
+    viewBox="0 0 150 240"
+    style={{
+      width: '100%',
+      maxHeight: '180px',
+      objectFit: 'contain',
+      display: 'block',
+      margin: '0 auto',
+      fontFamily: 'Arial, sans-serif',
+      fontSize: '7.5px',
+      fontWeight: 'bold',
+      textAnchor: 'middle',
+    }}
+    fill="none"
+    stroke="#000000"
+    strokeWidth="1.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* Front Bumper */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 52 14 C 52 9, 62 7, 75 7 C 88 7, 98 9, 98 14 L 102 21 C 102 24, 98 25, 96 25 L 54 25 C 52 25, 48 24, 48 21 Z" />
+    <text x="75" y="19" stroke="none" fill="#000000" fontSize="8">10</text>
+
+    {/* Front Left Fender */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 46 25 C 46 25, 34 26, 28 34 C 23 41, 23 52, 28 62 C 31 67, 36 71, 46 72" />
+    <text x="31" y="44" stroke="none" fill="#000000">6</text>
+    {/* Front Left Wheel Guide */}
+    <path fill="none" stroke="#000000" strokeWidth="1.3" d="M 18 36 C 14 42, 14 56, 18 62" />
+
+    {/* Front Right Fender */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 104 25 C 104 25, 116 26, 122 34 C 127 41, 127 52, 122 62 C 119 67, 114 71, 104 72" />
+    <text x="119" y="44" stroke="none" fill="#000000">12</text>
+    {/* Front Right Wheel Guide */}
+    <path fill="none" stroke="#000000" strokeWidth="1.3" d="M 132 36 C 136 42, 136 56, 132 62" />
+
+    {/* Hood */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 48 27 L 102 27 L 101 54 C 88 56, 62 56, 49 54 Z" />
+    <text x="75" y="44" stroke="none" fill="#000000">11</text>
+
+    {/* Windshield */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 49 57 C 60 59, 90 59, 101 57 L 97 76 C 85 78, 65 78, 53 76 Z" />
+
+    {/* Center Roof */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 53 79 C 65 80, 85 80, 97 79 L 97 138 C 85 137, 65 137, 53 138 Z" />
+    <text x="75" y="112" stroke="none" fill="#000000" fontSize="9">1</text>
+
+    {/* Left Front Door */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 46 74 L 28 74 C 22 75, 20 80, 20 90 L 20 106 L 46 106" />
+    <path fill="none" stroke="#000000" strokeWidth="0.8" d="M 46 76 L 31 76 C 26 77, 24 81, 24 88 L 24 104 L 46 104" />
+    <text x="25" y="93" stroke="none" fill="#000000">7</text>
+
+    {/* Left Center Pillar & B-notch */}
+    <line x1="16" y1="106" x2="20" y2="106" fill="none" stroke="#000000" strokeWidth="1.5" />
+    <text x="12" y="109" stroke="none" fill="#000000" fontSize="7">8</text>
+
+    {/* Left Rear Door */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 46 107 L 20 107 L 20 125 C 20 135, 24 139, 30 140 L 46 140" />
+    <path fill="none" stroke="#000000" strokeWidth="0.8" d="M 46 109 L 24 109 L 24 124 C 24 132, 27 137, 32 138 L 46 138" />
+    <text x="25" y="125" stroke="none" fill="#000000">9</text>
+
+    {/* Right Front Door */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 104 74 L 122 74 C 128 75, 130 80, 130 90 L 130 106 L 104 106" />
+    <path fill="none" stroke="#000000" strokeWidth="0.8" d="M 104 76 L 119 76 C 124 77, 126 81, 126 88 L 126 104 L 104 104" />
+    <text x="125" y="93" stroke="none" fill="#000000">13</text>
+
+    {/* Right Center Pillar & B-notch */}
+    <line x1="130" y1="106" x2="134" y2="106" fill="none" stroke="#000000" strokeWidth="1.5" />
+    <text x="138" y="109" stroke="none" fill="#000000" fontSize="7">15</text>
+
+    {/* Right Rear Door */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 104 107 L 130 107 L 130 125 C 130 135, 126 139, 120 140 L 104 140" />
+    <path fill="none" stroke="#000000" strokeWidth="0.8" d="M 104 109 L 126 109 L 126 124 C 126 132, 123 137, 118 138 L 104 138" />
+    <text x="125" y="125" stroke="none" fill="#000000">14</text>
+
+    {/* Rear Windshield */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 53 141 C 65 140, 85 140, 97 141 L 101 161 C 88 160, 62 160, 49 161 Z" />
+    <text x="75" y="153" stroke="none" fill="#000000" fontSize="7.5">2</text>
+
+    {/* Rear Left Fender */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 46 142 C 36 143, 31 147, 28 152 C 23 162, 23 173, 28 180 C 34 188, 46 189, 46 189" />
+    <text x="29" y="170" stroke="none" fill="#000000">5</text>
+    {/* Rear Left Wheel Guide */}
+    <path fill="none" stroke="#000000" strokeWidth="1.3" d="M 18 152 C 14 158, 14 172, 18 178" />
+
+    {/* Rear Right Fender */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 104 142 C 114 143, 119 147, 122 152 C 127 162, 127 173, 122 180 C 116 188, 104 189, 104 189" />
+    <text x="121" y="170" stroke="none" fill="#000000">16</text>
+    {/* Rear Right Wheel Guide */}
+    <path fill="none" stroke="#000000" strokeWidth="1.3" d="M 132 152 C 136 158, 136 172, 132 178" />
+
+    {/* Trunk */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 49 164 L 101 164 L 101 204 C 88 206, 62 206, 49 204 Z" />
+    <text x="75" y="186" stroke="none" fill="#000000" fontSize="7.5">3</text>
+
+    {/* Rear Bumper */}
+    <path fill="none" stroke="#000000" strokeWidth="1.2" d="M 47 206 C 52 208, 98 208, 103 206 L 99 216 C 96 222, 54 222, 51 216 Z" />
+    <text x="75" y="217" stroke="none" fill="#000000" fontSize="7.5">4</text>
+  </svg>
 );
 
 export function getRlvPrintStyles(): string {
   return `
     @page {
       size: A4 portrait;
-      margin: 5mm 6mm;
+      margin: 4mm 6mm;
     }
     *, *::before, *::after {
       box-sizing: border-box !important;
@@ -567,16 +1285,15 @@ export function getRlvPrintStyles(): string {
       margin: 0 !important;
       padding: 0 !important;
       font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif !important;
-      font-size: 7.4px !important;
+      font-size: 7.8px !important;
       color: #000 !important;
       background: #fff !important;
-      line-height: 1.18 !important;
+      line-height: 1.22 !important;
     }
-    .rlv-sheet {
+    .rlv-contract-root {
       width: 196mm !important;
       max-width: 196mm !important;
       min-height: auto !important;
-      max-height: none !important;
       padding: 2mm 3mm !important;
       margin: 0 auto !important;
       overflow: visible !important;
@@ -584,147 +1301,23 @@ export function getRlvPrintStyles(): string {
       background: #fff !important;
       color: #000 !important;
     }
-    /* ── CSS Grid replicas ── */
-    .grid { display: grid !important; }
-    .grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
-    .grid-cols-12 { grid-template-columns: repeat(12, 1fr) !important; }
-    .col-span-2 { grid-column: span 2 / span 2 !important; }
-    .col-span-5 { grid-column: span 5 / span 5 !important; }
-    .col-span-7 { grid-column: span 7 / span 7 !important; }
-    /* ── Flex utilities ── */
-    .flex { display: flex !important; }
-    .inline-flex { display: inline-flex !important; }
-    .flex-col { flex-direction: column !important; }
-    .flex-wrap { flex-wrap: wrap !important; }
-    .flex-1 { flex: 1 1 0% !important; }
-    .flex-shrink-0 { flex-shrink: 0 !important; }
-    .items-center { align-items: center !important; }
-    .items-start { align-items: flex-start !important; }
-    .justify-between { justify-content: space-between !important; }
-    .justify-center { justify-content: center !important; }
-    .justify-end { justify-content: flex-end !important; }
-    /* ── Gaps & Spacing ── */
-    .gap-0\.5 { gap: 1px !important; }
-    .gap-1 { gap: 2px !important; }
-    .gap-1\.5 { gap: 3px !important; }
-    .gap-2 { gap: 4px !important; }
-    .space-x-1 > * + * { margin-left: 2px !important; }
-    .space-y-0\.5 > * + * { margin-top: 1px !important; }
-    .mx-auto { margin-left: auto !important; margin-right: auto !important; }
-    .mb-0\.5 { margin-bottom: 2px !important; }
-    .mb-1 { margin-bottom: 4px !important; }
-    .mb-1\.5 { margin-bottom: 6px !important; }
-    .mt-0\.5 { margin-top: 2px !important; }
-    .mt-5 { margin-top: 20px !important; }
-    .ml-1 { margin-left: 4px !important; }
-    .mr-1 { margin-right: 4px !important; }
-    .my-0\.5 { margin-top: 2px !important; margin-bottom: 2px !important; }
-    .p-0\.5 { padding: 2px !important; }
-    .p-1 { padding: 4px !important; }
-    .p-1\.5 { padding: 6px !important; }
-    .px-1 { padding-left: 4px !important; padding-right: 4px !important; }
-    .px-1\.5 { padding-left: 6px !important; padding-right: 6px !important; }
-    .px-2 { padding-left: 8px !important; padding-right: 8px !important; }
-    .px-3 { padding-left: 12px !important; padding-right: 12px !important; }
-    .py-0\.5 { padding-top: 2px !important; padding-bottom: 2px !important; }
-    .py-0\.2 { padding-top: 1px !important; padding-bottom: 1px !important; }
-    .pb-1 { padding-bottom: 4px !important; }
-    /* ── Sizing ── */
-    .w-full { width: 100% !important; }
-    .w-1\/2 { width: 50% !important; }
-    .w-\[40\%\] { width: 40% !important; }
-    .w-\[36\%\] { width: 36% !important; }
-    .w-\[24\%\] { width: 24% !important; }
-    .w-\[12\%\] { width: 12% !important; }
-    .w-\[13\%\] { width: 13% !important; }
-    .w-2\.5 { width: 7px !important; }
-    .w-3 { width: 8px !important; }
-    .w-20 { width: 52px !important; }
-    .h-2\.5 { height: 7px !important; }
-    .h-3 { height: 8px !important; }
-    .h-9 { height: 26px !important; }
-    .h-11 { height: 26px !important; }
-    .h-24 { height: 58px !important; }
-    .max-h-8 { max-height: 20px !important; }
-    .max-w-\[120px\] { max-width: 120px !important; }
-    .max-w-\[100px\] { max-width: 100px !important; }
-    .min-w-0 { min-width: 0 !important; }
-    /* ── Typography ── */
-    .font-black { font-weight: 900 !important; }
-    .font-extrabold { font-weight: 800 !important; }
-    .font-bold { font-weight: 700 !important; }
-    .font-semibold { font-weight: 600 !important; }
-    .font-mono { font-family: 'Courier New', Courier, monospace !important; }
-    .text-left { text-align: left !important; }
-    .text-center { text-align: center !important; }
-    .text-right { text-align: right !important; }
-    .text-justify { text-align: justify !important; }
-    .tracking-wider { letter-spacing: 0.05em !important; }
-    .tracking-wide { letter-spacing: 0.025em !important; }
-    .uppercase { text-transform: uppercase !important; }
-    .leading-tight { line-height: 1.25 !important; }
-    .leading-snug { line-height: 1.375 !important; }
-    .truncate { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
-    .italic { font-style: italic !important; }
-    .select-text { user-select: text !important; }
-    /* ── Font sizes ── */
-    .text-\[5\.5px\] { font-size: 5.5px !important; }
-    .text-\[5\.9px\] { font-size: 5.9px !important; }
-    .text-\[6px\] { font-size: 6px !important; }
-    .text-\[6\.2px\] { font-size: 6.2px !important; }
-    .text-\[6\.5px\] { font-size: 6.5px !important; }
-    .text-\[6\.6px\] { font-size: 6.6px !important; }
-    .text-\[6\.8px\] { font-size: 6.8px !important; }
-    .text-\[7px\] { font-size: 7px !important; }
-    .text-\[7\.2px\] { font-size: 7.2px !important; }
-    .text-\[7\.5px\] { font-size: 7.5px !important; }
-    .text-\[8px\] { font-size: 8px !important; }
-    .text-\[8\.5px\] { font-size: 8.5px !important; }
-    .text-\[9\.5px\] { font-size: 9.5px !important; }
-    .text-\[11\.5px\] { font-size: 11.5px !important; }
-    .text-\[12px\] { font-size: 12px !important; }
-    .text-\[13px\] { font-size: 13px !important; }
-    .text-\[13\.5px\] { font-size: 13.5px !important; }
-    .text-\[17px\] { font-size: 17px !important; }
-    /* ── Colors ── */
-    .text-black { color: #000 !important; }
-    .text-white { color: #fff !important; }
-    .text-rose-600 { color: #e11d48 !important; }
-    .text-rose-700 { color: #be123c !important; }
-    .text-slate-300 { color: #cbd5e1 !important; }
-    .text-slate-400 { color: #94a3b8 !important; }
-    .text-slate-600 { color: #475569 !important; }
-    /* ── Backgrounds ── */
-    .bg-white { background-color: #fff !important; }
-    .bg-slate-50 { background-color: #f8fafc !important; }
-    .bg-slate-50\/60 { background-color: rgba(248,250,252,0.6) !important; }
-    .bg-slate-100 { background-color: #f1f5f9 !important; }
-    /* ── Borders ── */
-    .border { border-width: 1px !important; border-style: solid !important; }
-    .border-b { border-bottom-width: 1px !important; border-bottom-style: solid !important; }
-    .border-t { border-top-width: 1px !important; border-top-style: solid !important; }
-    .border-r { border-right-width: 1px !important; border-right-style: solid !important; }
-    .border-l { border-left-width: 1px !important; border-left-style: solid !important; }
-    .border-black { border-color: #000 !important; }
-    .border-slate-200 { border-color: #c0c8d4 !important; }
-    .border-slate-300 { border-color: #a0aab8 !important; }
-    .border-slate-400 { border-color: #7a8699 !important; }
-    .border-\[1\.5px\] { border-width: 1.5px !important; border-style: solid !important; }
-    .border-b-\[1\.5px\] { border-bottom: 1.5px solid !important; }
-    .border-r-\[1\.5px\] { border-right: 1.5px solid !important; }
-    .border-collapse { border-collapse: collapse !important; }
-    /* ── Object & Images ── */
-    .object-contain { object-fit: contain !important; }
-    img { max-width: 100% !important; }
-    /* ── Overflow ── */
-    .overflow-hidden { overflow: hidden !important; }
-    /* ── Border radius ── */
-    .rounded-full { border-radius: 9999px !important; }
-    /* ── RTL support ── */
-    [dir="rtl"] { direction: rtl !important; unicode-bidi: embed !important; }
-    /* ── Table defaults ── */
-    table { width: 100% !important; border-collapse: collapse !important; }
-    th, td { vertical-align: middle !important; }
+    .main-contract-box {
+      border: 2px solid #000 !important;
+      box-sizing: border-box !important;
+      page-break-inside: avoid !important;
+    }
+    .inspection-box {
+      border: 2px solid #000 !important;
+      box-sizing: border-box !important;
+      page-break-inside: avoid !important;
+    }
+    img {
+      max-width: 100% !important;
+    }
+    [dir="rtl"] {
+      direction: rtl !important;
+      unicode-bidi: embed !important;
+    }
   `;
 }
 
