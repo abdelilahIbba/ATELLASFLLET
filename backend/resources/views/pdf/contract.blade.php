@@ -525,7 +525,7 @@
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                         <td style="padding: 1.8mm 2mm 0.8mm 2mm;">
-                            <div class="bold" style="font-size: 7.8pt;">Fait à Tanger le : {{ $start->format('d/m/Y') }}</div>
+                            <div class="bold" style="font-size: 7.8pt;">Fait à {{ $contract->signature_city ?: 'Tanger' }} le : {{ $start->format('d/m/Y') }}</div>
                         </td>
                     </tr>
                     <tr>
