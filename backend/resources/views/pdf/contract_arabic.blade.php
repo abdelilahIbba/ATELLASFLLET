@@ -239,10 +239,10 @@
         ['Adresse au Maroc :', $contract->client_address, 'العنوان بالمغرب'],
         ["Adresse à l 'Etranger :", $contract->client_address_abroad, 'العنوان بالخارج'],
         ['Permis de Conduire N° :', $contract->client_license_number, 'رخصة السياقة رقم'],
-        ['Délivré à :', $contract->signature_city ?: 'Tanger', 'اصدارها في'],
+        ['Délivré à :', $contract->client_license_issued_at, 'اصدارها في'],
         ['Le :', $dateValue($contract->client_license_expiry), 'بتاريخ'],
         ['Passport N° :', $contract->client_passport_number, 'رقم جواز السفر'],
-        ['Délivré à :', '', 'اصدارها في'],
+        ['Délivré à :', $contract->client_passport_issued_at, 'اصدارها في'],
         ['Le :', '', 'بتاريخ'],
         ['Téléphone de Contrat :', $contract->client_phone, 'هاتف الاتصال', true],
     ];
@@ -250,7 +250,7 @@
     $driverRows = [
         ['Nom & Prénom :', $contract->driver_name, 'الاسم الشخصي و العائلي'],
         ['Permis de conduire N° :', $contract->driver_permit_number, 'رخصة السياقة رقم'],
-        ['Délivré à :', $contract->signature_city ?: 'Tanger', 'إصدارها في'],
+        ['Délivré à :', $contract->driver_permit_issued_at ?? '', 'إصدارها في'],
         ['Passeport N° :', $contract->driver_passport_number, 'رقم جواز السفر'],
         ['C.I.N n° :', $contract->driver_id_number, 'البطاقة الوطنية', true],
     ];
