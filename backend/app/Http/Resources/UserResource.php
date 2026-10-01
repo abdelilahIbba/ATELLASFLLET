@@ -28,6 +28,7 @@ class UserResource extends JsonResource
             'driver_permit_number'       => $this->driver_permit_number,
             'driver_passport_number'     => $this->driver_passport_number,
             'passport_number'            => $this->passport_number,
+            'passport_issued_at'         => $this->passport_issued_at,
             'passport_issued_date'       => $this->passport_issued_date?->toDateString(),
             'role'                       => $this->role,
             // Demo-mode fields (only populated for demo_admin users)

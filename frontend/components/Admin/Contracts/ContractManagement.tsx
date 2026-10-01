@@ -44,8 +44,19 @@ export interface Contract {
   client_id_number?: string;
   client_license_number?: string;
   client_license_expiry?: string;
+  client_date_of_birth?: string;
+  client_profession?: string;
   client_address?: string;
+  client_address_abroad?: string;
   client_nationality?: string;
+  client_passport_number?: string;
+  client_passport_issued_at?: string;
+  client_passport_issued_date?: string;
+  driver_name?: string;
+  driver_phone?: string;
+  driver_id_number?: string;
+  driver_permit_number?: string;
+  driver_passport_number?: string;
   vehicle_name: string;
   vehicle_plate: string;
   unit_number?: number;
@@ -106,8 +117,19 @@ export const contractFromApi = (c: Record<string, any>): Contract => ({
   client_id_number:      c.client_id_number ?? undefined,
   client_license_number: c.client_license_number ?? undefined,
   client_license_expiry: c.client_license_expiry?.slice(0, 10) ?? undefined,
+  client_date_of_birth:        c.client_date_of_birth?.slice(0, 10) ?? undefined,
+  client_profession:           c.client_profession ?? undefined,
   client_address:        c.client_address ?? undefined,
+  client_address_abroad:       c.client_address_abroad ?? undefined,
   client_nationality:    c.client_nationality ?? undefined,
+  client_passport_number:      c.client_passport_number ?? undefined,
+  client_passport_issued_at:   c.client_passport_issued_at ?? undefined,
+  client_passport_issued_date: c.client_passport_issued_date?.slice(0, 10) ?? undefined,
+  driver_name:                 c.driver_name ?? undefined,
+  driver_phone:                c.driver_phone ?? undefined,
+  driver_id_number:            c.driver_id_number ?? undefined,
+  driver_permit_number:        c.driver_permit_number ?? undefined,
+  driver_passport_number:      c.driver_passport_number ?? undefined,
   vehicle_name:          c.vehicle_name ?? '',
   vehicle_plate:         c.vehicle_plate ?? '',
   unit_number:           c.unit_number ?? undefined,

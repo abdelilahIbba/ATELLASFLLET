@@ -76,6 +76,7 @@ class ClientController extends Controller
             'driver_permit_number'       => ['sometimes', 'nullable', 'string', 'max:100'],
             'driver_passport_number'     => ['sometimes', 'nullable', 'string', 'max:100'],
             'passport_number'            => ['sometimes', 'nullable', 'string', 'max:100'],
+            'passport_issued_at'         => ['sometimes', 'nullable', 'string', 'max:255'],
             'passport_issued_date'       => ['sometimes', 'nullable', 'date'],
             'status'                     => ['sometimes', 'nullable', 'in:Active,Blacklisted,VIP'],
             'kyc_status'                 => ['sometimes', 'nullable', 'in:Verified,Pending,Missing'],
@@ -112,6 +113,7 @@ class ClientController extends Controller
             'driver_permit_number'       => $request->driver_permit_number,
             'driver_passport_number'     => $request->driver_passport_number,
             'passport_number'            => $request->passport_number,
+            'passport_issued_at'         => $request->passport_issued_at,
             'passport_issued_date'       => $request->passport_issued_date,
             'status'                     => $request->input('status', 'Active'),
             'kyc_status'                 => $request->input('kyc_status', 'Missing'),
@@ -167,6 +169,7 @@ class ClientController extends Controller
             'driver_permit_number'       => ['sometimes', 'nullable', 'string', 'max:100'],
             'driver_passport_number'     => ['sometimes', 'nullable', 'string', 'max:100'],
             'passport_number'            => ['sometimes', 'nullable', 'string', 'max:100'],
+            'passport_issued_at'         => ['sometimes', 'nullable', 'string', 'max:255'],
             'passport_issued_date'       => ['sometimes', 'nullable', 'date'],
             // KYC / Status
             'status'                     => ['sometimes', 'nullable', 'in:Active,Blacklisted,VIP'],
@@ -182,7 +185,7 @@ class ClientController extends Controller
             'driver_license_number', 'driver_license_expiry_date',
             'date_of_birth', 'profession', 'address_morocco', 'address_abroad',
             'driver_name', 'driver_phone', 'driver_id_number', 'driver_permit_number', 'driver_passport_number',
-            'passport_number', 'passport_issued_date',
+            'passport_number', 'passport_issued_at', 'passport_issued_date',
             'status', 'kyc_status',
         ]);
 
@@ -256,6 +259,7 @@ class ClientController extends Controller
             'address_morocco',
             'address_abroad',
             'passport_number',
+            'passport_issued_at',
             'passport_issued_date',
             'kyc_status',
         ] as $field) {

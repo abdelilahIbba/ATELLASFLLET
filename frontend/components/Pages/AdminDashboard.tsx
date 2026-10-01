@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate as useRouterNavigate } from 'react-router-dom';
 import { adminCarsApi, adminClientsApi, adminBookingsApi, adminContactsApi, adminFinesApi, adminPickupPointsApi, carsApi, api } from '../../services/api';
 import type { PickupPoint } from '../../services/api';
@@ -158,6 +158,7 @@ interface Client {
   driverLicense?: string;
   driverLicenseExpiry?: string;
   passportNumber?: string;
+  passportIssuedAt?: string;
   passportIssuedDate?: string;
   status: 'Active' | 'Blacklisted' | 'VIP';
   kycStatus: 'Verified' | 'Pending' | 'Missing';
@@ -403,6 +404,7 @@ const clientFromApi = (u: Record<string, any>): Client => ({
   driverLicense: u.driver_license_number ?? '',
   driverLicenseExpiry: u.driver_license_expiry_date?.slice(0, 10) ?? '',
   passportNumber: u.passport_number ?? '',
+  passportIssuedAt: u.passport_issued_at ?? '',
   passportIssuedDate: u.passport_issued_date?.slice(0, 10) ?? '',
   status: (u.status as Client['status']) ?? 'Active',
   kycStatus: (u.kyc_status as Client['kycStatus']) ?? 'Missing',
@@ -1197,7 +1199,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
       'address_morocco', 'address_abroad',
       'driver_name', 'driver_phone', 'driver_id_number', 'driver_permit_number',
       'driver_passport_number',
-      'passport_number', 'passport_issued_date',
+      'passport_number', 'passport_issued_at', 'passport_issued_date',
       'kyc_status',
     ];
     optionalFields.forEach(key => {

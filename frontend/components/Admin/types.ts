@@ -47,6 +47,7 @@ export interface Client {
     driverLicense?: string;        // driver_license_number
     driverLicenseExpiry?: string;  // driver_license_expiry_date
     passportNumber?: string;
+    passportIssuedAt?: string;
     passportIssuedDate?: string;
     status: 'Active' | 'Blacklisted' | 'VIP';
     kycStatus: 'Verified' | 'Pending' | 'Missing';

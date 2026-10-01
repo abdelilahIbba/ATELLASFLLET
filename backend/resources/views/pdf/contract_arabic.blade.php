@@ -243,7 +243,7 @@
         ['Le :', $dateValue($contract->client_license_expiry), 'بتاريخ'],
         ['Passport N° :', $contract->client_passport_number, 'رقم جواز السفر'],
         ['Délivré à :', $contract->client_passport_issued_at, 'اصدارها في'],
-        ['Le :', '', 'بتاريخ'],
+        ['Le :', $dateValue($contract->client_passport_issued_date), 'بتاريخ'],
         ['Téléphone de Contrat :', $contract->client_phone, 'هاتف الاتصال', true],
     ];
 

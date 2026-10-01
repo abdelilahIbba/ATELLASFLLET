@@ -16,6 +16,8 @@ export interface RlvContractData {
   client_address_abroad?: string;
   client_nationality?: string;
   client_passport_number?: string;
+  client_passport_issued_at?: string;
+  client_passport_issued_date?: string;
   driver_name?: string;
   driver_phone?: string;
   driver_id_number?: string;
@@ -100,6 +102,10 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
 
   const dobFormatted = contract.client_date_of_birth
     ? new Date(contract.client_date_of_birth).toLocaleDateString('fr-FR')
+    : '';
+
+  const passportIssuedDateFormatted = contract.client_passport_issued_date
+    ? new Date(contract.client_passport_issued_date).toLocaleDateString('fr-FR')
     : '';
 
   return (
@@ -432,8 +438,8 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
             <FieldRow labelFr="Délivré à :" value={contract.signature_city || 'Tanger'} labelAr="اصدارها في" />
             <FieldRow labelFr="Le :" value={licenseExpFormatted} labelAr="بتاريخ" />
             <FieldRow labelFr="Passport N° :" value={contract.client_passport_number} labelAr="رقم جواز السفر" />
-            <FieldRow labelFr="Délivré à :" value="" labelAr="اصدارها في" />
-            <FieldRow labelFr="Le :" value="" labelAr="بتاريخ" />
+            <FieldRow labelFr="Délivré à :" value={contract.client_passport_issued_at || ''} labelAr="اصدارها في" />
+            <FieldRow labelFr="Le :" value={passportIssuedDateFormatted} labelAr="بتاريخ" />
             <FieldRow labelFr="Téléphone de Contrat :" value={contract.client_phone} labelAr="هاتف الاتصال" isLastInSection />
           </div>
 
