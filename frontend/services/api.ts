@@ -270,6 +270,46 @@ export const adminCarsApi = {
     api.patch<{ data: unknown }>(`/admin/cars/${id}/gps`, { latitude: lat, longitude: lng }),
 };
 
+export interface AdminGpsVehicle {
+  provider_device_id: string;
+  provider_name: string;
+  vehicle_name: string;
+  car_id: number | null;
+  unit_number: number | null;
+  plate: string | null;
+  linked: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  speed: number | null;
+  status: string | null;
+  is_moving: boolean;
+  odometer: number | null;
+  fuel: number | null;
+  reported_at: string | null;
+  is_stale: boolean;
+}
+
+export interface AdminGpsAssignableUnit {
+  car_id: number;
+  unit_number: number;
+  vehicle_name: string;
+  plate: string | null;
+}
+
+export interface AdminGpsResponse {
+  vehicles: AdminGpsVehicle[];
+  assignable_units: AdminGpsAssignableUnit[];
+  fetched_at: string;
+}
+
+export const adminGpsApi = {
+  list: () => api.get<AdminGpsResponse>('/admin/gps/vehicles'),
+  associate: (deviceId: string, payload: { car_id: number; unit_number: number }) =>
+    api.post<{ message: string }>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/association`, payload),
+  unassociate: (deviceId: string) =>
+    api.delete<{ message: string }>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/association`),
+};
+
 // ---------------------------------------------------------------------------
 // Admin — Bookings
 // ---------------------------------------------------------------------------

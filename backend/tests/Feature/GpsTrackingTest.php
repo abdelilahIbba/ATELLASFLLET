@@ -1,0 +1,169 @@
+<?php
+
+use App\Models\Car;
+use App\Models\CarGpsTracker;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+
+uses(RefreshDatabase::class);
+
+function gpsTrackingAdmin(): User
+{
+    return User::factory()->create(['role' => 'admin', 'status' => 'Active', 'kyc_status' => 'Verified']);
+}
+
+function fakeAlloGpsDevices(array $devices): void
+{
+    Cache::flush();
+    config([
+        'services.allogps.base_url' => 'https://s16.allogps.com:5557',
+        'services.allogps.agency_id' => 'RH_746999',
+        'services.allogps.email' => 'test@example.test',
+        'services.allogps.password' => 'test-password',
+    ]);
+
+    Http::fake([
+        'https://s16.allogps.com:5557/auth/login' => Http::response(['token' => 'gps-test-token'], 200),
+        'https://s16.allogps.com:5557/list/RH_746999' => Http::response([
+            'name' => 'Agency',
+            'totalCars' => count($devices),
+            'cars' => $devices,
+        ], 200),
+    ]);
+}
+
+function gpsDevice(string $id = '352592579607821', string $name = '12345 WW Dacia Logan'): array
+{
+    return [
+        'id' => $id,
+        'key' => 'provider-key-' . $id,
+        'name' => $name,
+        'timestamp' => (string) (now()->timestamp * 1000),
+        'lat' => '35.7595',
+        'lon' => '-5.8330',
+        'status' => '1',
+        'speed' => '57',
+        'odometer' => '41796.37',
+        'fuel' => 0,
+    ];
+}
+
+test('admin receives normalized live GPS devices and available voiture units', function () {
+    $admin = gpsTrackingAdmin();
+    $car = Car::factory()->create([
+        'make' => 'Dacia', 'model' => 'Logan', 'year' => 2023,
+        'quantity' => 2, 'plate' => 'A-12345-B',
+        'unit_plates' => ['A-12345-B', 'B-12345-B'],
+    ]);
+    fakeAlloGpsDevices([gpsDevice()]);
+
+    $this->actingAs($admin)
+        ->getJson('/api/admin/gps/vehicles')
+        ->assertOk()
+        ->assertJsonPath('vehicles.0.provider_device_id', '352592579607821')
+        ->assertJsonPath('vehicles.0.vehicle_name', '12345 WW Dacia Logan')
+        ->assertJsonPath('vehicles.0.linked', false)
+        ->assertJsonPath('vehicles.0.latitude', 35.7595)
+        ->assertJsonPath('vehicles.0.longitude', -5.833)
+        ->assertJsonPath('vehicles.0.speed', 57)
+        ->assertJsonPath('vehicles.0.odometer', 41796.37)
+        ->assertJsonPath('vehicles.0.fuel', 0)
+        ->assertJsonPath('assignable_units.0.car_id', $car->id)
+        ->assertJsonPath('assignable_units.0.unit_number', 1);
+});
+
+test('provider agency response may be wrapped in a single-item JSON array', function () {
+    $admin = gpsTrackingAdmin();
+    Cache::flush();
+    config([
+        'services.allogps.base_url' => 'https://s16.allogps.com:5557',
+        'services.allogps.agency_id' => 'RH_746999',
+        'services.allogps.email' => 'test@example.test',
+        'services.allogps.password' => 'test-password',
+    ]);
+    Http::fake([
+        'https://s16.allogps.com:5557/auth/login' => Http::response(['token' => 'gps-test-token'], 200),
+        'https://s16.allogps.com:5557/list/RH_746999' => Http::response([[
+            'name' => 'Agency',
+            'totalCars' => 1,
+            'cars' => [gpsDevice()],
+        ]], 200),
+    ]);
+
+    $this->actingAs($admin)
+        ->getJson('/api/admin/gps/vehicles')
+        ->assertOk()
+        ->assertJsonPath('vehicles.0.provider_device_id', '352592579607821')
+        ->assertJsonPath('vehicles.0.odometer', 41796.37);
+});
+
+test('admin can associate a listed GPS device with a specific voiture unit', function () {
+    $admin = gpsTrackingAdmin();
+    $car = Car::factory()->create(['quantity' => 2, 'unit_plates' => ['A-12345-B', 'B-12345-B']]);
+    fakeAlloGpsDevices([gpsDevice()]);
+
+    $this->actingAs($admin)
+        ->postJson('/api/admin/gps/devices/352592579607821/association', [
+            'car_id' => $car->id,
+            'unit_number' => 2,
+        ])
+        ->assertCreated()
+        ->assertJsonPath('provider_device_id', '352592579607821')
+        ->assertJsonPath('unit_number', 2);
+
+    $association = CarGpsTracker::firstOrFail();
+    expect($association->tracker_key)->toBe('provider-key-352592579607821');
+
+    $this->actingAs($admin)
+        ->getJson('/api/admin/gps/vehicles')
+        ->assertOk()
+        ->assertJsonPath('vehicles.0.linked', true)
+        ->assertJsonPath('vehicles.0.car_id', $car->id)
+        ->assertJsonPath('vehicles.0.unit_number', 2)
+        ->assertJsonPath('vehicles.0.plate', 'B-12345-B');
+});
+
+test('GPS map response handles empty provider lists and unlinked devices', function () {
+    $admin = gpsTrackingAdmin();
+    fakeAlloGpsDevices([]);
+
+    $this->actingAs($admin)
+        ->getJson('/api/admin/gps/vehicles')
+        ->assertOk()
+        ->assertExactJson([
+            'vehicles' => [],
+            'assignable_units' => [],
+            'fetched_at' => now()->toIso8601String(),
+        ]);
+});
+
+test('GPS provider authentication failures become a safe gateway error', function () {
+    $admin = gpsTrackingAdmin();
+    Cache::flush();
+    config([
+        'services.allogps.base_url' => 'https://s16.allogps.com:5557',
+        'services.allogps.agency_id' => 'RH_746999',
+        'services.allogps.email' => 'test@example.test',
+        'services.allogps.password' => 'test-password',
+    ]);
+    Http::fake([
+        'https://s16.allogps.com:5557/auth/login' => Http::response('Invalid email or password', 401),
+    ]);
+
+    $this->actingAs($admin)
+        ->getJson('/api/admin/gps/vehicles')
+        ->assertStatus(502)
+        ->assertJsonPath('provider_status', 401)
+        ->assertJsonMissingPath('token');
+});
+
+test('clients cannot access GPS tracking endpoints', function () {
+    $client = User::factory()->create(['role' => 'client']);
+    $demoAdmin = User::factory()->create(['role' => 'demo_admin']);
+
+    $this->actingAs($client)->getJson('/api/admin/gps/vehicles')->assertForbidden();
+    $this->actingAs($client)->postJson('/api/admin/gps/devices/device/association', [])->assertForbidden();
+    $this->actingAs($demoAdmin)->getJson('/api/admin/gps/vehicles')->assertForbidden();
+});

@@ -16,7 +16,7 @@ import ReviewManagement from '../Admin/Reviews/ReviewManagement';
 import DashboardOverview from '../Admin/Overview/DashboardOverview';
 import AnalyticsManagement from '../Admin/Analytics/AnalyticsManagement';
 import ContractsAndInvoices from '../Admin/ContractsAndInvoices';
-import GPSManagement from '../Admin/Tracking/GPSManagement';
+import GPSManagement from '../Admin/Tracking/GPSManagementLive';
 import AvailabilityCalendar from '../UI/AvailabilityCalendar';
 import { UserInfo, Message } from '../../types';
 import type { Infraction, InfractionType } from '../Admin/types';
@@ -1573,7 +1573,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
 
                {/* --- GPS TRACKING TAB (LIVE SIMULATION) --- */}
                {activeTab === 'gps' && (
-                  <GPSManagement />
+                  <GPSManagement canManageMappings={currentUser?.role === 'admin'} />
                )}
 
                {/* --- MESSAGES TAB --- */}

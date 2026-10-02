@@ -53,6 +53,8 @@ services:
         - "pear.php.net:109.203.101.62"
     container_name: atellasfleet-backend
     restart: unless-stopped
+    env_file:
+      - .env.gps
     expose:
       - "9000"   # PHP-FPM listens on this internally
     environment:

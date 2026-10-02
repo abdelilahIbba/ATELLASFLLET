@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DemoController;
 use App\Http\Controllers\Api\ExpenseController;
 use App\Http\Controllers\Api\FineController;
+use App\Http\Controllers\Api\GpsTrackingController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\MaintenanceController;
 use App\Http\Controllers\Api\PickupPointController;
@@ -156,6 +157,12 @@ Route::middleware(['auth:sanctum', 'api.role:admin,demo_admin'])->prefix('admin'
 
     // GPS live position update
     Route::patch('/cars/{car}/gps', [CarController::class, 'updateGps']);
+
+    Route::middleware('api.role:admin')->group(function () {
+        Route::get('/gps/vehicles', [GpsTrackingController::class, 'index']);
+        Route::post('/gps/devices/{deviceId}/association', [GpsTrackingController::class, 'associate']);
+        Route::delete('/gps/devices/{deviceId}/association', [GpsTrackingController::class, 'unassociate']);
+    });
 
     // Per-car infractions (used by the vehicle modal)
     Route::get('/cars/{car}/infractions', [FineController::class, 'carInfractions']);

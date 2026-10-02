@@ -9,6 +9,8 @@ services:
       dockerfile: Dockerfile
     container_name: carrent-app
     restart: unless-stopped
+    env_file:
+      - ../.env.gps
     ports:
       - "${APP_PORT:-8088}:80"
     environment:

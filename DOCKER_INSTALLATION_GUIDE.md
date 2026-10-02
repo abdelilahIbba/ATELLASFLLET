@@ -54,6 +54,17 @@ Edit `.env` and set at least these values:
 
 If `APP_KEY` is empty, generate one from the backend container after the first start.
 
+### Configure the live GPS map (optional)
+
+Copy `.env.gps.example` to `.env.gps` and set the provider's agency ID, email, and password. `.env.gps` is ignored by Git and is loaded only by the backend containers. The map uses the authenticated provider feed automatically; no coordinates are entered in the app.
+
+After changing GPS credentials or backend configuration, rebuild the services and apply migrations:
+
+```bash
+docker compose up -d --build backend frontend
+docker compose exec backend php artisan migrate --force
+```
+
 ## 3. Review the default ports
 
 By default the project uses:

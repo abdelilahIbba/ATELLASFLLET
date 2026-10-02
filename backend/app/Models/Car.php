@@ -82,6 +82,11 @@ class Car extends Model
         return $this->hasMany(MaintenanceLog::class);
     }
 
+    public function gpsTrackers(): HasMany
+    {
+        return $this->hasMany(CarGpsTracker::class);
+    }
+
     public function remainingUnits(Carbon $startDate, Carbon $endDate): int
     {
         // Correct overlap condition: existing.start <= requested.end AND existing.end >= requested.start
