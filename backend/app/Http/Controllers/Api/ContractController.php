@@ -68,6 +68,8 @@ class ContractController extends Controller
             'client_license_number'  => 'nullable|string|max:100',
             'vehicle_name'           => 'required|string|max:255',
             'vehicle_plate'          => 'required|string|max:50',
+            'vehicle_color'          => 'nullable|string|max:100',
+            'vehicle_vin'            => 'nullable|string|max:100',
             'unit_number'            => 'nullable|integer',
             'start_date'             => 'required|date',
             'end_date'               => 'required|date|after_or_equal:start_date',
@@ -119,6 +121,8 @@ class ContractController extends Controller
             'driver_passport_number' => 'nullable|string|max:100',
             'vehicle_name'           => 'sometimes|string|max:255',
             'vehicle_plate'          => 'sometimes|string|max:50',
+            'vehicle_color'          => 'nullable|string|max:100',
+            'vehicle_vin'            => 'nullable|string|max:100',
             'unit_number'            => 'nullable|integer',
             'start_date'             => 'sometimes|date',
             'end_date'               => 'sometimes|date',
@@ -214,6 +218,10 @@ class ContractController extends Controller
             'vehicle_color'           => $booking->car->color ?? null,
             'vehicle_vin'             => $booking->car->vin ?? null,
             'unit_number'             => $booking->unit_number,
+            'mileage_start'           => $booking->car->odometer,
+            'fuel_level_start'        => $booking->car->fuel_level !== null
+                                          ? $booking->car->fuel_level . '%'
+                                          : null,
             'start_date'              => $booking->start_date,
             'end_date'                => $booking->end_date,
             'daily_rate'              => $dailyRate,

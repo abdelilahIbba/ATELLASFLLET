@@ -113,6 +113,8 @@ interface Vehicle {
   model?: string;
   year?: number;
   fuel_type?: string;
+  color?: string;
+  vin?: string;
   category: 'Hyper' | 'SUV' | 'Sedan' | 'Convertible';
   image: string;
   plate: string;
@@ -429,6 +431,8 @@ const carFromApi = (c: Record<string, any>): Vehicle => ({
   category: (c.category as Vehicle['category']) ?? 'Sedan',
   image: (c.image as string) || '',
   plate: c.plate ?? '',
+  color: c.color ?? '',
+  vin: c.vin ?? '',
   unitPlates: Array.isArray(c.unit_plates) ? c.unit_plates : [],
   branch: c.branch ?? '',
   status: (c.status as Vehicle['status']) ?? 'Available',
@@ -1110,6 +1114,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     fd.set('fuel_type',   raw.get('fuel_type')?.toString() ?? 'Essence');
     fd.set('category',    raw.get('category')?.toString()  ?? 'Sedan');
     fd.set('plate',       modalUnitPlates[0] ?? '');
+    fd.set('color',       raw.get('color')?.toString()        ?? '');
+    fd.set('vin',         raw.get('vin')?.toString()          ?? '');
     fd.set('branch',      raw.get('branch')?.toString()    ?? 'Casablanca');
     // Per-unit plates — send as unit_plates[] array
     modalUnitPlates.forEach(p => fd.append('unit_plates[]', p));
@@ -1668,6 +1674,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                          <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Catégorie</label><select name="category" defaultValue={selectedItem?.category || 'Sedan'} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"><option value="Hyper">Hyper / Supercar</option><option value="SUV">SUV de Luxe</option><option value="Sedan">Berline</option><option value="Convertible">Cabriolet</option></select></div>
                                          <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Année</label><input name="year" type="number" min="2000" max="2030" defaultValue={selectedItem?.year || new Date().getFullYear()} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/></div>
                                          <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Carburant</label><select name="fuel_type" defaultValue={selectedItem?.fuel_type || 'Essence'} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"><option value="Essence">Essence</option><option value="Diesel">Diesel</option><option value="Hybride">Hybride</option><option value="Électrique">Électrique</option></select></div>
+                                     </div>
+                                     <div className="grid grid-cols-2 gap-4">
+                                       <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Couleur</label><input name="color" defaultValue={selectedItem?.color || ''} maxLength={100} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="ex: Gris clair"/></div>
+                                       <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">VIN</label><input name="vin" defaultValue={selectedItem?.vin || ''} maxLength={100} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono" placeholder="Numéro d'identification du véhicule"/></div>
                                      </div>
                                      <div className="grid grid-cols-2 gap-4">
                                          {/* Plate: single input for qty=1, summary badge for qty>1 */}

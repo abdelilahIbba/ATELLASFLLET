@@ -25,6 +25,8 @@ class Car extends Model
         'category',
         'features',
         'plate',
+        'color',
+        'vin',
         'branch',
         'latitude',
         'longitude',

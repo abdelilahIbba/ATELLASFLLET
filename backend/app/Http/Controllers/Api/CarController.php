@@ -70,6 +70,8 @@ class CarController extends Controller
             'category'                => 'nullable|string|max:100',
             'features'                => 'nullable|array',
             'plate'                   => 'nullable|string|max:20|unique:cars,plate',
+            'color'                   => 'nullable|string|max:100',
+            'vin'                     => 'nullable|string|max:100|unique:cars,vin',
             'unit_plates'             => 'nullable|array',
             'unit_plates.*'           => 'nullable|string|max:20',
             'branch'                  => 'nullable|string|max:150',
@@ -88,6 +90,12 @@ class CarController extends Controller
             'doc_vignette'            => 'nullable|file|max:4096|mimes:pdf,jpg,jpeg,png',
             'doc_carte_grise'         => 'nullable|file|max:4096|mimes:pdf,jpg,jpeg,png',
         ]);
+
+        foreach (['color', 'vin'] as $field) {
+            if (($validated[$field] ?? null) === '') {
+                $validated[$field] = null;
+            }
+        }
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('cars', 'public');
@@ -128,6 +136,8 @@ class CarController extends Controller
             'category'                => 'nullable|string|max:100',
             'features'                => 'nullable|array',
             'plate'                   => 'nullable|string|max:20|unique:cars,plate,' . $car->id,
+            'color'                   => 'nullable|string|max:100',
+            'vin'                     => 'nullable|string|max:100|unique:cars,vin,' . $car->id,
             'unit_plates'             => 'nullable|array',
             'unit_plates.*'           => 'nullable|string|max:20',
             'branch'                  => 'nullable|string|max:150',
@@ -146,6 +156,12 @@ class CarController extends Controller
             'doc_vignette'            => 'nullable|file|max:4096|mimes:pdf,jpg,jpeg,png',
             'doc_carte_grise'         => 'nullable|file|max:4096|mimes:pdf,jpg,jpeg,png',
         ]);
+
+        foreach (['color', 'vin'] as $field) {
+            if (($validated[$field] ?? null) === '') {
+                $validated[$field] = null;
+            }
+        }
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('cars', 'public');

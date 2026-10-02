@@ -25,6 +25,8 @@ export interface RlvContractData {
   driver_passport_number?: string;
   vehicle_name?: string;
   vehicle_plate?: string;
+  vehicle_color?: string;
+  vehicle_vin?: string;
   unit_number?: number;
   start_date?: string;
   end_date?: string;
@@ -35,6 +37,7 @@ export interface RlvContractData {
   insurance_type?: string;
   mileage_start?: number;
   mileage_end?: number;
+  fuel_level_start?: string;
   condition_start?: any[];
   condition_end?: any[];
   booking_payment_status?: string;
@@ -356,10 +359,13 @@ export const RlvContractDocument: React.FC<RlvContractDocumentProps> = ({ contra
       >
         {/* ── ROW 1: VEHICLE (Left) | DATES GRID (Right) ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '2px solid #000' }}>
-          {/* Left: Vehicle Section (4 rows) */}
+          {/* Left: Vehicle Section */}
           <div style={{ borderRight: '2px solid #000' }}>
             <FieldRow labelFr="Marque :" value={contract.vehicle_name} labelAr="نوع" />
             <FieldRow labelFr="N° Immatriculation :" value={contract.vehicle_plate} labelAr="رقم التسجيل" />
+            {contract.vehicle_color && <FieldRow labelFr="Couleur :" value={contract.vehicle_color} labelAr="اللون" />}
+            {contract.vehicle_vin && <FieldRow labelFr="VIN :" value={contract.vehicle_vin} labelAr="رقم الهيكل" />}
+            {contract.fuel_level_start && <FieldRow labelFr="Carburant départ :" value={contract.fuel_level_start} labelAr="الوقود" />}
             <FieldRow labelFr="Lieu de livraison :" value={contract.signature_city || 'TANGER'} labelAr="مكان التسجيل" />
             <FieldRow labelFr="Lieu de Reprise :" value={contract.signature_city || 'TANGER'} labelAr="مكان الاسترجاع" isLastInSection />
           </div>

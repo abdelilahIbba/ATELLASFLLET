@@ -137,11 +137,14 @@ interface ContractExtras {
   driverPermitNumber:  string | null;
   driverPassportNumber: string | null;
   vehiclePlate:        string | null;
+  vehicleColor:        string | null;
+  vehicleVin:          string | null;
   dailyRate:           number | null;
   depositAmount:       number | null;
   insuranceType:       string | null;
   mileageStart:        number | null;
   mileageEnd:          number | null;
+  fuelLevelStart:      string | null;
 }
 
 const EMPTY_EXTRAS: ContractExtras = {
@@ -152,8 +155,9 @@ const EMPTY_EXTRAS: ContractExtras = {
   driverName: null, driverPhone: null, driverIdNumber: null, driverPermitNumber: null,
   driverPassportNumber: null,
   vehiclePlate: null,
+  vehicleColor: null, vehicleVin: null,
   dailyRate: null, depositAmount: null, insuranceType: null,
-  mileageStart: null, mileageEnd: null,
+  mileageStart: null, mileageEnd: null, fuelLevelStart: null,
 };
 
 // ─── Contract HTML generator ─────────────────────────────────────────────────
@@ -401,11 +405,14 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
             driverPermitNumber:  raw.driver_permit_number ?? null,
             driverPassportNumber: raw.driver_passport_number ?? null,
             vehiclePlate:        raw.vehicle_plate ?? null,
+            vehicleColor:        raw.vehicle_color ?? null,
+            vehicleVin:          raw.vehicle_vin ?? null,
             dailyRate:           raw.daily_rate != null ? parseFloat(raw.daily_rate) : null,
             depositAmount:       raw.deposit_amount != null ? parseFloat(raw.deposit_amount) : null,
             insuranceType:       raw.insurance_type ?? null,
             mileageStart:        raw.mileage_start != null ? Number(raw.mileage_start) : null,
             mileageEnd:          raw.mileage_end != null ? Number(raw.mileage_end) : null,
+            fuelLevelStart:      raw.fuel_level_start ?? null,
           };
           setExtras(ex);
           // Seed editable fields from backend (user can override)
@@ -457,6 +464,8 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
     driver_passport_number: extras.driverPassportNumber || undefined,
     vehicle_name: booking.vehicleName,
     vehicle_plate: extras.vehiclePlate || booking.unitPlate || '',
+    vehicle_color: extras.vehicleColor || undefined,
+    vehicle_vin: extras.vehicleVin || undefined,
     unit_number: booking.unitNumber,
     start_date: booking.startDate,
     end_date: booking.endDate,
@@ -467,6 +476,7 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
     insurance_type: extras.insuranceType || '',
     mileage_start: extras.mileageStart || 0,
     mileage_end: extras.mileageEnd || 0,
+    fuel_level_start: extras.fuelLevelStart || '',
     condition_start: condStart.damagePoints,
     condition_end: condEnd.damagePoints,
     booking_payment_status: booking.paymentStatus,

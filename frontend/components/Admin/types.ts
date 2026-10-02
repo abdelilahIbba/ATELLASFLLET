@@ -1,9 +1,15 @@
 export interface Vehicle {
     id: string;
     name: string;
+    make?: string;
+    model?: string;
+    year?: number;
+    fuel_type?: string;
     category: 'Hyper' | 'SUV' | 'Sedan' | 'Convertible';
     image: string;
     plate: string;
+    color?: string;
+    vin?: string;
     unitPlates?: string[];  // per-unit license plates, index = unitNumber - 1
     branch: string;
     status: 'Available' | 'Rented' | 'Maintenance' | 'Impounded';

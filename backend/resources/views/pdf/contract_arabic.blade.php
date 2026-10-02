@@ -227,6 +227,9 @@
     $vehicleRows = [
         ['Marque :', $contract->vehicle_name, 'نوع'],
         ['N° Immatriculation :', $contract->vehicle_plate, 'رقم التسجيل'],
+        ['Couleur :', $contract->vehicle_color, 'اللون'],
+        ['VIN :', $contract->vehicle_vin, 'رقم الهيكل'],
+        ['Carburant départ :', $contract->fuel_level_start, 'الوقود'],
         ['Lieu de livraison :', $contract->signature_city ?: 'TANGER', 'مكان التسجيل'],
         ['Lieu de Reprise :', $contract->signature_city ?: 'TANGER', 'مكان الاسترجاع', true],
     ];

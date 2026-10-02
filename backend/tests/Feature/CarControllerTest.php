@@ -79,13 +79,22 @@ test('admin can create a car', function () {
         'daily_price'  => 400,
         'availability' => 'available',
         'quantity'     => 3,
+        'color'        => 'Gris clair',
+        'vin'          => 'VF1COROLLATEST12345',
     ];
 
     $this->actingAs($admin)->postJson('/api/admin/cars', $payload)
         ->assertCreated()
-        ->assertJsonPath('message', 'Car created successfully.');
+        ->assertJsonPath('message', 'Car created successfully.')
+        ->assertJsonPath('car.color', 'Gris clair')
+        ->assertJsonPath('car.vin', 'VF1COROLLATEST12345');
 
-    $this->assertDatabaseHas('cars', ['make' => 'Toyota', 'model' => 'Corolla']);
+    $this->assertDatabaseHas('cars', [
+        'make' => 'Toyota',
+        'model' => 'Corolla',
+        'color' => 'Gris clair',
+        'vin' => 'VF1COROLLATEST12345',
+    ]);
 });
 
 // ── Admin: update car ────────────────────────────────────────────────

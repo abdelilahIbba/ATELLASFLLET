@@ -51,6 +51,11 @@ const FleetTable: React.FC<FleetTableProps> = ({ vehicles, onEdit, onDelete }) =
                                         )}
                                     </p>
                                     <p className="text-xs text-slate-500">{vehicle.category}</p>
+                                                                        {(vehicle.color || vehicle.vin) && (
+                                                                            <p className="text-[10px] text-slate-400">
+                                                                                {[vehicle.color, vehicle.vin ? `VIN ${vehicle.vin}` : ''].filter(Boolean).join(' · ')}
+                                                                            </p>
+                                                                        )}
                                 </div>
                             </div>
                         </td>

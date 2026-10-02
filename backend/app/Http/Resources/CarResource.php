@@ -47,6 +47,8 @@ class CarResource extends JsonResource
             'category'                => $this->category,
             'features'                => $this->features ?? [],
             'plate'                   => $this->plate,
+            'color'                   => $this->color,
+            'vin'                     => $this->vin,
             'unit_plates'             => $this->unit_plates ?? [],
             'branch'                  => $this->branch,
             'latitude'                => $this->latitude,

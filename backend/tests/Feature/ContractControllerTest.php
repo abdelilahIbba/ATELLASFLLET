@@ -67,6 +67,57 @@ test('admin can generate a contract from a booking', function () {
     expect($contract->contract_number)->toStartWith('CTR-');
 });
 
+test('reservation to contract snapshots all vehicle identity and handover data', function () {
+    $admin = contractAdmin();
+    $client = contractClient();
+    $car = contractCar();
+    $car->update([
+        'make' => 'Dacia',
+        'model' => 'Duster',
+        'year' => 2024,
+        'plate' => '12345-A-1',
+        'unit_plates' => ['12345-A-1', '67890-B-2'],
+        'color' => 'Gris clair',
+        'vin' => 'VF1EXAMPLEVIN12345',
+        'odometer' => 48210,
+        'fuel_level' => 68,
+    ]);
+
+    $reservation = $this->actingAs($admin)
+        ->postJson('/api/admin/bookings', [
+            'user_id' => $client->id,
+            'car_id' => $car->id,
+            'unit_number' => 2,
+            'start_date' => now()->addDays(2)->toDateString(),
+            'end_date' => now()->addDays(4)->toDateString(),
+        ])
+        ->assertCreated()
+        ->json('booking');
+
+    $this->actingAs($admin)
+        ->postJson("/api/admin/contracts/from-booking/{$reservation['id']}")
+        ->assertCreated()
+        ->assertJsonPath('contract.vehicle_name', '2024 Dacia Duster')
+        ->assertJsonPath('contract.vehicle_plate', '67890-B-2')
+        ->assertJsonPath('contract.vehicle_color', 'Gris clair')
+        ->assertJsonPath('contract.vehicle_vin', 'VF1EXAMPLEVIN12345')
+        ->assertJsonPath('contract.mileage_start', 48210)
+        ->assertJsonPath('contract.fuel_level_start', '68%')
+        ->assertJsonPath('contract.unit_number', 2);
+
+    $contract = Contract::where('booking_id', $reservation['id'])->firstOrFail();
+    $html = view('pdf.contract_arabic', ['contract' => $contract, 'forMpdf' => true])->render();
+    $documentText = preg_replace('/\s+/', '', strip_tags($html));
+
+    expect($documentText)
+        ->toContain('2024DaciaDuster')
+        ->toContain('67890-B-2')
+        ->toContain('Grisclair')
+        ->toContain('VF1EXAMPLEVIN12345')
+        ->toContain('48210')
+        ->toContain('68%');
+});
+
 test('contract snapshots the client additional driver fields', function () {
     $admin   = contractAdmin();
     $client  = contractClient();

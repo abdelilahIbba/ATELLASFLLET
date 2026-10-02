@@ -59,6 +59,8 @@ export interface Contract {
   driver_passport_number?: string;
   vehicle_name: string;
   vehicle_plate: string;
+  vehicle_color?: string;
+  vehicle_vin?: string;
   unit_number?: number;
   start_date: string;
   end_date: string;
@@ -132,6 +134,8 @@ export const contractFromApi = (c: Record<string, any>): Contract => ({
   driver_passport_number:      c.driver_passport_number ?? undefined,
   vehicle_name:          c.vehicle_name ?? '',
   vehicle_plate:         c.vehicle_plate ?? '',
+  vehicle_color:         c.vehicle_color ?? undefined,
+  vehicle_vin:           c.vehicle_vin ?? undefined,
   unit_number:           c.unit_number ?? undefined,
   start_date:            c.start_date?.slice(0, 10) ?? '',
   end_date:              c.end_date?.slice(0, 10) ?? '',
@@ -540,6 +544,8 @@ export const ContractDetail: React.FC<{
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Véhicule</p>
             <p className="font-bold text-brand-navy dark:text-white">{contract.vehicle_name}</p>
             <p className="text-sm text-slate-500">{contract.vehicle_plate}{contract.unit_number ? ` · Unité #${contract.unit_number}` : ''}</p>
+            {contract.vehicle_color && <p className="text-xs text-slate-500">Couleur : {contract.vehicle_color}</p>}
+            {contract.vehicle_vin && <p className="text-xs text-slate-500">VIN : {contract.vehicle_vin}</p>}
           </div>
 
           {/* Period & Finance */}

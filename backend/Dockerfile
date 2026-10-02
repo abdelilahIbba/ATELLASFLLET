@@ -42,10 +42,9 @@ RUN apk add --no-cache \
 # Copy composer files
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies (production only, optimized)
+# Install PHP dependencies (including dev deps so `php artisan test` / Pest work in-container)
 # --ignore-platform-reqs: the builder image lacks ext-gd, but the final image has it
 RUN composer install \
-    --no-dev \
     --no-interaction \
     --no-progress \
     --no-scripts \
@@ -55,6 +54,9 @@ RUN composer install \
 
 # Stage 3: Final production image
 FROM php:8.2-fpm-alpine
+
+# Composer available in the final image (for in-container composer commands)
+COPY --from=composer:2.7 /usr/local/bin/composer /usr/local/bin/composer
 
 # Install system dependencies and PHP extensions required by Laravel
 RUN apk add --no-cache \

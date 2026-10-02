@@ -56,6 +56,7 @@ echo "[*] Optimizing Laravel caches..."
 php artisan config:cache || echo "[WARN] config:cache failed — running with dynamic config"
 php artisan route:cache  || echo "[WARN] route:cache failed — running with dynamic routes"
 php artisan view:cache   || echo "[WARN] view:cache failed — running with dynamic views"
+chown -R www-data:www-data /var/www/html/storage/framework/views
 
 # ── Create storage symlink if needed (no DB required) ─────────────────
 if [ ! -L /var/www/html/public/storage ]; then
