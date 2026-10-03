@@ -98,6 +98,7 @@ class GpsTrackingController extends Controller
             'vehicles' => $vehicles,
             'assignable_units' => $this->vehicleMapper->assignableUnits(Car::with('gpsTrackers')->get()),
             'location_vehicles' => $locationVehicles,
+            'refresh_interval_seconds' => $this->refreshIntervalSeconds(),
             'fetched_at' => now()->toIso8601String(),
         ]);
     }
@@ -172,13 +173,19 @@ class GpsTrackingController extends Controller
             ->with([
                 'car',
                 'user',
-                'contracts' => fn ($query) => $query->where('status', 'active'),
+                'contracts' => fn ($query) => $query->where('status', 'active')
+                    ->whereDate('start_date', '<=', $today)
+                    ->whereDate('end_date', '>=', $today),
             ])
-            ->whereDate('start_date', '<=', $today)
-            ->whereDate('end_date', '>=', $today)
-            ->where(function ($query) {
-                $query->where('status', 'active')
-                    ->orWhereHas('contracts', fn ($contracts) => $contracts->where('status', 'active'));
+            ->where(function ($query) use ($today) {
+                $query->where(function ($booking) use ($today) {
+                    $booking->where('status', 'active')
+                        ->whereDate('start_date', '<=', $today)
+                        ->whereDate('end_date', '>=', $today);
+                })->orWhereHas('contracts', fn ($contracts) => $contracts
+                    ->where('status', 'active')
+                    ->whereDate('start_date', '<=', $today)
+                    ->whereDate('end_date', '>=', $today));
             })
             ->orderBy('start_date')
             ->get()
@@ -188,6 +195,11 @@ class GpsTrackingController extends Controller
                 (int) ($booking->unit_number ?? 1),
             ))
             ->values();
+    }
+
+    private function refreshIntervalSeconds(): int
+    {
+        return max(15, min(600, (int) config('services.allogps.refresh_interval_seconds', 15)));
     }
 
     private function bookingSummary(Booking $booking): array

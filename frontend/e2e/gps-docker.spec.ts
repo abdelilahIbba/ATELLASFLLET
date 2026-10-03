@@ -17,10 +17,15 @@ interface LiveGpsVehicle {
   latitude: number | null;
   longitude: number | null;
   odometer: number | null;
+  speed: number | null;
+  is_moving: boolean;
+  reported_at: string | null;
+  is_stale: boolean;
 }
 
 interface LiveGpsResponse {
   vehicles: LiveGpsVehicle[];
+  assignable_units: unknown[];
   location_vehicles: Array<{
     location_id: string;
     unit_identity: string;
@@ -28,12 +33,19 @@ interface LiveGpsResponse {
     gps_available: boolean;
     odometer: number | null;
   }>;
+  fetched_at: string;
+  refresh_interval_seconds: number;
 }
 
 const repositoryRoot = resolve(process.cwd(), '..');
 let dockerAdminToken: DockerAdminToken | null = null;
 
-const runDocker = (args: string[]): string => execFileSync('docker', args, {
+const runDocker = (args: string[]): string => execFileSync('docker', [
+  'compose',
+  '--project-directory', repositoryRoot,
+  '-f', resolve(repositoryRoot, 'docker-compose.yml'),
+  ...args,
+], {
   cwd: repositoryRoot,
   encoding: 'utf8',
   stdio: ['ignore', 'pipe', 'pipe'],
@@ -49,7 +61,7 @@ const createTemporaryAdminToken = (): DockerAdminToken => {
     "$issued = $user->createToken('gps-e2e-' . bin2hex(random_bytes(6)));",
     "echo base64_encode(json_encode(['token' => $issued->plainTextToken, 'userId' => $user->id, 'tokenId' => $issued->accessToken->id]));",
   ].join(' ');
-  const encoded = runDocker(['compose', 'exec', '-T', 'backend', 'php', '-r', php]).trim();
+  const encoded = runDocker(['exec', '-T', 'backend', 'php', '-r', php]).trim();
 
   return JSON.parse(Buffer.from(encoded, 'base64').toString('utf8')) as DockerAdminToken;
 };
@@ -62,16 +74,16 @@ const removeTemporaryAdminToken = (credentials: DockerAdminToken): void => {
     `\\Laravel\\Sanctum\\PersonalAccessToken::whereKey(${Number(credentials.tokenId)})->delete();`,
   ].join(' ');
 
-  runDocker(['compose', 'exec', '-T', 'backend', 'php', '-r', php]);
+  runDocker(['exec', '-T', 'backend', 'php', '-r', php]);
 };
 
-test.beforeAll(() => {
-  runDocker(['compose', 'up', '-d', '--build', 'backend', 'frontend']);
-  runDocker(['compose', 'exec', '-T', 'backend', 'php', 'artisan', 'migrate', '--force']);
+test.beforeAll('Start Docker services and prepare GPS test auth', () => {
+  runDocker(['up', '-d', 'backend', 'frontend']);
+  runDocker(['exec', '-T', 'backend', 'php', 'artisan', 'migrate', '--force']);
   dockerAdminToken = createTemporaryAdminToken();
 });
 
-test.afterAll(() => {
+test.afterAll('Remove temporary GPS test auth', () => {
   if (dockerAdminToken) removeTemporaryAdminToken(dockerAdminToken);
   dockerAdminToken = null;
 });
@@ -88,14 +100,46 @@ test('Docker GPS feed renders live voitures, kilométrage, and matching map mark
   expect(response.status()).toBe(200);
   const liveData = await response.json() as LiveGpsResponse;
   expect(liveData.vehicles.length).toBeGreaterThan(0);
+  expect(liveData.refresh_interval_seconds).toBe(15);
+  const deviceToMove = liveData.vehicles.find(vehicle =>
+    typeof vehicle.latitude === 'number' && typeof vehicle.longitude === 'number',
+  );
+  expect(deviceToMove).toBeDefined();
+  if (!deviceToMove || deviceToMove.latitude === null || deviceToMove.longitude === null) {
+    throw new Error('Live GPS feed has no mappable device to exercise movement.');
+  }
+
+  const nextTimestamp = new Date(Date.parse(deviceToMove.reported_at ?? new Date().toISOString()) + 30_000).toISOString();
+  const movementSnapshot: LiveGpsResponse = {
+    ...liveData,
+    fetched_at: nextTimestamp,
+    refresh_interval_seconds: 15,
+    vehicles: liveData.vehicles.map(vehicle => vehicle.provider_device_id === deviceToMove.provider_device_id
+      ? {
+          ...vehicle,
+          latitude: vehicle.latitude! + 0.008,
+          longitude: vehicle.longitude! + 0.008,
+          speed: 31,
+          is_moving: true,
+          odometer: vehicle.odometer === null ? null : vehicle.odometer + 0.5,
+          reported_at: nextTimestamp,
+          is_stale: false,
+        }
+      : vehicle),
+  };
 
   let usedLiveSnapshot = false;
+  let pageFeedRequests = 0;
   await page.route('**/admin/gps/vehicles*', async route => {
     usedLiveSnapshot = true;
+    pageFeedRequests++;
+    const snapshot = pageFeedRequests === 1
+      ? { ...liveData, refresh_interval_seconds: 15 }
+      : movementSnapshot;
     await route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify(liveData),
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(snapshot),
     });
   });
   await page.addInitScript((authToken: string) => localStorage.setItem('auth_token', authToken), token);
@@ -135,6 +179,29 @@ test('Docker GPS feed renders live voitures, kilométrage, and matching map mark
       await expect(card).toContainText(`GPS: ${vehicle.provider_name}`);
     }
   }
+
+  const marker = page.locator(`.gps-vehicle-marker:has([data-provider-device-id="${deviceToMove.provider_device_id}"])`);
+  await expect(marker).toBeVisible();
+  const markerBefore = await marker.boundingBox();
+  const mapPane = page.locator('.leaflet-map-pane');
+  const paneTransformBefore = await mapPane.getAttribute('style');
+  expect(markerBefore).not.toBeNull();
+
+  await expect.poll(() => pageFeedRequests, { timeout: 30_000 }).toBeGreaterThan(1);
+  await expect.poll(async () => {
+    const current = await marker.boundingBox();
+    if (!markerBefore || !current) return 0;
+    return Math.hypot(current.x - markerBefore.x, current.y - markerBefore.y);
+  }, { timeout: 8_000 }).toBeGreaterThan(1);
+
+  const movedCard = page.locator('aside article').filter({ hasText: deviceToMove.provider_name }).first();
+  await expect(movedCard).toContainText('Vitesse 31');
+  if (deviceToMove.odometer !== null) {
+    const movedKilometrage = new Intl.NumberFormat('fr-MA', { maximumFractionDigits: 2 }).format(deviceToMove.odometer + 0.5);
+    await expect(movedCard).toContainText(`Kilométrage ${movedKilometrage}`);
+  }
+  expect(await page.url()).toBe('http://localhost:8080/admin/gps');
+  expect(await mapPane.getAttribute('style')).toBe(paneTransformBefore);
 
   expect(pageErrors).toEqual([]);
   expect(await page.url()).toBe('http://localhost:8080/admin/gps');

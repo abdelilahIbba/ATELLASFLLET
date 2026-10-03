@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AdminGpsAssignableUnit, AdminGpsLocationVehicle, AdminGpsResponse, AdminGpsVehicle } from '../../../services/api';
 import GPSManagement from './GPSManagementLive';
+import { interpolateGpsPosition, mergeGpsSnapshots } from './gpsLiveUpdates';
 
 const gpsMocks = vi.hoisted(() => ({
   list: vi.fn(),
@@ -13,6 +14,7 @@ const gpsMocks = vi.hoisted(() => ({
   flyTo: vi.fn(),
   setView: vi.fn(),
   fitBounds: vi.fn(),
+  setLatLng: vi.fn(),
 }));
 
 vi.mock('../../../services/api', () => ({
@@ -29,12 +31,14 @@ vi.mock('react-leaflet', async () => {
     MapContainer: (props: { children?: React.ReactNode }) =>
       ReactModule.createElement('div', { 'data-testid': 'leaflet-map' }, props.children),
     TileLayer: () => null,
-    Marker: (props: { position: [number, number]; icon?: { options?: { html?: string } }; children?: React.ReactNode }) =>
-      ReactModule.createElement('div', {
+    Marker: ReactModule.forwardRef((props: { position: [number, number]; icon?: { options?: { html?: string } }; children?: React.ReactNode }, ref) => {
+      ReactModule.useImperativeHandle(ref, () => ({ setLatLng: gpsMocks.setLatLng }), []);
+      return ReactModule.createElement('div', {
         'data-testid': 'gps-marker',
         'data-position': props.position.join(','),
         'data-marker-html': props.icon?.options?.html ?? '',
-      }, props.children),
+      }, props.children);
+    }),
     Popup: (props: { children?: React.ReactNode }) => ReactModule.createElement('div', {}, props.children),
     useMap: () => ({
       flyTo: gpsMocks.flyTo,
@@ -110,12 +114,30 @@ const responseFor = (
   vehicles: AdminGpsVehicle[],
   assignableUnits: AdminGpsAssignableUnit[] = [freeUnit],
   locationVehicles: AdminGpsLocationVehicle[] = [],
+  refreshIntervalSeconds = 15,
 ): AdminGpsResponse => ({
   vehicles,
   assignable_units: assignableUnits,
   location_vehicles: locationVehicles,
+  refresh_interval_seconds: refreshIntervalSeconds,
   fetched_at: currentTime,
 });
+
+const installRefreshTimer = (expectedIntervalMs = 15_000): (() => void) => {
+  let scheduledRefresh: TimerHandler | undefined;
+  const originalSetTimeout = window.setTimeout;
+  vi.spyOn(window, 'setTimeout').mockImplementation(((handler: TimerHandler, delay?: number) => {
+    if (delay === expectedIntervalMs) {
+      scheduledRefresh = handler;
+      return 1 as unknown as number;
+    }
+    return originalSetTimeout(handler, delay);
+  }) as typeof window.setTimeout);
+
+  return () => {
+    if (typeof scheduledRefresh === 'function') scheduledRefresh();
+  };
+};
 
 const linkedVehicle = (overrides: Partial<AdminGpsVehicle> = {}): AdminGpsVehicle => gpsVehicle({
   provider_name: '771223 WW HYUNDAI I20',
@@ -140,6 +162,7 @@ const linkedVehicle = (overrides: Partial<AdminGpsVehicle> = {}): AdminGpsVehicl
 
 describe('GPSManagement at /admin/gps', () => {
   beforeEach(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
     gpsMocks.list.mockResolvedValue(responseFor([gpsVehicle()]));
     gpsMocks.associate.mockResolvedValue({ message: 'GPS device associated with the voiture.' });
     gpsMocks.unassociate.mockResolvedValue({ message: 'GPS association removed.' });
@@ -148,7 +171,9 @@ describe('GPSManagement at /admin/gps', () => {
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
   });
 
   it('renders provider voiture fields and creates one map marker per valid GPS location', async () => {
@@ -177,6 +202,8 @@ describe('GPSManagement at /admin/gps', () => {
         plate: 'D-56789-E',
         unit_identity: 'Voiture #2 · 2023 Renault Clio · qté 1/3 · Matricule D-56789-E',
         in_location: false,
+        speed: 0,
+        is_moving: false,
         latitude: 34.02,
         longitude: -6.8416,
       }),
@@ -235,8 +262,9 @@ describe('GPSManagement at /admin/gps', () => {
       expect.stringContaining('#64748b'),
     ]);
     const legend = screen.getByLabelText('Légende de la map');
+    expect(legend).toHaveTextContent('En mouvement');
+    expect(legend).toHaveTextContent('À l’arrêt');
     expect(legend).toHaveTextContent('Voiture en location');
-    expect(legend).toHaveTextContent('GPS associé · hors location');
     expect(legend).toHaveTextContent('GPS non associé');
     expect(legend).toHaveTextContent('Données GPS anciennes');
     expect(screen.getAllByText('Dacia Sandero GPS').length).toBeGreaterThan(0);
@@ -335,15 +363,7 @@ describe('GPSManagement at /admin/gps', () => {
   });
 
   it('automatically refreshes after 30 seconds and keeps last data when refresh fails', async () => {
-    let refresh: TimerHandler | undefined;
-    const originalSetInterval = window.setInterval;
-    vi.spyOn(window, 'setInterval').mockImplementation(((handler: TimerHandler, delay?: number) => {
-      if (delay === 30_000) {
-        refresh = handler;
-        return 1 as unknown as number;
-      }
-      return originalSetInterval(handler, delay);
-    }) as typeof window.setInterval);
+    const refresh = installRefreshTimer();
     gpsMocks.list
       .mockResolvedValueOnce(responseFor([gpsVehicle()]))
       .mockRejectedValueOnce({ message: 'temporary timeout' });
@@ -352,7 +372,7 @@ describe('GPSManagement at /admin/gps', () => {
     await waitFor(() => expect(screen.getAllByText('771223 WW HYUNDAI I20').length).toBeGreaterThan(0));
 
     await act(async () => {
-      if (typeof refresh === 'function') refresh();
+      refresh();
       await Promise.resolve();
     });
 
@@ -363,15 +383,7 @@ describe('GPSManagement at /admin/gps', () => {
   });
 
   it('replaces vehicle telemetry when an automatic refresh succeeds', async () => {
-    let refresh: TimerHandler | undefined;
-    const originalSetInterval = window.setInterval;
-    vi.spyOn(window, 'setInterval').mockImplementation(((handler: TimerHandler, delay?: number) => {
-      if (delay === 30_000) {
-        refresh = handler;
-        return 1 as unknown as number;
-      }
-      return originalSetInterval(handler, delay);
-    }) as typeof window.setInterval);
+    const refresh = installRefreshTimer();
     gpsMocks.list
       .mockResolvedValueOnce(responseFor([gpsVehicle({ speed: 57, odometer: 41796.37 })]))
       .mockResolvedValueOnce(responseFor([gpsVehicle({ speed: 12, odometer: 41797.37 })]));
@@ -380,7 +392,7 @@ describe('GPSManagement at /admin/gps', () => {
     await waitFor(() => expect(within(screen.getAllByRole('article')[0]).getByText('Vitesse 57')).toBeInTheDocument());
 
     await act(async () => {
-      if (typeof refresh === 'function') refresh();
+      refresh();
       await Promise.resolve();
     });
 
@@ -389,8 +401,28 @@ describe('GPSManagement at /admin/gps', () => {
     expect(gpsMocks.list).toHaveBeenCalledTimes(2);
   });
 
-  it('recenters the map on the selected device GPS coordinates', async () => {
-    gpsMocks.list.mockResolvedValue(responseFor([
+  it('uses the refresh interval returned by the Docker-configured backend', async () => {
+    const refresh = installRefreshTimer(20_000);
+    gpsMocks.list
+      .mockResolvedValueOnce(responseFor([gpsVehicle({ speed: 57 })], [freeUnit], [], 20))
+      .mockResolvedValueOnce(responseFor([gpsVehicle({ speed: 9 })], [freeUnit], [], 20));
+
+    render(<GPSManagement canManageMappings={false} />);
+    await waitFor(() => expect(within(screen.getAllByRole('article')[0]).getByText('Vitesse 57')).toBeInTheDocument());
+
+    await act(async () => {
+      refresh();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(within(screen.getAllByRole('article')[0]).getByText('Vitesse 9')).toBeInTheDocument());
+    expect(gpsMocks.list).toHaveBeenCalledTimes(2);
+  });
+
+  it('only focuses on explicit selection and never recenters during GPS polling', async () => {
+    const refresh = installRefreshTimer();
+    gpsMocks.list
+      .mockResolvedValueOnce(responseFor([
       gpsVehicle(),
       gpsVehicle({
         provider_device_id: 'second-provider-device',
@@ -399,12 +431,109 @@ describe('GPSManagement at /admin/gps', () => {
         latitude: 34.02,
         longitude: -6.8416,
       }),
-    ]));
+      ]))
+      .mockResolvedValueOnce(responseFor([
+        gpsVehicle({ latitude: 35.76, longitude: -5.83 }),
+        gpsVehicle({
+          provider_device_id: 'second-provider-device',
+          provider_name: 'GPS car 2',
+          vehicle_name: 'GPS car 2',
+          latitude: 34.03,
+          longitude: -6.83,
+          speed: 12,
+          is_moving: true,
+        }),
+      ]));
     render(<GPSManagement canManageMappings={false} />);
-    await waitFor(() => expect(gpsMocks.flyTo).toHaveBeenCalledWith([35.7595, -5.833], 13, { duration: 0.5 }));
+    await waitFor(() => expect(gpsMocks.fitBounds).toHaveBeenCalledTimes(1));
+    expect(gpsMocks.flyTo).not.toHaveBeenCalled();
 
     await userEvent.click(screen.getByRole('button', { name: /GPS car 2/ }));
     await waitFor(() => expect(gpsMocks.flyTo).toHaveBeenCalledWith([34.02, -6.8416], 13, { duration: 0.5 }));
+
+    await act(async () => {
+      refresh();
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(within(screen.getAllByRole('article')[1]).getByText('Vitesse 12')).toBeInTheDocument());
+    expect(gpsMocks.flyTo).toHaveBeenCalledTimes(1);
+    expect(gpsMocks.fitBounds).toHaveBeenCalledTimes(1);
+  });
+
+  it('pauses and aborts polling while hidden, then fetches immediately when visible', async () => {
+    let resolveFirst: ((response: AdminGpsResponse) => void) | undefined;
+    let firstSignal: AbortSignal | undefined;
+    gpsMocks.list
+      .mockImplementationOnce((signal: AbortSignal) => {
+        firstSignal = signal;
+        return new Promise(resolve => { resolveFirst = resolve; });
+      })
+      .mockResolvedValueOnce(responseFor([gpsVehicle()]));
+
+    render(<GPSManagement canManageMappings={false} />);
+    await waitFor(() => expect(gpsMocks.list).toHaveBeenCalledTimes(1));
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    fireEvent(document, new Event('visibilitychange'));
+    expect(firstSignal?.aborted).toBe(true);
+
+    Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+    fireEvent(document, new Event('visibilitychange'));
+    await waitFor(() => expect(gpsMocks.list).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getAllByText(/771223 WW HYUNDAI I20/).length).toBeGreaterThan(0));
+
+    await act(async () => {
+      resolveFirst?.(responseFor([gpsVehicle({ speed: 0, is_moving: false })]));
+    });
+    expect(within(screen.getAllByRole('article')[0]).getByText('Vitesse 57')).toBeInTheDocument();
+  });
+
+  it('animates a new GPS position through intermediate Leaflet coordinates', async () => {
+    const frames = new Map<number, FrameRequestCallback>();
+    let nextFrameId = 0;
+    let animationStart = 100;
+    vi.stubGlobal('requestAnimationFrame', vi.fn((callback: FrameRequestCallback) => {
+      const id = ++nextFrameId;
+      frames.set(id, callback);
+      return id;
+    }));
+    vi.stubGlobal('cancelAnimationFrame', vi.fn((id: number) => frames.delete(id)));
+    vi.spyOn(performance, 'now').mockImplementation(() => animationStart);
+    const refresh = installRefreshTimer();
+    gpsMocks.list
+      .mockResolvedValueOnce(responseFor([gpsVehicle()]))
+      .mockResolvedValueOnce(responseFor([gpsVehicle({
+        latitude: 35.7615,
+        longitude: -5.829,
+        reported_at: '2026-10-02T19:16:07.000Z',
+      })]));
+
+    render(<GPSManagement canManageMappings={false} />);
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1));
+    expect(gpsMocks.setLatLng).not.toHaveBeenCalled();
+
+    animationStart = 100;
+    await act(async () => {
+      refresh();
+      await Promise.resolve();
+    });
+
+    const runNextFrame = async (time: number) => {
+      const next = frames.entries().next().value as [number, FrameRequestCallback] | undefined;
+      expect(next).toBeDefined();
+      if (!next) return;
+      frames.delete(next[0]);
+      await act(async () => next[1](time));
+    };
+    await runNextFrame(700);
+    const midpoint = gpsMocks.setLatLng.mock.lastCall?.[0] as [number, number];
+    expect(midpoint[0]).toBeCloseTo(35.7605, 7);
+    expect(midpoint[1]).toBeCloseTo(-5.831, 7);
+    await runNextFrame(1300);
+    const endpoint = gpsMocks.setLatLng.mock.lastCall?.[0] as [number, number];
+    expect(endpoint[0]).toBeCloseTo(35.7615, 7);
+    expect(endpoint[1]).toBeCloseTo(-5.829, 7);
+    expect(gpsMocks.setView).toHaveBeenCalledTimes(1);
+    expect(gpsMocks.flyTo).not.toHaveBeenCalled();
   });
 
   it('associates an unlinked device with the selected voiture unit and refreshes the list', async () => {
@@ -458,12 +587,12 @@ describe('GPSManagement at /admin/gps', () => {
   });
 
   it('removes the automatic refresh timer when unmounted', async () => {
-    const clearInterval = vi.spyOn(window, 'clearInterval');
+    const clearTimeout = vi.spyOn(window, 'clearTimeout');
     const view = render(<GPSManagement canManageMappings={false} />);
-    await waitFor(() => expect(screen.getAllByText('771223 WW HYUNDAI I20').length).toBeGreaterThan(0));
+    await waitFor(() => expect(screen.getAllByText(/771223 WW HYUNDAI I20/).length).toBeGreaterThan(0));
 
     view.unmount();
-    expect(clearInterval).toHaveBeenCalled();
+    expect(clearTimeout).toHaveBeenCalled();
   });
 
   it('contains no hardcoded GPS demo fleet and obtains all vehicles from the API', async () => {
@@ -471,7 +600,50 @@ describe('GPSManagement at /admin/gps', () => {
     const source = readFileSync(resolve(process.cwd(), 'components/Admin/Tracking/GPSManagementLive.tsx'), 'utf8');
 
     expect(source).not.toMatch(/INITIAL_VEHICLES|STATS_DATA|SPEED_HISTORY|Math\.random\(|V-00[1-4]/);
-    expect(source).toContain('adminGpsApi.list()');
-    expect(source).toContain('setInterval(load, REFRESH_INTERVAL_MS)');
+    expect(source).toContain('adminGpsApi.list(controller.signal)');
+    expect(source).toContain('setTimeout(() => void load(), refreshIntervalMs)');
+  });
+});
+
+describe('GPS live update reconciliation', () => {
+  it('keeps only the newest update for a device and ignores older out-of-order snapshots', () => {
+    const latest = gpsVehicle({
+      speed: 18,
+      odometer: 41798,
+      reported_at: '2026-10-03T10:00:30.000Z',
+    });
+    const stale = gpsVehicle({
+      speed: 0,
+      odometer: 41790,
+      reported_at: '2026-10-03T10:00:00.000Z',
+    });
+
+    expect(mergeGpsSnapshots([latest], [stale])).toEqual([latest]);
+    expect(mergeGpsSnapshots([], [stale, latest])).toEqual([latest]);
+    expect(mergeGpsSnapshots([], [latest, stale])).toEqual([latest]);
+  });
+
+  it('preserves last-known coordinates when the new GPS sample omits either coordinate', () => {
+    const lastKnown = gpsVehicle({ latitude: 35.7, longitude: -5.8 });
+    const partial = gpsVehicle({
+      latitude: null,
+      longitude: null,
+      speed: 12,
+      reported_at: '2026-10-03T10:01:00.000Z',
+    });
+
+    expect(mergeGpsSnapshots([lastKnown], [partial])[0]).toMatchObject({
+      latitude: 35.7,
+      longitude: -5.8,
+      speed: 12,
+    });
+  });
+
+  it('interpolates marker coordinates and clamps progress to the animation interval', () => {
+    expect(interpolateGpsPosition([10, 20], [20, 40], 0)).toEqual([10, 20]);
+    expect(interpolateGpsPosition([10, 20], [20, 40], 0.5)).toEqual([15, 30]);
+    expect(interpolateGpsPosition([10, 20], [20, 40], 1)).toEqual([20, 40]);
+    expect(interpolateGpsPosition([10, 20], [20, 40], -1)).toEqual([10, 20]);
+    expect(interpolateGpsPosition([10, 20], [20, 40], 2)).toEqual([20, 40]);
   });
 });

@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Activity, Car, Fuel, Gauge, Map as MapIcon, RefreshCw, Search, Unlink, Wifi, WifiOff } from 'lucide-react';
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { LatLngBoundsExpression, LatLngExpression } from 'leaflet';
 import L from 'leaflet';
 import { adminGpsApi, type AdminGpsAssignableUnit, type AdminGpsLocationVehicle, type AdminGpsVehicle } from '../../../services/api';
+import { interpolateGpsPosition, mergeGpsSnapshots } from './gpsLiveUpdates';
 
-const REFRESH_INTERVAL_MS = 30_000;
+const DEFAULT_REFRESH_INTERVAL_SECONDS = 15;
+const MIN_REFRESH_INTERVAL_SECONDS = 15;
+const MAX_REFRESH_INTERVAL_SECONDS = 600;
+const MARKER_ANIMATION_MS = 1_200;
 
 interface GPSManagementProps {
   canManageMappings: boolean;
@@ -28,55 +32,132 @@ const formatDate = (value: string | null): string =>
 const validLocation = (vehicle: AdminGpsVehicle): vehicle is AdminGpsVehicle & { latitude: number; longitude: number } =>
   vehicle.latitude !== null && vehicle.longitude !== null;
 
-type MarkerKind = 'location' | 'linked' | 'unlinked' | 'stale';
+type MarkerKind = 'moving' | 'stopped' | 'unlinked' | 'stale';
 
 const markerKind = (vehicle: AdminGpsVehicle): MarkerKind => {
   if (vehicle.is_stale) return 'stale';
   if (!vehicle.linked) return 'unlinked';
-  return vehicle.in_location ? 'location' : 'linked';
+  return vehicle.is_moving ? 'moving' : 'stopped';
 };
 
 const markerColors: Record<MarkerKind, string> = {
-  location: '#16a34a',
-  linked: '#2563eb',
+  moving: '#16a34a',
+  stopped: '#2563eb',
   unlinked: '#d97706',
   stale: '#64748b',
 };
 
-const vehicleMarkerIcon = (kind: MarkerKind): L.DivIcon => L.divIcon({
+const vehicleMarkerIcon = (kind: MarkerKind, inLocation: boolean, deviceId: string): L.DivIcon => L.divIcon({
   className: 'gps-vehicle-marker',
-  html: `<span style="display:block;width:16px;height:16px;border:2px solid #fff;border-radius:50%;background:${markerColors[kind]};box-shadow:0 1px 5px #334155;box-sizing:border-box"></span>`,
-  iconSize: [16, 16],
-  iconAnchor: [8, 8],
+  html: `<span data-provider-device-id="${deviceId.replace(/[^a-zA-Z0-9_-]/g, '')}" style="display:grid;place-items:center;width:20px;height:20px;border:${inLocation ? '3px solid #15803d' : '2px solid #fff'};border-radius:50%;background:#fff;box-shadow:0 1px 5px #334155;box-sizing:border-box"><i style="display:block;width:9px;height:9px;border-radius:50%;background:${markerColors[kind]}"></i></span>`,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
 });
 
-const MapViewport: React.FC<{ vehicles: AdminGpsVehicle[]; selected: AdminGpsVehicle | null }> = ({ vehicles, selected }) => {
+const MapViewport: React.FC<{
+  vehicles: AdminGpsVehicle[];
+  focusVehicle: AdminGpsVehicle | null;
+  focusSequence: number;
+}> = ({ vehicles, focusVehicle, focusSequence }) => {
   const map = useMap();
+  const initialViewSet = useRef(false);
+  const lastFocusSequence = useRef(0);
   const pointKey = vehicles.filter(validLocation).map(vehicle => `${vehicle.latitude},${vehicle.longitude}`).join('|');
 
   useEffect(() => {
-    if (selected && validLocation(selected)) {
-      map.flyTo([selected.latitude, selected.longitude], Math.max(map.getZoom(), 13), { duration: 0.5 });
+    if (focusSequence !== lastFocusSequence.current) {
+      lastFocusSequence.current = focusSequence;
+      if (focusVehicle && validLocation(focusVehicle)) {
+        map.flyTo([focusVehicle.latitude, focusVehicle.longitude], Math.max(map.getZoom(), 13), { duration: 0.5 });
+      }
       return;
     }
 
+    if (initialViewSet.current) return;
     const points = vehicles.filter(validLocation).map(vehicle => [vehicle.latitude, vehicle.longitude] as LatLngExpression);
+    if (points.length === 0) return;
+    initialViewSet.current = true;
     if (points.length === 1) {
       map.setView(points[0], 12);
     } else if (points.length > 1) {
       map.fitBounds(points as LatLngBoundsExpression, { padding: [36, 36], maxZoom: 13 });
     }
-  }, [map, pointKey, selected?.provider_device_id, selected?.latitude, selected?.longitude]);
+  }, [map, pointKey, focusSequence, focusVehicle?.provider_device_id, focusVehicle?.latitude, focusVehicle?.longitude]);
 
   return null;
 };
 
+const AnimatedGpsMarker: React.FC<{
+  vehicle: AdminGpsVehicle & { latitude: number; longitude: number };
+  onSelect: () => void;
+}> = ({ vehicle, onSelect }) => {
+  const markerRef = useRef<L.Marker | null>(null);
+  const initialPosition = useRef<LatLngExpression>([vehicle.latitude, vehicle.longitude]);
+  const currentPosition = useRef<[number, number]>([vehicle.latitude, vehicle.longitude]);
+
+  useEffect(() => {
+    const marker = markerRef.current;
+    const target: [number, number] = [vehicle.latitude, vehicle.longitude];
+    if (!marker) {
+      currentPosition.current = target;
+      return;
+    }
+
+    const from = currentPosition.current;
+    if (from[0] === target[0] && from[1] === target[1]) return;
+
+    let frame = 0;
+    const startedAt = performance.now();
+    const animate = (time: number) => {
+      const progress = Math.min(1, (time - startedAt) / MARKER_ANIMATION_MS);
+      const position = interpolateGpsPosition(from, target, progress);
+      marker.setLatLng(position);
+      currentPosition.current = position;
+      if (progress < 1) {
+        frame = requestAnimationFrame(animate);
+      } else {
+        currentPosition.current = target;
+      }
+    };
+
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [vehicle.latitude, vehicle.longitude]);
+
+  return (
+    <Marker
+      ref={markerRef}
+      position={initialPosition.current}
+      icon={vehicleMarkerIcon(markerKind(vehicle), vehicle.in_location, vehicle.provider_device_id)}
+      eventHandlers={{ click: onSelect }}
+    >
+      <Popup>
+        <div className="min-w-48 space-y-1 text-sm">
+          <strong>{vehicle.vehicle_name}</strong>
+          {!vehicle.linked && <p>GPS non associé à une voiture</p>}
+          {vehicle.unit_identity && <p>{vehicle.unit_identity}</p>}
+          {vehicle.linked && <p>Appareil GPS : {vehicle.provider_name}</p>}
+          {vehicle.in_location && vehicle.location_booking && (
+            <p>En location · {vehicle.location_booking.client_name || 'Client N/D'} · Réservation #{vehicle.location_booking.booking_id}</p>
+          )}
+          <p>Vitesse API : {formatNumber(vehicle.speed)}</p>
+          <p>Kilométrage : {formatNumber(vehicle.odometer)}</p>
+          <p>Statut API : {vehicle.status ?? 'N/D'}</p>
+          <p>Dernière mise à jour : {formatDate(vehicle.reported_at)}</p>
+        </div>
+      </Popup>
+    </Marker>
+  );
+};
+
 const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
   const [vehicles, setVehicles] = useState<AdminGpsVehicle[]>([]);
+  const vehiclesRef = useRef<AdminGpsVehicle[]>([]);
   const [assignableUnits, setAssignableUnits] = useState<AdminGpsAssignableUnit[]>([]);
   const [locationVehicles, setLocationVehicles] = useState<AdminGpsLocationVehicle[]>([]);
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+  const [focusSequence, setFocusSequence] = useState(0);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -88,19 +169,45 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
   useEffect(() => {
     let disposed = false;
     let inFlight = false;
+    let requestSequence = 0;
+    let timer: number | undefined;
+    let activeRequest: AbortController | null = null;
+    let refreshIntervalMs = DEFAULT_REFRESH_INTERVAL_SECONDS * 1000;
+
+    const clearTimer = () => {
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+        timer = undefined;
+      }
+    };
+
+    const scheduleNext = () => {
+      if (disposed || document.hidden) return;
+      clearTimer();
+      timer = window.setTimeout(() => void load(), refreshIntervalMs);
+    };
 
     const load = async () => {
-      if (inFlight) return;
+      if (disposed || document.hidden || inFlight) return;
       inFlight = true;
+      const thisRequest = ++requestSequence;
+      const controller = new AbortController();
+      activeRequest = controller;
       setRefreshing(true);
       try {
-        const response = await adminGpsApi.list();
-        if (!disposed) {
-          const nextVehicles = Array.isArray(response.vehicles) ? response.vehicles : [];
+        const response = await adminGpsApi.list(controller.signal);
+        if (!disposed && thisRequest === requestSequence) {
+          const incoming = Array.isArray(response.vehicles) ? response.vehicles : [];
+          const nextVehicles = mergeGpsSnapshots(vehiclesRef.current, incoming);
+          vehiclesRef.current = nextVehicles;
           setVehicles(nextVehicles);
           setAssignableUnits(Array.isArray(response.assignable_units) ? response.assignable_units : []);
           setLocationVehicles(Array.isArray(response.location_vehicles) ? response.location_vehicles : []);
           setFetchedAt(response.fetched_at ?? null);
+          const configuredInterval = Number(response.refresh_interval_seconds);
+          refreshIntervalMs = (Number.isFinite(configuredInterval)
+            ? Math.max(MIN_REFRESH_INTERVAL_SECONDS, Math.min(MAX_REFRESH_INTERVAL_SECONDS, configuredInterval))
+            : DEFAULT_REFRESH_INTERVAL_SECONDS) * 1000;
           setError('');
           setSelectedDeviceId(current =>
             current && nextVehicles.some(vehicle => vehicle.provider_device_id === current)
@@ -109,21 +216,44 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
           );
         }
       } catch (requestError) {
-        if (!disposed) setError(requestMessage(requestError));
+        if (!disposed && thisRequest === requestSequence && !controller.signal.aborted) {
+          setError(requestMessage(requestError));
+        }
       } finally {
-        inFlight = false;
-        if (!disposed) {
+        if (thisRequest === requestSequence) {
+          inFlight = false;
+          activeRequest = null;
+        }
+        if (!disposed && thisRequest === requestSequence) {
           setLoading(false);
           setRefreshing(false);
+          scheduleNext();
         }
       }
     };
 
-    void load();
-    const interval = window.setInterval(load, REFRESH_INTERVAL_MS);
+    const handleVisibilityChange = () => {
+      clearTimer();
+      if (document.hidden) {
+        requestSequence++;
+        inFlight = false;
+        activeRequest?.abort();
+        activeRequest = null;
+        setRefreshing(false);
+      } else {
+        void load();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    if (!document.hidden) void load();
     return () => {
       disposed = true;
-      window.clearInterval(interval);
+      requestSequence++;
+      clearTimer();
+      activeRequest?.abort();
+      activeRequest = null;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [reloadKey]);
 
@@ -171,6 +301,11 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
     setReloadKey(value => value + 1);
   };
 
+  const focusVehicle = (deviceId: string) => {
+    setSelectedDeviceId(deviceId);
+    setFocusSequence(value => value + 1);
+  };
+
   if (loading && vehicles.length === 0) {
     return (
       <div className="flex min-h-[420px] items-center justify-center gap-3 text-slate-500">
@@ -214,8 +349,8 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
       <div aria-label="Légende de la map" className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
         <span className="font-bold text-slate-800 dark:text-white">Légende</span>
         {([
-          ['location', 'Voiture en location'],
-          ['linked', 'GPS associé · hors location'],
+          ['moving', 'En mouvement'],
+          ['stopped', 'À l’arrêt'],
           ['unlinked', 'GPS non associé'],
           ['stale', 'Données GPS anciennes'],
         ] as const).map(([kind, label]) => (
@@ -224,6 +359,10 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
             {label}
           </span>
         ))}
+        <span className="inline-flex items-center gap-2">
+          <span aria-hidden="true" className="h-3.5 w-3.5 rounded-full border-[3px] border-emerald-700 bg-white shadow" />
+          Voiture en location
+        </span>
       </div>
 
       {error && (
@@ -254,7 +393,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                 <p className="p-4 text-center text-sm text-slate-500">Aucun résultat.</p>
               ) : visibleVehicles.map(vehicle => (
                 <article key={vehicle.provider_device_id} className={`rounded-lg border p-3 transition-colors ${selectedDeviceId === vehicle.provider_device_id ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/20' : 'border-slate-200 dark:border-slate-700'}`}>
-                  <button onClick={() => setSelectedDeviceId(vehicle.provider_device_id)} className="w-full text-left">
+                  <button onClick={() => focusVehicle(vehicle.provider_device_id)} className="w-full text-left">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <h3 className="truncate text-sm font-bold text-slate-900 dark:text-white">{vehicle.vehicle_name}</h3>
@@ -263,9 +402,14 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                             ? `${vehicle.unit_identity} · GPS: ${vehicle.provider_name}`
                             : `GPS: ${vehicle.provider_name} · Appareil ${vehicle.provider_device_id}`}
                         </p>
+                        {vehicle.in_location && vehicle.location_booking && (
+                          <p className="mt-0.5 truncate text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
+                            En location · {vehicle.location_booking.client_name || 'Client N/D'} · Réservation #{vehicle.location_booking.booking_id}
+                          </p>
+                        )}
                       </div>
-                      <span className={`shrink-0 rounded px-2 py-1 text-[10px] font-bold ${!vehicle.linked ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200' : vehicle.is_stale ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' : vehicle.is_moving ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'}`}>
-                        {!vehicle.linked ? 'Non associée' : vehicle.is_stale ? 'Données anciennes' : vehicle.is_moving ? 'En mouvement' : 'À l’arrêt'}
+                      <span className={`shrink-0 rounded px-2 py-1 text-[10px] font-bold ${markerKind(vehicle) === 'unlinked' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200' : markerKind(vehicle) === 'stale' ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' : markerKind(vehicle) === 'moving' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'}`}>
+                        {markerKind(vehicle) === 'unlinked' ? 'Non associée' : markerKind(vehicle) === 'stale' ? 'Données anciennes' : markerKind(vehicle) === 'moving' ? 'En mouvement' : 'À l’arrêt'}
                       </span>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
@@ -312,7 +456,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                     key={locationVehicle.location_id}
                     type="button"
                     disabled={!locationVehicle.gps_device_id}
-                    onClick={() => locationVehicle.gps_device_id && setSelectedDeviceId(locationVehicle.gps_device_id)}
+                    onClick={() => locationVehicle.gps_device_id && focusVehicle(locationVehicle.gps_device_id)}
                     className="mb-2 w-full rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-left hover:border-emerald-500 disabled:cursor-default dark:border-emerald-900/60 dark:bg-emerald-950/20"
                   >
                     <span className="block truncate text-xs font-bold text-slate-900 dark:text-white">{locationVehicle.unit_identity}</span>
@@ -335,28 +479,13 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
-              <MapViewport vehicles={vehicles} selected={selectedVehicle} />
+              <MapViewport vehicles={vehicles} focusVehicle={selectedVehicle} focusSequence={focusSequence} />
               {vehiclesWithLocation.map(vehicle => (
-                <Marker
+                <AnimatedGpsMarker
                   key={vehicle.provider_device_id}
-                  position={[vehicle.latitude, vehicle.longitude]}
-                  icon={vehicleMarkerIcon(markerKind(vehicle))}
-                  eventHandlers={{ click: () => setSelectedDeviceId(vehicle.provider_device_id) }}
-                >
-                  <Popup>
-                    <div className="min-w-48 space-y-1 text-sm">
-                      <strong>{vehicle.vehicle_name}</strong>
-                      {!vehicle.linked && <p>GPS non associé à une voiture</p>}
-                      {vehicle.plate && <p>{vehicle.plate}{vehicle.unit_number ? ` · Unité #${vehicle.unit_number}` : ''}</p>}
-                      {vehicle.unit_identity && <p>{vehicle.unit_identity}</p>}
-                      {vehicle.linked && <p>Appareil GPS : {vehicle.provider_name}</p>}
-                      <p>Vitesse API : {formatNumber(vehicle.speed)}</p>
-                      <p>Kilométrage : {formatNumber(vehicle.odometer)}</p>
-                      <p>Statut API : {vehicle.status ?? 'N/D'}</p>
-                      <p>Dernière mise à jour : {formatDate(vehicle.reported_at)}</p>
-                    </div>
-                  </Popup>
-                </Marker>
+                  vehicle={vehicle}
+                  onSelect={() => focusVehicle(vehicle.provider_device_id)}
+                />
               ))}
             </MapContainer>
             {vehiclesWithLocation.length === 0 && (
@@ -383,6 +512,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                   <div className="rounded-md bg-slate-100 p-2 dark:bg-slate-800"><p className="text-[10px] font-bold uppercase text-slate-500">Carburant API</p><p className="text-sm font-bold text-slate-900 dark:text-white">{formatNumber(selectedVehicle.fuel)}</p></div>
                   <div className="rounded-md bg-slate-100 p-2 dark:bg-slate-800"><p className="text-[10px] font-bold uppercase text-slate-500">Statut API</p><p className="text-sm font-bold text-slate-900 dark:text-white">{selectedVehicle.status ?? 'N/D'}</p></div>
                 </div>
+                <p className="mt-2 text-[10px] text-slate-500">État : {markerKind(selectedVehicle) === 'moving' ? 'En mouvement' : markerKind(selectedVehicle) === 'stopped' ? 'À l’arrêt' : markerKind(selectedVehicle) === 'unlinked' ? 'GPS non associé' : 'Données anciennes'}</p>
                 <p className="mt-2 text-[11px] text-slate-500">Dernière mise à jour : {formatDate(selectedVehicle.reported_at)}</p>
               </div>
             )}

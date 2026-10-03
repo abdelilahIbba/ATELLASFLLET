@@ -5,7 +5,7 @@ export default defineConfig({
   testMatch: '**/gps-docker.spec.ts',
   fullyParallel: false,
   workers: 1,
-  timeout: 120_000,
+  timeout: 300_000,
   reporter: 'list',
   use: {
     baseURL: 'http://localhost:8080',

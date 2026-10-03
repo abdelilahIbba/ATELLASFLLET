@@ -143,8 +143,20 @@ test('GPS map response handles empty provider lists and unlinked devices', funct
             'vehicles' => [],
             'assignable_units' => [],
             'location_vehicles' => [],
+            'refresh_interval_seconds' => 15,
             'fetched_at' => now()->toIso8601String(),
         ]);
+});
+
+test('GPS refresh interval is configurable but never below the provider-safe minimum', function () {
+    $admin = gpsTrackingAdmin();
+    fakeAlloGpsDevices([]);
+    config(['services.allogps.refresh_interval_seconds' => 5]);
+
+    $this->actingAs($admin)
+        ->getJson('/api/admin/gps/vehicles')
+        ->assertOk()
+        ->assertJsonPath('refresh_interval_seconds', 15);
 });
 
 test('GPS provider authentication failures become a safe gateway error', function () {

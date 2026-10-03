@@ -32,6 +32,7 @@ type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 interface RequestOptions {
   method?: HttpMethod;
   body?: unknown;
+  signal?: AbortSignal;
   /** Pass a FormData body directly (skips JSON serialisation) */
   formData?: FormData;
   /** Extra headers merged on top of defaults */
@@ -49,7 +50,7 @@ export interface ApiError {
 }
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, formData, headers: extraHeaders = {} } = options;
+  const { method = 'GET', body, formData, signal, headers: extraHeaders = {} } = options;
 
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -61,7 +62,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const init: RequestInit = { method, headers };
+  const init: RequestInit = { method, headers, ...(signal ? { signal } : {}) };
 
   if (formData) {
     // Let the browser set multipart/form-data boundary automatically
@@ -98,8 +99,8 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 // Convenience methods
 // ---------------------------------------------------------------------------
 export const api = {
-  get: <T>(endpoint: string, headers?: Record<string, string>) =>
-    request<T>(endpoint, { method: 'GET', headers }),
+  get: <T>(endpoint: string, headers?: Record<string, string>, signal?: AbortSignal) =>
+    request<T>(endpoint, { method: 'GET', headers, signal }),
 
   post: <T>(endpoint: string, body: unknown) =>
     request<T>(endpoint, { method: 'POST', body }),
@@ -338,11 +339,12 @@ export interface AdminGpsResponse {
   vehicles: AdminGpsVehicle[];
   assignable_units: AdminGpsAssignableUnit[];
   location_vehicles: AdminGpsLocationVehicle[];
+  refresh_interval_seconds: number;
   fetched_at: string;
 }
 
 export const adminGpsApi = {
-  list: () => api.get<AdminGpsResponse>('/admin/gps/vehicles'),
+  list: (signal?: AbortSignal) => api.get<AdminGpsResponse>('/admin/gps/vehicles', undefined, signal),
   associate: (deviceId: string, payload: { car_id: number; unit_number: number }) =>
     api.post<{ message: string }>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/association`, payload),
   unassociate: (deviceId: string) =>
