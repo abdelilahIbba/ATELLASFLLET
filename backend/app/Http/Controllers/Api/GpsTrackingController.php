@@ -7,6 +7,7 @@ use App\Models\Car;
 use App\Models\CarGpsTracker;
 use App\Services\AlloGpsClient;
 use App\Services\GpsProviderException;
+use App\Services\GpsVehicleMapper;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,8 +16,10 @@ use Throwable;
 
 class GpsTrackingController extends Controller
 {
-    public function __construct(private readonly AlloGpsClient $gpsClient)
-    {
+    public function __construct(
+        private readonly AlloGpsClient $gpsClient,
+        private readonly GpsVehicleMapper $vehicleMapper,
+    ) {
     }
 
     public function index(): JsonResponse
@@ -33,46 +36,18 @@ class GpsTrackingController extends Controller
         }
 
         $associations = CarGpsTracker::with('car')->get()->keyBy('provider_device_id');
-        $vehicles = array_map(function (array $device) use ($associations) {
-            $association = $associations->get((string) $device['id']);
-            $car = $association?->car;
-            $latitude = $this->number($device['lat'] ?? null);
-            $longitude = $this->number($device['lon'] ?? null);
-            if ($latitude !== null && ($latitude < -90 || $latitude > 90)) {
-                $latitude = null;
-            }
-            if ($longitude !== null && ($longitude < -180 || $longitude > 180)) {
-                $longitude = null;
-            }
-
-            $speed = $this->number($device['speed'] ?? null);
-            $reportedAt = $this->reportedAt($device['timestamp'] ?? null);
-
-            return [
-                'provider_device_id' => (string) $device['id'],
-                'provider_name' => (string) ($device['name'] ?? ''),
-                'vehicle_name' => $car?->full_name ?: (string) ($device['name'] ?? 'Voiture GPS'),
-                'car_id' => $car?->id,
-                'unit_number' => $association?->unit_number,
-                'plate' => $car ? $this->unitPlate($car, $association->unit_number) : null,
-                'linked' => $car !== null,
-                'latitude' => $latitude,
-                'longitude' => $longitude,
-                'speed' => $speed,
-                'status' => isset($device['status']) ? (string) $device['status'] : null,
-                'is_moving' => $speed !== null && $speed > 0,
-                'odometer' => $this->number($device['odometer'] ?? null),
-                'fuel' => $this->number($device['fuel'] ?? null),
-                'reported_at' => $reportedAt?->toIso8601String(),
-                'is_stale' => $reportedAt === null || $reportedAt->lt(now()->subSeconds(
-                    max(30, (int) config('services.allogps.stale_after_seconds', 300))
-                )),
-            ];
-        }, $devices);
+        $vehicles = array_map(
+            fn (array $device) => $this->vehicleMapper->transform(
+                $device,
+                $associations->get((string) $device['id']),
+                CarbonImmutable::now('UTC'),
+            ),
+            $devices,
+        );
 
         return response()->json([
             'vehicles' => $vehicles,
-            'assignable_units' => $this->assignableUnits(),
+            'assignable_units' => $this->vehicleMapper->assignableUnits(Car::with('gpsTrackers')->get()),
             'fetched_at' => now()->toIso8601String(),
         ]);
     }
@@ -139,52 +114,4 @@ class GpsTrackingController extends Controller
         ], $deleted ? 200 : 404);
     }
 
-    private function assignableUnits(): array
-    {
-        return Car::with('gpsTrackers')->get()->flatMap(function (Car $car) {
-            $assigned = $car->gpsTrackers->pluck('unit_number')->map(fn ($unit) => (int) $unit)->all();
-            $units = [];
-
-            for ($unit = 1; $unit <= max(1, (int) $car->quantity); $unit++) {
-                if (in_array($unit, $assigned, true)) {
-                    continue;
-                }
-
-                $units[] = [
-                    'car_id' => $car->id,
-                    'unit_number' => $unit,
-                    'vehicle_name' => $car->full_name,
-                    'plate' => $this->unitPlate($car, $unit),
-                ];
-            }
-
-            return $units;
-        })->values()->all();
-    }
-
-    private function unitPlate(Car $car, int $unitNumber): ?string
-    {
-        $plates = $car->unit_plates ?? [];
-        $plate = $plates[$unitNumber - 1] ?? null;
-
-        return $plate ?: ($unitNumber === 1 ? $car->plate : null);
-    }
-
-    private function number(mixed $value): ?float
-    {
-        return is_numeric($value) && is_finite((float) $value) ? (float) $value : null;
-    }
-
-    private function reportedAt(mixed $timestamp): ?CarbonImmutable
-    {
-        if (!is_numeric($timestamp)) {
-            return null;
-        }
-
-        try {
-            return CarbonImmutable::createFromTimestampMs((int) $timestamp, 'UTC');
-        } catch (Throwable) {
-            return null;
-        }
-    }
 }

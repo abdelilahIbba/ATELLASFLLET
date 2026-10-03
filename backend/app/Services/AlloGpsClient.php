@@ -41,8 +41,11 @@ class AlloGpsClient
             }
 
             $token = $response->json('token');
-            if (!$response->successful() || !is_string($token) || $token === '') {
+            if (!$response->successful()) {
                 throw new GpsProviderException($response->status(), 'GPS provider authentication failed.');
+            }
+            if (!is_string($token) || $token === '') {
+                throw new GpsProviderException(502, 'GPS provider returned an invalid authentication response.');
             }
 
             return $token;
@@ -83,9 +86,16 @@ class AlloGpsClient
                 throw new GpsProviderException(502, 'GPS provider returned an invalid vehicle list.');
             }
 
-            return array_values(array_filter($devices, static fn ($device) =>
-                is_array($device) && isset($device['id'], $device['key'])
-            ));
+            return array_values(array_filter($devices, static function ($device): bool {
+                if (!is_array($device) || !isset($device['id'], $device['key'])) {
+                    return false;
+                }
+
+                $idIsValid = is_string($device['id']) || is_int($device['id']);
+                $keyIsValid = is_string($device['key']) && $device['key'] !== '';
+
+                return $idIsValid && (string) $device['id'] !== '' && $keyIsValid;
+            }));
         }
 
         throw new GpsProviderException(401, 'GPS provider authentication failed.');
