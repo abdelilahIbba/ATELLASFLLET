@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\Car;
 use App\Models\CarGpsTracker;
 use App\Services\AlloGpsClient;
@@ -11,6 +12,7 @@ use App\Services\GpsVehicleMapper;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -36,18 +38,66 @@ class GpsTrackingController extends Controller
         }
 
         $associations = CarGpsTracker::with('car')->get()->keyBy('provider_device_id');
-        $vehicles = array_map(
-            fn (array $device) => $this->vehicleMapper->transform(
-                $device,
-                $associations->get((string) $device['id']),
-                CarbonImmutable::now('UTC'),
-            ),
-            $devices,
+        $locationBookings = $this->currentLocationBookings();
+        $locationBookingsByUnit = $locationBookings->keyBy(fn (Booking $booking) =>
+            $this->unitKey((int) $booking->car_id, (int) ($booking->unit_number ?? 1))
         );
+        $vehicles = array_map(function (array $device) use ($associations, $locationBookingsByUnit) {
+            $association = $associations->get((string) $device['id']);
+            $vehicle = $this->vehicleMapper->transform(
+                $device,
+                $association,
+                CarbonImmutable::now('UTC'),
+            );
+            $locationBooking = $association
+                ? $locationBookingsByUnit->get($this->unitKey((int) $association->car_id, (int) $association->unit_number))
+                : null;
+            $vehicle['in_location'] = $locationBooking !== null;
+            $vehicle['location_booking'] = $locationBooking ? $this->bookingSummary($locationBooking) : null;
+
+            return $vehicle;
+        }, $devices);
+        $gpsVehiclesByUnit = collect($vehicles)
+            ->filter(fn (array $vehicle) => $vehicle['linked'])
+            ->keyBy(fn (array $vehicle) => $this->unitKey((int) $vehicle['car_id'], (int) $vehicle['unit_number']));
+        $locationVehicles = $locationBookings->map(function (Booking $booking) use ($gpsVehiclesByUnit) {
+            $car = $booking->car;
+            $unitNumber = (int) ($booking->unit_number ?? 1);
+            $gpsVehicle = $gpsVehiclesByUnit->get($this->unitKey((int) $booking->car_id, $unitNumber));
+            $contract = $booking->contracts->first();
+
+            return [
+                'location_id' => $this->unitKey((int) $booking->car_id, $unitNumber),
+                'booking_id' => (int) $booking->id,
+                'car_id' => (int) $booking->car_id,
+                'unit_number' => $unitNumber,
+                'quantity' => max(1, (int) $car->quantity),
+                'vehicle_name' => $car->full_name,
+                'plate' => $this->vehicleMapper->unitPlate($car, $unitNumber),
+                'unit_identity' => $this->locationUnitIdentity($car, $unitNumber),
+                'client_name' => $booking->user?->name,
+                'start_date' => $booking->start_date?->toDateString(),
+                'end_date' => $booking->end_date?->toDateString(),
+                'booking_status' => $booking->status,
+                'contract_number' => $contract?->contract_number,
+                'gps_device_id' => $gpsVehicle['provider_device_id'] ?? null,
+                'gps_available' => $gpsVehicle !== null
+                    && $gpsVehicle['latitude'] !== null
+                    && $gpsVehicle['longitude'] !== null,
+                'latitude' => $gpsVehicle['latitude'] ?? null,
+                'longitude' => $gpsVehicle['longitude'] ?? null,
+                'speed' => $gpsVehicle['speed'] ?? null,
+                'odometer' => $gpsVehicle['odometer'] ?? null,
+                'status' => $gpsVehicle['status'] ?? null,
+                'reported_at' => $gpsVehicle['reported_at'] ?? null,
+                'is_stale' => $gpsVehicle['is_stale'] ?? null,
+            ];
+        })->values()->all();
 
         return response()->json([
             'vehicles' => $vehicles,
             'assignable_units' => $this->vehicleMapper->assignableUnits(Car::with('gpsTrackers')->get()),
+            'location_vehicles' => $locationVehicles,
             'fetched_at' => now()->toIso8601String(),
         ]);
     }
@@ -112,6 +162,58 @@ class GpsTrackingController extends Controller
         return response()->json([
             'message' => $deleted ? 'GPS association removed.' : 'GPS association was not found.',
         ], $deleted ? 200 : 404);
+    }
+
+    private function currentLocationBookings(): Collection
+    {
+        $today = now()->toDateString();
+
+        return Booking::query()
+            ->with([
+                'car',
+                'user',
+                'contracts' => fn ($query) => $query->where('status', 'active'),
+            ])
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->where(function ($query) {
+                $query->where('status', 'active')
+                    ->orWhereHas('contracts', fn ($contracts) => $contracts->where('status', 'active'));
+            })
+            ->orderBy('start_date')
+            ->get()
+            ->filter(fn (Booking $booking) => $booking->car !== null)
+            ->unique(fn (Booking $booking) => $this->unitKey(
+                (int) $booking->car_id,
+                (int) ($booking->unit_number ?? 1),
+            ))
+            ->values();
+    }
+
+    private function bookingSummary(Booking $booking): array
+    {
+        return [
+            'booking_id' => (int) $booking->id,
+            'client_name' => $booking->user?->name,
+            'start_date' => $booking->start_date?->toDateString(),
+            'end_date' => $booking->end_date?->toDateString(),
+            'booking_status' => $booking->status,
+            'contract_number' => $booking->contracts->first()?->contract_number,
+        ];
+    }
+
+    private function unitKey(int $carId, int $unitNumber): string
+    {
+        return $carId . ':' . $unitNumber;
+    }
+
+    private function locationUnitIdentity(Car $car, int $unitNumber): string
+    {
+        $quantity = max(1, (int) $car->quantity);
+        $plate = $this->vehicleMapper->unitPlate($car, $unitNumber);
+
+        return 'Voiture #' . $car->id . ' · ' . $car->full_name . ' · qté ' . $unitNumber . '/' . $quantity
+            . ' · ' . ($plate ? 'Matricule ' . $plate : 'Matricule non renseigné');
     }
 
 }

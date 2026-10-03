@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AdminGpsAssignableUnit, AdminGpsResponse, AdminGpsVehicle } from '../../../services/api';
+import type { AdminGpsAssignableUnit, AdminGpsLocationVehicle, AdminGpsResponse, AdminGpsVehicle } from '../../../services/api';
 import GPSManagement from './GPSManagementLive';
 
 const gpsMocks = vi.hoisted(() => ({
@@ -29,10 +29,11 @@ vi.mock('react-leaflet', async () => {
     MapContainer: (props: { children?: React.ReactNode }) =>
       ReactModule.createElement('div', { 'data-testid': 'leaflet-map' }, props.children),
     TileLayer: () => null,
-    Marker: (props: { position: [number, number]; children?: React.ReactNode }) =>
+    Marker: (props: { position: [number, number]; icon?: { options?: { html?: string } }; children?: React.ReactNode }) =>
       ReactModule.createElement('div', {
         'data-testid': 'gps-marker',
         'data-position': props.position.join(','),
+        'data-marker-html': props.icon?.options?.html ?? '',
       }, props.children),
     Popup: (props: { children?: React.ReactNode }) => ReactModule.createElement('div', {}, props.children),
     useMap: () => ({
@@ -52,8 +53,12 @@ const gpsVehicle = (overrides: Partial<AdminGpsVehicle> = {}): AdminGpsVehicle =
   vehicle_name: '771223 WW HYUNDAI I20',
   car_id: null,
   unit_number: null,
+  unit_count: null,
+  unit_identity: null,
   plate: null,
   linked: false,
+  in_location: false,
+  location_booking: null,
   latitude: 35.7595,
   longitude: -5.833,
   speed: 57,
@@ -69,16 +74,46 @@ const gpsVehicle = (overrides: Partial<AdminGpsVehicle> = {}): AdminGpsVehicle =
 const freeUnit: AdminGpsAssignableUnit = {
   car_id: 19,
   unit_number: 2,
+  quantity: 3,
   vehicle_name: '2023 Kia Picanto',
   plate: 'G-89013-H',
+  unit_label: 'Voiture #19 · 2023 Kia Picanto · qté 2/3 · Matricule G-89013-H',
 };
+
+const currentLocationVehicle = (overrides: Partial<AdminGpsLocationVehicle> = {}): AdminGpsLocationVehicle => ({
+  location_id: '1:2',
+  booking_id: 77,
+  car_id: 1,
+  unit_number: 2,
+  quantity: 3,
+  vehicle_name: '2023 Dacia Logan',
+  plate: 'B-12345-B',
+  unit_identity: 'Voiture #1 · 2023 Dacia Logan · qté 2/3 · Matricule B-12345-B',
+  client_name: 'Karim Client',
+  start_date: '2026-10-01',
+  end_date: '2026-10-05',
+  booking_status: 'active',
+  contract_number: null,
+  gps_device_id: '352592579607821',
+  gps_available: true,
+  latitude: 35.7595,
+  longitude: -5.833,
+  speed: 57,
+  odometer: 41796.37,
+  status: '1',
+  reported_at: currentTime,
+  is_stale: false,
+  ...overrides,
+});
 
 const responseFor = (
   vehicles: AdminGpsVehicle[],
   assignableUnits: AdminGpsAssignableUnit[] = [freeUnit],
+  locationVehicles: AdminGpsLocationVehicle[] = [],
 ): AdminGpsResponse => ({
   vehicles,
   assignable_units: assignableUnits,
+  location_vehicles: locationVehicles,
   fetched_at: currentTime,
 });
 
@@ -87,8 +122,19 @@ const linkedVehicle = (overrides: Partial<AdminGpsVehicle> = {}): AdminGpsVehicl
   vehicle_name: '2023 Dacia Logan',
   car_id: 1,
   unit_number: 1,
+  unit_count: 3,
+  unit_identity: 'Voiture #1 · 2023 Dacia Logan · qté 1/3 · Matricule A-12345-B',
   plate: 'A-12345-B',
   linked: true,
+  in_location: true,
+  location_booking: {
+    booking_id: 77,
+    client_name: 'Karim Client',
+    start_date: '2026-10-01',
+    end_date: '2026-10-05',
+    booking_status: 'active',
+    contract_number: null,
+  },
   ...overrides,
 });
 
@@ -118,27 +164,137 @@ describe('GPSManagement at /admin/gps', () => {
         is_moving: false,
       }),
       gpsVehicle({
+        provider_device_id: 'unlinked-located-device',
+        provider_name: 'Dacia GPS unlinked',
+        latitude: 34.05,
+        longitude: -5.0,
+      }),
+      linkedVehicle({
         provider_device_id: 'second-located-device',
-        provider_name: 'Renault Clio GPS',
-        vehicle_name: 'Renault Clio GPS',
+        provider_name: 'Renault Clio Tracker',
+        vehicle_name: '2023 Renault Clio',
+        car_id: 2,
+        plate: 'D-56789-E',
+        unit_identity: 'Voiture #2 · 2023 Renault Clio · qté 1/3 · Matricule D-56789-E',
+        in_location: false,
         latitude: 34.02,
         longitude: -6.8416,
+      }),
+      linkedVehicle({
+        provider_device_id: 'stale-located-device',
+        provider_name: 'Kia Picanto Tracker',
+        vehicle_name: '2023 Kia Picanto',
+        car_id: 3,
+        plate: 'G-89012-H',
+        unit_identity: 'Voiture #3 · 2023 Kia Picanto · qté 1/3 · Matricule G-89012-H',
+        is_stale: true,
+        in_location: false,
+        latitude: 31.0,
+        longitude: -7.0,
+      }),
+    ], [freeUnit], [
+      currentLocationVehicle(),
+      currentLocationVehicle({
+        location_id: '2:1',
+        booking_id: 88,
+        car_id: 2,
+        unit_number: 1,
+        vehicle_name: '2023 Renault Clio',
+        unit_identity: 'Voiture #2 · 2023 Renault Clio · qté 1/3 · Matricule D-56789-E',
+        plate: 'D-56789-E',
+        client_name: 'Sarah Client',
+        gps_device_id: null,
+        gps_available: false,
+        latitude: null,
+        longitude: null,
+        speed: null,
+        odometer: null,
+        status: null,
+        reported_at: null,
+        is_stale: null,
       }),
     ]));
 
     render(<GPSManagement canManageMappings />);
 
     await waitFor(() => expect(screen.getAllByText('2023 Dacia Logan').length).toBeGreaterThan(0));
-    expect(screen.getAllByText(/GPS: 771223 WW HYUNDAI I20/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Voiture #1 · 2023 Dacia Logan · qté 1\/3 · Matricule A-12345-B/).length).toBeGreaterThan(0);
     const firstVehicleCard = within(screen.getAllByRole('article')[0]);
     expect(firstVehicleCard.getByText(/Kilométrage/).textContent).toContain('41.796,37');
     expect(firstVehicleCard.getByText('Vitesse 57')).toBeInTheDocument();
     expect(firstVehicleCard.getByText('Carburant API 0')).toBeInTheDocument();
     expect(firstVehicleCard.getByText('Statut API 1')).toBeInTheDocument();
     expect(screen.getByText(/Actualisé/)).toBeInTheDocument();
-    expect(screen.getAllByTestId('gps-marker').map(marker => marker.getAttribute('data-position')))
-      .toEqual(['35.7595,-5.833', '34.02,-6.8416']);
+    const markers = screen.getAllByTestId('gps-marker');
+    expect(markers.map(marker => marker.getAttribute('data-position')))
+      .toEqual(['35.7595,-5.833', '34.05,-5', '34.02,-6.8416', '31,-7']);
+    expect(markers.map(marker => marker.getAttribute('data-marker-html'))).toEqual([
+      expect.stringContaining('#16a34a'),
+      expect.stringContaining('#d97706'),
+      expect.stringContaining('#2563eb'),
+      expect.stringContaining('#64748b'),
+    ]);
+    const legend = screen.getByLabelText('Légende de la map');
+    expect(legend).toHaveTextContent('Voiture en location');
+    expect(legend).toHaveTextContent('GPS associé · hors location');
+    expect(legend).toHaveTextContent('GPS non associé');
+    expect(legend).toHaveTextContent('Données GPS anciennes');
     expect(screen.getAllByText('Dacia Sandero GPS').length).toBeGreaterThan(0);
+    const locationList = screen.getByRole('region', { name: 'Voitures en location' });
+    expect(locationList).toHaveTextContent('Karim Client');
+    expect(locationList).toHaveTextContent('Sarah Client');
+    expect(locationList).toHaveTextContent('Position GPS indisponible');
+  });
+
+  it('distinguishes same-marque, same-model voitures by car id, qté unit, and matricule', async () => {
+    const secondUnit: AdminGpsAssignableUnit = {
+      car_id: 20,
+      unit_number: 1,
+      quantity: 2,
+      vehicle_name: '2023 Kia Picanto',
+      plate: 'H-89012-J',
+      unit_label: 'Voiture #20 · 2023 Kia Picanto · qté 1/2 · Matricule H-89012-J',
+    };
+    gpsMocks.list.mockResolvedValue(responseFor([gpsVehicle()], [freeUnit, secondUnit]));
+
+    render(<GPSManagement canManageMappings />);
+
+    const selector = await screen.findByRole('combobox', { name: /Associer 771223 WW HYUNDAI I20/ });
+    expect(within(selector).getByRole('option', { name: freeUnit.unit_label })).toBeInTheDocument();
+    expect(within(selector).getByRole('option', { name: secondUnit.unit_label })).toBeInTheDocument();
+  });
+
+  it('shows every current location reservation, including a voiture without a GPS association', async () => {
+    gpsMocks.list.mockResolvedValue(responseFor([linkedVehicle()], [], [
+      currentLocationVehicle(),
+      currentLocationVehicle({
+        location_id: '44:1',
+        booking_id: 99,
+        car_id: 44,
+        unit_number: 1,
+        vehicle_name: '2024 Dacia Logan',
+        unit_identity: 'Voiture #44 · 2024 Dacia Logan · qté 1/3 · Matricule A-12345-B',
+        client_name: 'Fatima Client',
+        gps_device_id: null,
+        gps_available: false,
+        latitude: null,
+        longitude: null,
+        speed: null,
+        odometer: null,
+        status: null,
+        reported_at: null,
+        is_stale: null,
+      }),
+    ]));
+
+    render(<GPSManagement canManageMappings={false} />);
+
+    const locationList = await screen.findByRole('region', { name: 'Voitures en location' });
+    expect(locationList).toHaveTextContent('2');
+    expect(locationList).toHaveTextContent('Karim Client');
+    expect(locationList).toHaveTextContent('Fatima Client');
+    expect(locationList).toHaveTextContent('Voiture #44 · 2024 Dacia Logan · qté 1/3 · Matricule A-12345-B');
+    expect(locationList).toHaveTextContent('Position GPS indisponible');
   });
 
   it('shows a loading state while the first GPS response is pending', async () => {

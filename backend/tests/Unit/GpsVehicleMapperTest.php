@@ -145,7 +145,21 @@ test('assignable unit mapping excludes assigned units and preserves plate orderi
     $units = (new GpsVehicleMapper)->assignableUnits(new Collection([$car]));
 
     expect($units)->toBe([
-        ['car_id' => 19, 'unit_number' => 1, 'vehicle_name' => '2023 Kia Picanto', 'plate' => 'G-89012-H'],
-        ['car_id' => 19, 'unit_number' => 3, 'vehicle_name' => '2023 Kia Picanto', 'plate' => 'G-89014-H'],
+        [
+            'car_id' => 19,
+            'unit_number' => 1,
+            'quantity' => 3,
+            'vehicle_name' => '2023 Kia Picanto',
+            'plate' => 'G-89012-H',
+            'unit_label' => 'Voiture #19 · 2023 Kia Picanto · qté 1/3 · Matricule G-89012-H',
+        ],
+        [
+            'car_id' => 19,
+            'unit_number' => 3,
+            'quantity' => 3,
+            'vehicle_name' => '2023 Kia Picanto',
+            'plate' => 'G-89014-H',
+            'unit_label' => 'Voiture #19 · 2023 Kia Picanto · qté 3/3 · Matricule G-89014-H',
+        ],
     ]);
 });

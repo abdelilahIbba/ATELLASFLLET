@@ -276,8 +276,19 @@ export interface AdminGpsVehicle {
   vehicle_name: string;
   car_id: number | null;
   unit_number: number | null;
+  unit_count: number | null;
+  unit_identity: string | null;
   plate: string | null;
   linked: boolean;
+  in_location: boolean;
+  location_booking: {
+    booking_id: number;
+    client_name: string | null;
+    start_date: string | null;
+    end_date: string | null;
+    booking_status: string;
+    contract_number: string | null;
+  } | null;
   latitude: number | null;
   longitude: number | null;
   speed: number | null;
@@ -292,13 +303,41 @@ export interface AdminGpsVehicle {
 export interface AdminGpsAssignableUnit {
   car_id: number;
   unit_number: number;
+  quantity: number;
   vehicle_name: string;
   plate: string | null;
+  unit_label: string;
+}
+
+export interface AdminGpsLocationVehicle {
+  location_id: string;
+  booking_id: number;
+  car_id: number;
+  unit_number: number;
+  quantity: number;
+  vehicle_name: string;
+  plate: string | null;
+  unit_identity: string;
+  client_name: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  booking_status: string;
+  contract_number: string | null;
+  gps_device_id: string | null;
+  gps_available: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  speed: number | null;
+  odometer: number | null;
+  status: string | null;
+  reported_at: string | null;
+  is_stale: boolean | null;
 }
 
 export interface AdminGpsResponse {
   vehicles: AdminGpsVehicle[];
   assignable_units: AdminGpsAssignableUnit[];
+  location_vehicles: AdminGpsLocationVehicle[];
   fetched_at: string;
 }
 

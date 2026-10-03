@@ -21,6 +21,13 @@ interface LiveGpsVehicle {
 
 interface LiveGpsResponse {
   vehicles: LiveGpsVehicle[];
+  location_vehicles: Array<{
+    location_id: string;
+    unit_identity: string;
+    client_name: string | null;
+    gps_available: boolean;
+    odometer: number | null;
+  }>;
 }
 
 const repositoryRoot = resolve(process.cwd(), '..');
@@ -97,6 +104,19 @@ test('Docker GPS feed renders live voitures, kilométrage, and matching map mark
   expect(usedLiveSnapshot).toBe(true);
   await expect(page.locator('aside article')).toHaveCount(liveData.vehicles.length);
   await expect(page.locator('.leaflet-container')).toBeVisible();
+  await expect(page.getByLabel('Légende de la map')).toContainText('Voiture en location');
+  await expect(page.getByLabel('Légende de la map')).toContainText('GPS non associé');
+
+  const locationList = page.getByRole('region', { name: 'Voitures en location' });
+  await expect(locationList).toContainText(String(liveData.location_vehicles.length));
+  for (const locationVehicle of liveData.location_vehicles) {
+    await expect(locationList).toContainText(locationVehicle.unit_identity);
+    if (locationVehicle.client_name) await expect(locationList).toContainText(locationVehicle.client_name);
+    if (locationVehicle.gps_available && locationVehicle.odometer !== null) {
+      const mileage = new Intl.NumberFormat('fr-MA', { maximumFractionDigits: 2 }).format(locationVehicle.odometer);
+      await expect(locationList).toContainText(`Kilométrage ${mileage}`);
+    }
+  }
 
   const expectedMarkers = liveData.vehicles.filter(vehicle =>
     typeof vehicle.latitude === 'number' && typeof vehicle.longitude === 'number',

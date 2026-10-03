@@ -3,7 +3,8 @@ import { Activity, Car, Fuel, Gauge, Map as MapIcon, RefreshCw, Search, Unlink, 
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { LatLngBoundsExpression, LatLngExpression } from 'leaflet';
-import { adminGpsApi, type AdminGpsAssignableUnit, type AdminGpsVehicle } from '../../../services/api';
+import L from 'leaflet';
+import { adminGpsApi, type AdminGpsAssignableUnit, type AdminGpsLocationVehicle, type AdminGpsVehicle } from '../../../services/api';
 
 const REFRESH_INTERVAL_MS = 30_000;
 
@@ -26,6 +27,28 @@ const formatDate = (value: string | null): string =>
 
 const validLocation = (vehicle: AdminGpsVehicle): vehicle is AdminGpsVehicle & { latitude: number; longitude: number } =>
   vehicle.latitude !== null && vehicle.longitude !== null;
+
+type MarkerKind = 'location' | 'linked' | 'unlinked' | 'stale';
+
+const markerKind = (vehicle: AdminGpsVehicle): MarkerKind => {
+  if (vehicle.is_stale) return 'stale';
+  if (!vehicle.linked) return 'unlinked';
+  return vehicle.in_location ? 'location' : 'linked';
+};
+
+const markerColors: Record<MarkerKind, string> = {
+  location: '#16a34a',
+  linked: '#2563eb',
+  unlinked: '#d97706',
+  stale: '#64748b',
+};
+
+const vehicleMarkerIcon = (kind: MarkerKind): L.DivIcon => L.divIcon({
+  className: 'gps-vehicle-marker',
+  html: `<span style="display:block;width:16px;height:16px;border:2px solid #fff;border-radius:50%;background:${markerColors[kind]};box-shadow:0 1px 5px #334155;box-sizing:border-box"></span>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+});
 
 const MapViewport: React.FC<{ vehicles: AdminGpsVehicle[]; selected: AdminGpsVehicle | null }> = ({ vehicles, selected }) => {
   const map = useMap();
@@ -51,6 +74,7 @@ const MapViewport: React.FC<{ vehicles: AdminGpsVehicle[]; selected: AdminGpsVeh
 const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
   const [vehicles, setVehicles] = useState<AdminGpsVehicle[]>([]);
   const [assignableUnits, setAssignableUnits] = useState<AdminGpsAssignableUnit[]>([]);
+  const [locationVehicles, setLocationVehicles] = useState<AdminGpsLocationVehicle[]>([]);
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -75,6 +99,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
           const nextVehicles = Array.isArray(response.vehicles) ? response.vehicles : [];
           setVehicles(nextVehicles);
           setAssignableUnits(Array.isArray(response.assignable_units) ? response.assignable_units : []);
+          setLocationVehicles(Array.isArray(response.location_vehicles) ? response.location_vehicles : []);
           setFetchedAt(response.fetched_at ?? null);
           setError('');
           setSelectedDeviceId(current =>
@@ -186,6 +211,21 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
         </button>
       </header>
 
+      <div aria-label="Légende de la map" className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+        <span className="font-bold text-slate-800 dark:text-white">Légende</span>
+        {([
+          ['location', 'Voiture en location'],
+          ['linked', 'GPS associé · hors location'],
+          ['unlinked', 'GPS non associé'],
+          ['stale', 'Données GPS anciennes'],
+        ] as const).map(([kind, label]) => (
+          <span key={kind} className="inline-flex items-center gap-2">
+            <span aria-hidden="true" className="h-3.5 w-3.5 rounded-full border-2 border-white shadow" style={{ backgroundColor: markerColors[kind] }} />
+            {label}
+          </span>
+        ))}
+      </div>
+
       {error && (
         <div role="status" className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
           <span>Actualisation impossible. Les dernières données restent affichées. {error}</span>
@@ -220,8 +260,8 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                         <h3 className="truncate text-sm font-bold text-slate-900 dark:text-white">{vehicle.vehicle_name}</h3>
                         <p className="truncate text-xs text-slate-500">
                           {vehicle.linked
-                            ? [vehicle.plate, `GPS: ${vehicle.provider_name}`].filter(Boolean).join(' · ')
-                            : `Appareil ${vehicle.provider_device_id}`}
+                            ? `${vehicle.unit_identity} · GPS: ${vehicle.provider_name}`
+                            : `GPS: ${vehicle.provider_name} · Appareil ${vehicle.provider_device_id}`}
                         </p>
                       </div>
                       <span className={`shrink-0 rounded px-2 py-1 text-[10px] font-bold ${!vehicle.linked ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200' : vehicle.is_stale ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' : vehicle.is_moving ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200' : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'}`}>
@@ -247,7 +287,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                       <option value="">{assignableUnits.length ? 'Associer à une voiture…' : 'Aucune unité disponible'}</option>
                       {assignableUnits.map(unit => (
                         <option key={`${unit.car_id}:${unit.unit_number}`} value={`${unit.car_id}:${unit.unit_number}`}>
-                          {unit.vehicle_name} · Unité #{unit.unit_number}{unit.plate ? ` · ${unit.plate}` : ''}
+                          {unit.unit_label}
                         </option>
                       ))}
                     </select>
@@ -259,6 +299,33 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                   )}
                 </article>
               ))}
+
+              <section aria-label="Voitures en location" className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-700">
+                <div className="mb-2 flex items-center justify-between gap-2 px-1">
+                  <h3 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-200">Voitures en location</h3>
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">{locationVehicles.length}</span>
+                </div>
+                {locationVehicles.length === 0 ? (
+                  <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500 dark:bg-slate-800">Aucune voiture en location actuellement.</p>
+                ) : locationVehicles.map(locationVehicle => (
+                  <button
+                    key={locationVehicle.location_id}
+                    type="button"
+                    disabled={!locationVehicle.gps_device_id}
+                    onClick={() => locationVehicle.gps_device_id && setSelectedDeviceId(locationVehicle.gps_device_id)}
+                    className="mb-2 w-full rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-left hover:border-emerald-500 disabled:cursor-default dark:border-emerald-900/60 dark:bg-emerald-950/20"
+                  >
+                    <span className="block truncate text-xs font-bold text-slate-900 dark:text-white">{locationVehicle.unit_identity}</span>
+                    <span className="mt-1 block truncate text-[11px] text-slate-600 dark:text-slate-300">Client : {locationVehicle.client_name || 'N/D'}</span>
+                    <span className="block text-[11px] text-slate-500">Réservation #{locationVehicle.booking_id} · {locationVehicle.start_date || 'N/D'} → {locationVehicle.end_date || 'N/D'}</span>
+                    <span className={`mt-1 block text-[11px] font-semibold ${locationVehicle.gps_available ? locationVehicle.is_stale ? 'text-slate-500' : 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}`}>
+                      {locationVehicle.gps_available
+                        ? `GPS ${locationVehicle.is_stale ? 'ancien' : 'actif'} · Kilométrage ${formatNumber(locationVehicle.odometer)}`
+                        : 'Position GPS indisponible'}
+                    </span>
+                  </button>
+                ))}
+              </section>
             </div>
           </aside>
 
@@ -273,6 +340,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                 <Marker
                   key={vehicle.provider_device_id}
                   position={[vehicle.latitude, vehicle.longitude]}
+                  icon={vehicleMarkerIcon(markerKind(vehicle))}
                   eventHandlers={{ click: () => setSelectedDeviceId(vehicle.provider_device_id) }}
                 >
                   <Popup>
@@ -280,6 +348,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                       <strong>{vehicle.vehicle_name}</strong>
                       {!vehicle.linked && <p>GPS non associé à une voiture</p>}
                       {vehicle.plate && <p>{vehicle.plate}{vehicle.unit_number ? ` · Unité #${vehicle.unit_number}` : ''}</p>}
+                      {vehicle.unit_identity && <p>{vehicle.unit_identity}</p>}
                       {vehicle.linked && <p>Appareil GPS : {vehicle.provider_name}</p>}
                       <p>Vitesse API : {formatNumber(vehicle.speed)}</p>
                       <p>Kilométrage : {formatNumber(vehicle.odometer)}</p>
@@ -300,9 +369,14 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                 <p className="truncate text-sm font-bold text-slate-900 dark:text-white">{selectedVehicle.vehicle_name}</p>
                 <p className="mt-0.5 truncate text-xs text-slate-500">
                   {selectedVehicle.linked
-                    ? [selectedVehicle.plate, `GPS: ${selectedVehicle.provider_name}`].filter(Boolean).join(' · ')
-                    : selectedVehicle.provider_name}
+                    ? `${selectedVehicle.unit_identity} · GPS: ${selectedVehicle.provider_name}`
+                    : `GPS: ${selectedVehicle.provider_name} · Appareil ${selectedVehicle.provider_device_id}`}
                 </p>
+                {selectedVehicle.location_booking && (
+                  <p className="mt-1 truncate text-[11px] text-emerald-700 dark:text-emerald-300">
+                    En location · {selectedVehicle.location_booking.client_name || 'Client N/D'} · Réservation #{selectedVehicle.location_booking.booking_id}
+                  </p>
+                )}
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <div className="rounded-md bg-slate-100 p-2 dark:bg-slate-800"><p className="text-[10px] font-bold uppercase text-slate-500">Kilométrage</p><p className="text-sm font-bold text-slate-900 dark:text-white">{formatNumber(selectedVehicle.odometer)}</p><p className="text-[10px] text-slate-400">Valeur API</p></div>
                   <div className="rounded-md bg-slate-100 p-2 dark:bg-slate-800"><p className="text-[10px] font-bold uppercase text-slate-500">Vitesse</p><p className="text-sm font-bold text-slate-900 dark:text-white">{formatNumber(selectedVehicle.speed)}</p><p className="text-[10px] text-slate-400">Valeur API</p></div>

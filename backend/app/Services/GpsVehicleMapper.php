@@ -36,6 +36,10 @@ class GpsVehicleMapper
             'vehicle_name' => $car?->full_name ?: ($providerName ?: 'Voiture GPS'),
             'car_id' => $car?->id,
             'unit_number' => $association?->unit_number,
+            'unit_count' => $car ? max(1, (int) $car->quantity) : null,
+            'unit_identity' => $car && $association
+                ? $this->unitIdentity($car, (int) $association->unit_number)
+                : null,
             'plate' => $car && $association ? $this->unitPlate($car, (int) $association->unit_number) : null,
             'linked' => $car !== null,
             'latitude' => $latitude,
@@ -69,8 +73,10 @@ class GpsVehicleMapper
                 $units[] = [
                     'car_id' => (int) $car->id,
                     'unit_number' => $unit,
+                    'quantity' => max(1, (int) $car->quantity),
                     'vehicle_name' => $car->full_name,
                     'plate' => $this->unitPlate($car, $unit),
+                    'unit_label' => $this->unitIdentity($car, $unit),
                 ];
             }
 
@@ -78,12 +84,21 @@ class GpsVehicleMapper
         })->values()->all();
     }
 
-    private function unitPlate(Car $car, int $unitNumber): ?string
+    public function unitPlate(Car $car, int $unitNumber): ?string
     {
         $plates = $car->unit_plates ?? [];
         $plate = $plates[$unitNumber - 1] ?? null;
 
         return is_string($plate) && $plate !== '' ? $plate : ($unitNumber === 1 ? $car->plate : null);
+    }
+
+    private function unitIdentity(Car $car, int $unitNumber): string
+    {
+        $quantity = max(1, (int) $car->quantity);
+        $plate = $this->unitPlate($car, $unitNumber);
+        $matricule = $plate ? 'Matricule ' . $plate : 'Matricule non renseigné';
+
+        return "Voiture #{$car->id} · {$car->full_name} · qté {$unitNumber}/{$quantity} · {$matricule}";
     }
 
     private function number(mixed $value): ?float

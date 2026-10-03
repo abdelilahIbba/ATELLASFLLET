@@ -2,6 +2,8 @@
 
 use App\Models\Car;
 use App\Models\CarGpsTracker;
+use App\Models\Booking;
+use App\Models\Contract;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\QueryException;
@@ -140,6 +142,7 @@ test('GPS map response handles empty provider lists and unlinked devices', funct
         ->assertExactJson([
             'vehicles' => [],
             'assignable_units' => [],
+            'location_vehicles' => [],
             'fetched_at' => now()->toIso8601String(),
         ]);
 });
@@ -314,4 +317,114 @@ test('large GPS feeds return all devices with a bounded number of database queri
 
     $response->assertJsonCount(250, 'vehicles')->assertJsonCount(120, 'assignable_units');
     expect($queryCount)->toBeLessThan(20);
+});
+
+test('same-marque and same-model voitures have distinct qté and matricule association choices', function () {
+    $admin = gpsTrackingAdmin();
+    $firstCar = Car::factory()->create([
+        'make' => 'Dacia', 'model' => 'Logan', 'year' => 2023,
+        'quantity' => 2, 'plate' => 'A-12345-B',
+        'unit_plates' => ['A-12345-B', 'B-12345-B'],
+    ]);
+    $secondCar = Car::factory()->create([
+        'make' => 'Dacia', 'model' => 'Logan', 'year' => 2023,
+        'quantity' => 2, 'plate' => 'C-12345-D',
+        'unit_plates' => ['C-12345-D', 'D-12345-D'],
+    ]);
+    fakeAlloGpsDevices([]);
+
+    $response = $this->actingAs($admin)->getJson('/api/admin/gps/vehicles')->assertOk();
+    $choices = collect($response->json('assignable_units'));
+    $sameModelChoices = $choices->whereIn('car_id', [$firstCar->id, $secondCar->id])->values();
+
+    expect($sameModelChoices)->toHaveCount(4)
+        ->and($sameModelChoices->pluck('unit_label')->unique())->toHaveCount(4)
+        ->and($sameModelChoices->pluck('unit_label')->all())->toContain(
+            "Voiture #{$firstCar->id} · 2023 Dacia Logan · qté 2/2 · Matricule B-12345-B",
+            "Voiture #{$secondCar->id} · 2023 Dacia Logan · qté 2/2 · Matricule D-12345-D",
+        );
+});
+
+test('location list includes only current active bookings or active contracts and attaches matching GPS data', function () {
+    $admin = gpsTrackingAdmin();
+    $client = User::factory()->create(['role' => 'client']);
+    $car = Car::factory()->create([
+        'make' => 'Dacia', 'model' => 'Logan', 'year' => 2023,
+        'quantity' => 3, 'plate' => 'A-12345-B',
+        'unit_plates' => ['A-12345-B', 'B-12345-B', 'C-12345-C'],
+    ]);
+
+    $activeBooking = Booking::factory()->create([
+        'user_id' => $client->id,
+        'car_id' => $car->id,
+        'unit_number' => 2,
+        'start_date' => today()->subDay()->toDateString(),
+        'end_date' => today()->addDays(2)->toDateString(),
+        'status' => 'active',
+    ]);
+    $activeContractBooking = Booking::factory()->create([
+        'user_id' => $client->id,
+        'car_id' => $car->id,
+        'unit_number' => 1,
+        'start_date' => today()->toDateString(),
+        'end_date' => today()->addDays(3)->toDateString(),
+        'status' => 'confirmed',
+    ]);
+    Contract::create([
+        'booking_id' => $activeContractBooking->id,
+        'user_id' => $client->id,
+        'car_id' => $car->id,
+        'client_name' => $client->name,
+        'vehicle_name' => $car->full_name,
+        'vehicle_plate' => 'A-12345-B',
+        'unit_number' => 1,
+        'start_date' => today()->toDateString(),
+        'end_date' => today()->addDays(3)->toDateString(),
+        'daily_rate' => 300,
+        'total_amount' => 1200,
+        'status' => 'active',
+    ]);
+    Booking::factory()->create([
+        'user_id' => $client->id,
+        'car_id' => $car->id,
+        'unit_number' => 3,
+        'start_date' => today()->addDay()->toDateString(),
+        'end_date' => today()->addDays(4)->toDateString(),
+        'status' => 'confirmed',
+    ]);
+    Booking::factory()->create([
+        'user_id' => $client->id,
+        'car_id' => $car->id,
+        'unit_number' => 3,
+        'start_date' => today()->subDays(4)->toDateString(),
+        'end_date' => today()->subDay()->toDateString(),
+        'status' => 'active',
+    ]);
+    CarGpsTracker::create([
+        'car_id' => $car->id,
+        'unit_number' => 2,
+        'provider_device_id' => 'gps-unit-2',
+        'tracker_key' => 'gps-unit-2-secret',
+        'provider_name' => 'B-12345-B Dacia Logan',
+    ]);
+    fakeAlloGpsDevices([gpsDevice('gps-unit-2', 'B-12345-B Dacia Logan')]);
+
+    $response = $this->actingAs($admin)->getJson('/api/admin/gps/vehicles')->assertOk();
+
+    $response->assertJsonCount(2, 'location_vehicles')
+        ->assertJsonPath('location_vehicles.0.booking_id', $activeBooking->id)
+        ->assertJsonPath('location_vehicles.0.car_id', $car->id)
+        ->assertJsonPath('location_vehicles.0.unit_number', 2)
+        ->assertJsonPath('location_vehicles.0.plate', 'B-12345-B')
+        ->assertJsonPath('location_vehicles.0.client_name', $client->name)
+        ->assertJsonPath('location_vehicles.0.gps_device_id', 'gps-unit-2')
+        ->assertJsonPath('location_vehicles.0.gps_available', true)
+        ->assertJsonPath('location_vehicles.0.odometer', 41796.37)
+        ->assertJsonPath('location_vehicles.1.booking_id', $activeContractBooking->id)
+        ->assertJsonPath('location_vehicles.1.unit_number', 1)
+        ->assertJsonPath('location_vehicles.1.contract_number', Contract::where('booking_id', $activeContractBooking->id)->value('contract_number'))
+        ->assertJsonPath('location_vehicles.1.gps_device_id', null)
+        ->assertJsonPath('location_vehicles.1.gps_available', false)
+        ->assertJsonPath('vehicles.0.in_location', true)
+        ->assertJsonPath('vehicles.0.location_booking.booking_id', $activeBooking->id);
 });
