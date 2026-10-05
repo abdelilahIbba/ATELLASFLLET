@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Printer, Download, X, RefreshCw, FileText } from 'lucide-react';
+import { X, FileText } from 'lucide-react';
 import type { Contract } from './ContractManagement';
 
 interface RlvContractModalProps {
@@ -9,8 +9,6 @@ interface RlvContractModalProps {
 }
 
 const RlvContractModal: React.FC<RlvContractModalProps> = ({ contract, onClose }) => {
-  const [downloadingPdf, setDownloadingPdf] = useState(false);
-  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState('');
   const [previewError, setPreviewError] = useState('');
   const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? '/api';
@@ -48,7 +46,6 @@ const RlvContractModal: React.FC<RlvContractModalProps> = ({ contract, onClose }
     let objectUrl = '';
 
     const loadPreview = async () => {
-      setPdfBlob(null);
       setPdfPreviewUrl('');
       setPreviewError('');
 
@@ -56,7 +53,6 @@ const RlvContractModal: React.FC<RlvContractModalProps> = ({ contract, onClose }
         const blob = await fetchContractPdf();
         if (!cancelled) {
           objectUrl = URL.createObjectURL(blob);
-          setPdfBlob(blob);
           setPdfPreviewUrl(objectUrl);
         }
       } catch (err) {
@@ -76,49 +72,6 @@ const RlvContractModal: React.FC<RlvContractModalProps> = ({ contract, onClose }
       }
     };
   }, [apiBase, contract.id]);
-
-  const handlePrint = () => {
-    if (!pdfPreviewUrl) {
-      alert('Apercu PDF du contrat en cours de chargement.');
-      return;
-    }
-
-    const printWindow = window.open(pdfPreviewUrl, '_blank', 'width=1000,height=900,scrollbars=yes');
-    if (!printWindow) {
-      alert('Veuillez autoriser les popups pour imprimer.');
-      return;
-    }
-
-    setTimeout(() => {
-      printWindow.focus();
-      printWindow.print();
-    }, 600);
-  };
-
-  const handleDownloadPdf = async () => {
-    setDownloadingPdf(true);
-
-    try {
-      const downloadBlob = pdfBlob ?? await fetchContractPdf();
-      const objUrl = URL.createObjectURL(downloadBlob);
-      const link = document.createElement('a');
-      link.href = objUrl;
-      link.download = `contrat-rlv-${contract.contract_number}.pdf`;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(objUrl);
-      }, 1000);
-    } catch (err: any) {
-      console.error('PDF download network error:', err);
-      alert('Erreur lors du telechargement PDF : ' + (err?.message ?? 'Erreur inconnue'));
-    } finally {
-      setDownloadingPdf(false);
-    }
-  };
 
   return (
     <AnimatePresence>
@@ -150,29 +103,6 @@ const RlvContractModal: React.FC<RlvContractModalProps> = ({ contract, onClose }
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                onClick={handlePrint}
-                className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-sm"
-                title="Imprimer au format A4"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Imprimer (عقد RLV)</span>
-              </button>
-
-              <button
-                onClick={handleDownloadPdf}
-                disabled={downloadingPdf}
-                className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm disabled:opacity-50"
-                title="Telecharger le document PDF"
-              >
-                {downloadingPdf ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4" />
-                )}
-                <span>Telecharger PDF</span>
-              </button>
-
               <button
                 onClick={onClose}
                 className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 transition-colors ml-1"
