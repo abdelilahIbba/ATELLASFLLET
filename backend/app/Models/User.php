@@ -75,14 +75,105 @@ class User extends Authenticatable
             'passport_issued_date' => 'date',
             'demo_permissions'  => 'array',
             'demo_expires_at'   => 'date',
+            'is_active'         => 'boolean',
         ];
     }
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            $legacy = $user->role ?? 'client';
+            if (in_array($legacy, ['admin', 'demo_admin'], true)) {
+                $user->user_type ??= 'staff';
+                return;
+            }
+            if ($user->user_type === null || $user->user_type === 'client') {
+                $user->user_type = 'client';
+                $user->role_id ??= Role::client()?->id;
+            }
+        });
+    }
+
     public function hasRole($roles): bool
     {
         if (is_array($roles)) {
             return in_array($this->role, $roles);
         }
         return $this->role === $roles;
+    }
+
+    public function assignedRole()
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function isActive(): bool
+    {
+        return $this->is_active !== false;
+    }
+
+    /** Legacy admins without role_id keep full access (backward compatibility). */
+    public function isSuperAdmin(): bool
+    {
+        if ($this->role !== 'admin') {
+            return false;
+        }
+        if ($this->role_id === null) {
+            return true;
+        }
+        return $this->assignedRole?->slug === Role::SUPER_ADMIN;
+    }
+
+    public function hasAdminAccess(): bool
+    {
+        if (!$this->isActive()) {
+            return false;
+        }
+        if ($this->role === 'demo_admin') {
+            return true;
+        }
+        if ($this->role !== 'admin') {
+            return false;
+        }
+        return $this->role_id === null || (bool) $this->assignedRole?->admin_access;
+    }
+
+    /** @return list<string> */
+    public function permissionKeys(): array
+    {
+        if ($this->isSuperAdmin()) {
+            return \App\Support\PermissionCatalog::keys();
+        }
+        if ($this->role === 'demo_admin') {
+            $keys = [];
+            foreach (\App\Support\PermissionCatalog::pagesForTabs((array) $this->demo_permissions) as $page) {
+                $keys[] = "admin.$page.view";
+            }
+            return $keys;
+        }
+        if ($this->role_id === null) {
+            return array_keys(\App\Support\PermissionCatalog::WEBSITE);
+        }
+        return $this->assignedRole?->permissions->pluck('key')->all() ?? [];
+    }
+
+    public function hasPermission(string $key): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+        return in_array($key, $this->permissionKeys(), true);
+    }
+
+    /** Pages the user can at least view in the admin panel. */
+    public function adminPages(): array
+    {
+        $pages = [];
+        foreach ($this->permissionKeys() as $key) {
+            if (preg_match('/^admin\.([a-z_]+)\.view$/', $key, $m)) {
+                $pages[] = $m[1];
+            }
+        }
+        return array_values(array_unique($pages));
     }
 
     public function bookings()

@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Role;
 use App\Models\Setting;
+use App\Support\PermissionCatalog;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -25,8 +27,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
         
-        // Ensure admin role is set since it's not fillable by default
-        $admin->role = 'admin';
+        PermissionCatalog::sync();
+
+        $admin->role      = 'admin';
+        $admin->user_type = 'staff';
+        $admin->role_id   = Role::superAdmin()?->id;
+        $admin->is_active = true;
         $admin->save();
 
         // ── Reservation pricing settings (admin-configurable) ──

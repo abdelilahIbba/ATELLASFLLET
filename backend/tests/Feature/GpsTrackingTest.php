@@ -311,6 +311,7 @@ test('admin can associate a listed GPS device with a specific voiture unit', fun
 });
 
 test('GPS map response handles empty provider lists and unlinked devices', function () {
+    config(['services.allogps.visible_matricules' => '']);
     $admin = gpsTrackingAdmin();
     fakeAlloGpsDevices([]);
 

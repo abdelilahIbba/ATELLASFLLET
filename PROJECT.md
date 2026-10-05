@@ -45,6 +45,15 @@ The retained visibility endpoint and GPS_VISIBLE_MATRICULES are legacy database-
 ### Client PC
 Copy the updated project without local secrets or database volumes. Install Docker Desktop, configure that client's .env and .env.gps, start the stack, and follow the same backup/audit/migration/approval steps. Import only their verified records, never the development MySQL volume. Set NGINX_PORT=8080 in .env to retain the route. If using native PHP instead, run the same artisan commands from backend with that client's database configuration. Never run migrate:fresh on a real database.
 
+### User Management (RBAC)
+UI: `/admin/settings` → Gestion des utilisateurs (tabs: Utilisateurs admin, Clients, Roles, Audit).
+Endpoints (`/api/admin`, backend-enforced via `permission:<page>[,<action>]`): `users` (CRUD + `{id}/activate`, `{id}/deactivate`, `{id}/send-reset-link`), `roles` (CRUD; delete with users needs `reassign_to`), `permissions` (catalog), `clients` (read-only, search/filters, réservations), `audit-logs`. Website routes use `website:<key>`.
+Apply on any PC (back up first with mysqldump):
+1. `docker compose up -d --build`
+2. `docker compose exec backend php artisan migrate --force` (backfills `user_type` and `role_id` for existing users; logins unchanged)
+3. Optional: `docker compose exec backend php artisan db:seed --force`. The migration already syncs roles and permissions, and this command resets the seeded admin account's password.
+4. `docker compose exec backend php artisan optimize:clear`
+
 ### Source inventory (2026-10-04, before removal)
 | Source | Fake voiture / identifier | Runtime relevance |
 | --- | --- | --- |
@@ -84,8 +93,12 @@ Counts are a point-in-time Docker inventory, not deletion authorization. IDs 1-6
 - A failed GPS API request remains an error; database records and frontend fixtures are never used as a location fallback.
 - Cleanup is opt-in, backed up, dependency-aware and never cascades business documents.
 - Database deletion requires explicit owner confirmation; none was performed during implementation.
+- RBAC: one `role_id` per user. Roles carry `admin_access`/`website_access` plus granular `admin.<page>.<action>` and `website.*` permissions from `PermissionCatalog`.
+- `user_type` (staff/client) isolates the two lists. Clients are created only through website register/login and never get admin access implicitly.
+- Super Admin and Client roles are protected. The last active Super Admin cannot be removed. Users cannot grant permissions they lack. Sensitive changes are written to `audit_logs`.
 
 ## Changelog
+- 2026-10-05: Added the User Management module (staff users, client list, custom roles, granular backend-enforced permissions, audit log) in /admin/settings.
 - 2026-10-04: Replaced database-gated GPS display with the complete live API fleet; removed local visibility controls from the GPS page and retained only verified optional association metadata.
 - 2026-10-05: Added persistent, one-to-one API device-to-matricule association choices for live GPS voitures without requiring local car records.
 - 2026-10-04: Added real-only GPS eligibility, environment whitelist, reversible visibility and safe cleanup/audit workflow; removed static voiture fallbacks and automatic sample seeding.

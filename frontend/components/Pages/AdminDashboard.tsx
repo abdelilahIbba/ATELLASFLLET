@@ -506,8 +506,15 @@ const ModalContainer: React.FC<ModalContainerProps> = ({ title, children, onClos
     </div>
 );
 
-type SettingsSubTab = 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts';
-const VALID_SETTINGS_TABS: SettingsSubTab[] = ['general','notifications','security','team','demo','roles','pickup-points','contracts'];
+type SettingsSubTab = 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts' | 'users';
+const VALID_SETTINGS_TABS: SettingsSubTab[] = ['general','notifications','security','team','demo','roles','pickup-points','contracts','users'];
+
+const TAB_PAGES: Record<string, string[]> = {
+  overview: ['dashboard'], analytics: ['analytics'], fleet: ['cars'], infractions: ['fines'],
+  bookings: ['bookings'], contracts: ['contracts', 'invoices'], expenses: ['expenses'], clients: ['clients'],
+  gps: ['gps'], messages: ['messages'], reviews: ['reviews'], blog: ['blogs'],
+  settings: ['settings', 'users', 'roles', 'pickup_points', 'demo'],
+};
 
 type AdminTab = 'overview' | 'fleet' | 'clients' | 'bookings' | 'gps' | 'reviews' | 'blog' | 'messages' | 'settings' | 'analytics' | 'infractions' | 'contracts' | 'expenses';
 const VALID_ADMIN_TABS: AdminTab[] = ['overview','fleet','clients','bookings','gps','reviews','blog','messages','settings','analytics','infractions','contracts','expenses'];
@@ -550,6 +557,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   const setActiveTab = (t: AdminTab) => adminNav(`/admin/${t}`);
   const settingsTab: SettingsSubTab = (subtab && VALID_SETTINGS_TABS.includes(subtab as SettingsSubTab)) ? (subtab as SettingsSubTab) : 'general';
   const setSettingsTab = (t: SettingsSubTab) => adminNav(`/admin/settings/${t}`);
+
+  const canTab = (id: string): boolean => {
+    if (currentUser?.role === 'demo_admin') return (currentUser.demoPermissions ?? []).includes(id);
+    if (!currentUser?.adminPages || currentUser.isSuperAdmin) return true;
+    return (TAB_PAGES[id] ?? [id]).some(p => currentUser.adminPages!.includes(p));
+  };
+
+  useEffect(() => {
+    if (canTab(activeTab)) return;
+    const first = VALID_ADMIN_TABS.find(t => canTab(t));
+    if (first) adminNav(`/admin/${first}`, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, currentUser]);
   const [selectedItem, setSelectedItem] = useState<any | null>(null); 
   const [modalType, setModalType] = useState<string | null>(null);
   
@@ -1306,8 +1326,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
              <nav className="space-y-1 flex-grow overflow-y-auto custom-scrollbar">
                 {/* Filter tabs for demo_admin — only show allowed ones */}
                 {(() => {
-                  const allowed = currentUser?.role === 'demo_admin' ? (currentUser.demoPermissions ?? []) : null;
-                  const can = (id: string) => allowed === null || allowed.includes(id);
+                  const can = canTab;
                   return (
                     <>
                       {can('overview')     && <TabButton id="overview"     icon={LayoutDashboard} label="Tableau de Bord" />}
@@ -1329,7 +1348,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
 
              <div className="mt-auto pt-4 border-t border-slate-100 dark:border-white/5 space-y-2">
                 {/* Only real admins can access system settings */}
-                {currentUser?.role !== 'demo_admin' && (
+                {currentUser?.role !== 'demo_admin' && canTab('settings') && (
                   <button 
                       onClick={() => adminNav('/admin/settings')}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${activeTab === 'settings' ? 'bg-brand-blue/10 text-brand-blue font-bold shadow-sm' : 'text-slate-500 hover:text-brand-navy dark:hover:text-white'}`}

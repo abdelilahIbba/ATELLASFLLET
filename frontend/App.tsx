@@ -62,6 +62,13 @@ function buildUserInfo(user: {
   avatar?: string | null;
   demo_permissions?: string[] | null;
   demo_expires_at?: string | null;
+  permissions?: string[] | null;
+  admin_pages?: unknown;
+  role_name?: string | null;
+  role_slug?: string | null;
+  user_type?: 'staff' | 'client' | null;
+  admin_access?: boolean | null;
+  is_super_admin?: boolean | null;
 }): UserInfo {
   const parts = (user.name ?? '').trim().split(' ').filter(Boolean);
 
@@ -74,7 +81,27 @@ function buildUserInfo(user: {
     accessKey: `ID-${user.id}`,
     demoPermissions: user.demo_permissions ?? undefined,
     demoExpiresAt: user.demo_expires_at ?? undefined,
+    permissions: user.permissions ?? undefined,
+    adminPages: normalizeAdminPages(user.admin_pages),
+    roleName: user.role_name ?? undefined,
+    roleSlug: user.role_slug ?? undefined,
+    userType: user.user_type ?? undefined,
+    adminAccess: user.admin_access ?? undefined,
+    isSuperAdmin: user.is_super_admin ?? undefined,
   };
+}
+
+function normalizeAdminPages(pages: unknown): string[] | undefined {
+  if (!Array.isArray(pages)) return undefined;
+  return pages
+    .map((p) => (typeof p === 'string' ? p : (p as { slug?: string })?.slug))
+    .filter((p): p is string => typeof p === 'string');
+}
+
+export function canAccessAdmin(user: UserInfo | null): boolean {
+  if (!user) return false;
+  if (user.adminAccess !== undefined) return user.adminAccess;
+  return user.role === 'admin' || user.role === 'demo_admin';
 }
 
 const App: React.FC = () => {
@@ -142,7 +169,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isAuthReady) return;
 
-    if (location.pathname.startsWith('/admin') && (!currentUser || !['admin', 'demo_admin'].includes(currentUser.role))) {
+    if (location.pathname.startsWith('/admin') && (!currentUser || !canAccessAdmin(currentUser))) {
       navigate('/', { replace: true });
     }
   }, [isAuthReady, location.pathname, currentUser, navigate]);
@@ -191,7 +218,7 @@ const App: React.FC = () => {
 
   const handleLoginClick = () => {
     if (currentUser) {
-        if (currentUser.role === 'admin' || currentUser.role === 'demo_admin') {
+        if (canAccessAdmin(currentUser)) {
             handleNavigation('admin');
         } else {
             handleNavigation('home');
@@ -216,8 +243,8 @@ const App: React.FC = () => {
         console.warn('[Auth] No resp or no user in response');
         return false;
       }
-      const isAdminRole = resp.user.role === 'admin' || resp.user.role === 'demo_admin';
-      if ((role === 'admin' && !isAdminRole) || (role === 'client' && resp.user.role !== 'client')) {
+      const isAdminRole = resp.user.admin_access !== undefined ? !!resp.user.admin_access : (resp.user.role === 'admin' || resp.user.role === 'demo_admin');
+      if ((role === 'admin' && !isAdminRole) || (role === 'client' && isAdminRole)) {
         console.warn(`[Auth] Role mismatch: API returned "${resp.user.role}", tab expects "${role}"`);
         return false;
       }
@@ -228,12 +255,12 @@ const App: React.FC = () => {
       localStorage.setItem('currentUser', JSON.stringify(userInfo));
       setCurrentUser(userInfo);
 
-      if (resp.user.role === 'admin' || resp.user.role === 'demo_admin') {
+      if (isAdminRole) {
         navigate('/admin');
       }
       setIsAuthOpen(false);
       // Open pending booking if user initiated it before logging in
-      if (pendingBookingAfterAuth && resp.user.role !== 'admin' && resp.user.role !== 'demo_admin') {
+      if (pendingBookingAfterAuth && !isAdminRole) {
         setPendingBookingAfterAuth(false);
         setIsBookingOpen(true);
       }
@@ -406,7 +433,7 @@ const App: React.FC = () => {
               element={
                 !isAuthReady
                   ? null
-                  : (currentUser?.role === 'admin' || currentUser?.role === 'demo_admin')
+                  : canAccessAdmin(currentUser)
                   ? <AdminDashboard
                       isDark={isDark}
                       toggleTheme={toggleTheme}

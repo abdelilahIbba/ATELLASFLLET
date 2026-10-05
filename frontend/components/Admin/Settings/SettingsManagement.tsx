@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import RoleManagement from './RoleManagement';
+import UserManagement from './UserManagement';
 import PickupPointsManager from './PickupPointsManager';
 import { adminSettingsApi, adminDemoApi, DemoAccountResource } from '../../../services/api';
 import {
@@ -40,6 +41,7 @@ import {
   ShieldCheck,
   Edit3,
   TimerReset,
+  Users,
 } from 'lucide-react';
 
 interface TeamMember {
@@ -64,8 +66,8 @@ interface DemoAccount {
 }
 
 interface SettingsManagementProps {
-  activeTab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts';
-  onTabChange: (tab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts') => void;
+  activeTab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts' | 'users';
+  onTabChange: (tab: 'general' | 'notifications' | 'security' | 'team' | 'demo' | 'roles' | 'pickup-points' | 'contracts' | 'users') => void;
 }
 
 // All modules available for demo access
@@ -402,6 +404,7 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
                 { id: 'general', label: 'Général & Marque', icon: Building },
                 { id: 'notifications', label: 'Notifications', icon: Bell },
                 { id: 'security', label: 'Sécurité & Accès', icon: Shield },
+                { id: 'users', label: 'Gestion des utilisateurs', icon: Users },
                 { id: 'roles', label: 'Rôles & Permissions', icon: Lock },
                 { id: 'team', label: "Gestion d'Équipe", icon: UserPlus },
                 { id: 'demo', label: 'Accès Démo', icon: Clock },
@@ -1079,6 +1082,13 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* USER MANAGEMENT TAB */}
+            {activeTab === 'users' && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <UserManagement />
               </div>
             )}
 

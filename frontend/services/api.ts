@@ -144,6 +144,9 @@ export interface AuthResponse {
     phone?: string | null;
     national_id?: string | null;
     driver_license_number?: string | null;
+    user_type?: 'staff' | 'client';
+    admin_access?: boolean;
+    permissions?: string[];
   };
 }
 
@@ -542,6 +545,149 @@ export interface AnalyticsResponse {
 export const adminAnalyticsApi = {
   /** GET /api/admin/analytics — real fleet/booking statistics */
   get: () => api.get<AnalyticsResponse>('/admin/analytics'),
+};
+
+// ---------------------------------------------------------------------------
+// User management (staff users, client accounts, roles, audit log)
+// ---------------------------------------------------------------------------
+type QueryParams = Record<string, string | number | boolean | undefined | null>;
+const qs = (params?: QueryParams): string => {
+  if (!params) return '';
+  const clean: Record<string, string> = {};
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== '') clean[k] = String(v);
+  });
+  const s = new URLSearchParams(clean).toString();
+  return s ? `?${s}` : '';
+};
+
+export interface Paginated<T> {
+  data: T[];
+  meta?: { current_page: number; last_page: number; per_page: number; total: number };
+}
+
+export interface ManagedUser {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  role: string;
+  role_id: number | null;
+  role_name?: string | null;
+  role_slug?: string | null;
+  user_type?: 'staff' | 'client';
+  is_active: boolean;
+  is_super_admin?: boolean;
+  admin_access?: boolean;
+  permissions?: string[];
+  admin_pages?: string[];
+  status?: string;
+  kyc_status?: string;
+  created_at?: string;
+}
+
+export interface StaffUserPayload {
+  name: string;
+  email: string;
+  phone?: string;
+  password?: string;
+  role_id: number;
+}
+
+export const userManagementApi = {
+  list: (params?: QueryParams) => api.get<Paginated<ManagedUser>>(`/admin/users${qs(params)}`),
+  create: (payload: StaffUserPayload) =>
+    api.post<{ message: string; reset_link_sent: boolean; data: ManagedUser }>('/admin/users', payload),
+  update: (id: number, payload: Partial<StaffUserPayload>) =>
+    api.put<{ data: ManagedUser }>(`/admin/users/${id}`, payload),
+  remove: (id: number) => api.delete<{ message: string }>(`/admin/users/${id}`),
+  activate: (id: number) => api.patch<{ data: ManagedUser }>(`/admin/users/${id}/activate`, {}),
+  deactivate: (id: number) => api.patch<{ data: ManagedUser }>(`/admin/users/${id}/deactivate`, {}),
+  sendResetLink: (id: number) => api.post<{ message: string }>(`/admin/users/${id}/send-reset-link`, {}),
+};
+
+export interface ClientAccount {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  status?: string;
+  kyc_status?: string;
+  is_active: boolean;
+  bookings_count: number;
+  total_spent: number;
+  created_at?: string;
+}
+
+export interface ClientBooking {
+  id: number;
+  status: string;
+  start_date?: string;
+  end_date?: string;
+  amount?: number | string | null;
+  car?: string | null;
+  created_at?: string;
+}
+
+export const clientAccountsApi = {
+  list: (params?: QueryParams) => api.get<Paginated<ClientAccount>>(`/admin/client-accounts${qs(params)}`),
+  show: (id: number) =>
+    api.get<{ data: { client: ClientAccount; bookings: ClientBooking[] } }>(`/admin/client-accounts/${id}`),
+  promote: (id: number, roleId: number) =>
+    api.post<{ message: string; data: ManagedUser }>(`/admin/client-accounts/${id}/promote`, { role_id: roleId }),
+};
+
+export interface RoleRecord {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  is_system: boolean;
+  is_protected: boolean;
+  admin_access: boolean;
+  website_access: boolean;
+  users_count: number;
+  permissions: string[];
+  created_at?: string;
+}
+
+export interface RolePayload {
+  name: string;
+  description?: string;
+  admin_access: boolean;
+  website_access: boolean;
+  permissions: string[];
+}
+
+export interface PermissionCatalogResponse {
+  actions: string[];
+  admin: { slug: string; label: string; actions: { action: string; key: string }[] }[];
+  website: { key: string; label: string }[];
+  granted: string[];
+}
+
+export const rolesApi = {
+  list: () => api.get<{ data: RoleRecord[] }>('/admin/roles'),
+  catalog: () => api.get<{ data: PermissionCatalogResponse }>('/admin/permissions'),
+  create: (payload: RolePayload) => api.post<{ data: RoleRecord }>('/admin/roles', payload),
+  update: (id: number, payload: RolePayload) => api.put<{ data: RoleRecord }>(`/admin/roles/${id}`, payload),
+  remove: (id: number, reassignTo?: number) =>
+    api.delete<{ message: string }>(`/admin/roles/${id}${qs({ reassign_to: reassignTo })}`),
+};
+
+export interface AuditLogEntry {
+  id: number;
+  action: string;
+  target_type?: string | null;
+  target_id?: number | null;
+  meta?: Record<string, unknown> | null;
+  ip?: string | null;
+  actor?: { id: number; name: string; email: string } | null;
+  created_at: string;
+}
+
+export const auditLogApi = {
+  list: (params?: QueryParams) => api.get<Paginated<AuditLogEntry>>(`/admin/audit-logs${qs(params)}`),
 };
 
 // ---------------------------------------------------------------------------

@@ -38,6 +38,31 @@ class UserFactory extends Factory
         ];
     }
 
+    public function staff(?\App\Models\Role $role = null): static
+    {
+        return $this->state(fn () => [
+            'role'      => 'admin',
+            'user_type' => 'staff',
+            'role_id'   => $role?->id ?? \App\Models\Role::where('slug', 'employe-agence')->value('id'),
+            'is_active' => true,
+        ]);
+    }
+
+    public function superAdmin(): static
+    {
+        return $this->state(fn () => [
+            'role'      => 'admin',
+            'user_type' => 'staff',
+            'role_id'   => \App\Models\Role::superAdmin()?->id,
+            'is_active' => true,
+        ]);
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn () => ['is_active' => false]);
+    }
+
     /**
      * Indicate that the model's email address should be unverified.
      */

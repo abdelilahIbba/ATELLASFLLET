@@ -53,6 +53,10 @@ class AuthController extends Controller
                 ], 401);
             }
 
+            if (!$user->isActive()) {
+                return response()->json(['message' => 'Ce compte est désactivé.'], 403);
+            }
+
             Log::info('User authenticated successfully', ['email' => $request->email, 'user_id' => $user->id]);
 
             $token = $user->createToken('api-token')->plainTextToken;

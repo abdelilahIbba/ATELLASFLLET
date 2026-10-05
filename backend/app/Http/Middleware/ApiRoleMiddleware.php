@@ -17,6 +17,10 @@ class ApiRoleMiddleware
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
+        if (!$request->user()->isActive()) {
+            return response()->json(['message' => 'Compte désactivé.'], 403);
+        }
+
         if (!in_array($request->user()->role, $roles)) {
             return response()->json(['message' => 'Forbidden. Insufficient permissions.'], 403);
         }

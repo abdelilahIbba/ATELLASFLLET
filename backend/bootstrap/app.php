@@ -18,7 +18,18 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role'     => \App\Http\Middleware\RoleMiddleware::class,
             'api.role' => \App\Http\Middleware\ApiRoleMiddleware::class,
+            'permission' => \App\Http\Middleware\CheckPermission::class,
+            'website' => \App\Http\Middleware\WebsitePermission::class,
         ]);
+        // Authorize before route-model binding so forbidden users get 403, not 404.
+        $middleware->prependToPriorityList(
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\CheckPermission::class,
+        );
+        $middleware->prependToPriorityList(
+            \App\Http\Middleware\CheckPermission::class,
+            \App\Http\Middleware\ApiRoleMiddleware::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

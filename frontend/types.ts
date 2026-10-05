@@ -34,6 +34,15 @@ export interface UserInfo {
   demoPermissions?: string[];
   /** For demo_admin: trial expiry date (YYYY-MM-DD) */
   demoExpiresAt?: string;
+  /** RBAC: granted permission keys (admin.<page>.<action>, website.*) */
+  permissions?: string[];
+  /** RBAC: admin pages the user may view */
+  adminPages?: string[];
+  roleName?: string;
+  roleSlug?: string;
+  userType?: 'staff' | 'client';
+  adminAccess?: boolean;
+  isSuperAdmin?: boolean;
 }
 
 export interface Booking {
