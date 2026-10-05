@@ -4,7 +4,9 @@ import { adminCarsApi, adminClientsApi, adminBookingsApi, adminContactsApi, admi
 import type { PickupPoint } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import FleetManagement from '../Admin/Fleet/FleetManagement';
+import { VehicleFormModal } from '../Admin/Fleet/components/modal/VehicleFormModal';
 import BookingManagement from '../Admin/Bookings/BookingManagement';
+import BookingFormModal from '../Admin/Bookings/components/BookingFormModal';
 import ClientManagement from '../Admin/Clients/ClientManagement';
 import InfractionsManagement from '../Admin/Infractions/InfractionsManagement';
 import ExpenseManagement from '../Admin/Expenses/ExpenseManagement';
@@ -1648,370 +1650,36 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
              {/* Re-rendering Modals to ensure file integrity */}
              
              {/* EDIT/ADD VEHICLE MODAL */}
-             {modalType === 'vehicle_form' && (
-                 <ModalContainer title={selectedItem ? `Modifier ${selectedItem.name}` : 'Ajouter un Véhicule'} onClose={closeModal} width="max-w-4xl">
-                     <form onSubmit={handleSaveVehicle} className="flex flex-col h-[70vh]">
-                         <div className="flex border-b border-slate-200 dark:border-white/10 mb-6">
-                             <button type="button" onClick={() => setVehicleModalTab('details')} className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${vehicleModalTab === 'details' ? 'border-brand-blue text-brand-blue' : 'border-transparent text-slate-500 hover:text-brand-navy dark:hover:text-white'}`}>Détails Véhicule</button>
-                             <button type="button" onClick={() => setVehicleModalTab('documents')} className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${vehicleModalTab === 'documents' ? 'border-brand-blue text-brand-blue' : 'border-transparent text-slate-500 hover:text-brand-navy dark:hover:text-white'}`}>Documents <span className="bg-brand-red text-white text-[9px] px-1.5 py-0.5 rounded-full">Sécurisé</span></button>
-                             <button type="button" onClick={() => setVehicleModalTab('infractions')} className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${vehicleModalTab === 'infractions' ? 'border-brand-blue text-brand-blue' : 'border-transparent text-slate-500 hover:text-brand-navy dark:hover:text-white'}`}>
-                               Infractions
-                               {modalInfractions.filter(i => i.status !== 'Paid').length > 0 && (
-                                 <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
-                                   {modalInfractions.filter(i => i.status !== 'Paid').length}
-                                 </span>
-                               )}
-                             </button>
-                         </div>
-                         <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar">
-                             <div className={vehicleModalTab === 'details' ? 'block' : 'hidden'}>
-                                 <div className="space-y-4">
-                                     <div className="grid grid-cols-2 gap-4">
-                                         <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Marque</label><input name="make" defaultValue={selectedItem?.make || ''} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="ex: BMW"/></div>
-                                         <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Modèle</label><input name="model" defaultValue={selectedItem?.model || ''} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="ex: M4 Competition"/></div>
-                                     </div>
-                                     <div className="grid grid-cols-3 gap-4">
-                                         <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Catégorie</label><select name="category" defaultValue={selectedItem?.category || 'Sedan'} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"><option value="Hyper">Hyper / Supercar</option><option value="SUV">SUV de Luxe</option><option value="Sedan">Berline</option><option value="Convertible">Cabriolet</option></select></div>
-                                         <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Année</label><input name="year" type="number" min="2000" max="2030" defaultValue={selectedItem?.year || new Date().getFullYear()} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/></div>
-                                         <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Carburant</label><select name="fuel_type" defaultValue={selectedItem?.fuel_type || 'Essence'} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"><option value="Essence">Essence</option><option value="Diesel">Diesel</option><option value="Hybride">Hybride</option><option value="Électrique">Électrique</option></select></div>
-                                     </div>
-                                     <div className="grid grid-cols-2 gap-4">
-                                       <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Couleur</label><input name="color" defaultValue={selectedItem?.color || ''} maxLength={100} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="ex: Gris clair"/></div>
-                                       <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">VIN</label><input name="vin" defaultValue={selectedItem?.vin || ''} maxLength={100} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono" placeholder="Numéro d'identification du véhicule"/></div>
-                                     </div>
-                                     <div className="grid grid-cols-2 gap-4">
-                                         {/* Plate: single input for qty=1, summary badge for qty>1 */}
-                                         {modalQty <= 1 ? (
-                                           <div>
-                                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Immatriculation</label>
-                                             <input
-                                               value={modalUnitPlates[0] ?? ''}
-                                               onChange={e => setModalUnitPlates([e.target.value])}
-                                               className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono"
-                                               placeholder="ex: 72819-A-1"
-                                             />
-                                           </div>
-                                         ) : (
-                                           <div>
-                                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Immatriculations ({modalQty} unités)</label>
-                                             <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
-                                               {modalUnitPlates.map((p, i) => (
-                                                 <input
-                                                   key={i}
-                                                   value={p}
-                                                   onChange={e => {
-                                                     const next = [...modalUnitPlates];
-                                                     next[i] = e.target.value;
-                                                     setModalUnitPlates(next);
-                                                   }}
-                                                   className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono"
-                                                   placeholder={`Unité #${i + 1} — ex: 7281${i}-A-1`}
-                                                 />
-                                               ))}
-                                             </div>
-                                           </div>
-                                         )}
-                                         <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Statut</label><select name="status" defaultValue={selectedItem?.status || 'Available'} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"><option value="Available">Disponible</option><option value="Rented">Loué</option><option value="Maintenance">Maintenance</option><option value="Impounded">Fourrière</option></select></div>
-                                     </div>
-                                     <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Agence / Lieu</label><input name="branch" defaultValue={selectedItem?.branch || 'Casablanca Anfa'} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/></div>
-                                     <div className="grid grid-cols-4 gap-4">
-                                         <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Kilométrage (km)</label><input name="odometer" type="number" defaultValue={selectedItem?.odometer || 0} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/></div>
-                                         <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Carburant (%)</label><input name="fuel" type="number" min="0" max="100" defaultValue={selectedItem?.fuel || 100} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/></div>
-                                         <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Prix/Jour (MAD)</label><input name="pricePerDay" type="number" defaultValue={selectedItem?.pricePerDay || 1000} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/></div>
-                                         <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Quantité (unités)</label><input name="quantity" type="number" min="0" value={modalQty} onChange={e => {
-                                             const n = Math.max(1, parseInt(e.target.value) || 1);
-                                             setModalQty(n);
-                                             setModalUnitPlates(prev => Array.from({ length: n }, (_, i) => prev[i] ?? ''));
-                                           }} required className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/></div>
-                                     </div>
-                                     <div>
-                                         <div className="flex justify-between items-center mb-1">
-                                             <label className="block text-xs font-bold text-slate-500 uppercase">Image du Véhicule</label>
-                                             <div className="flex bg-slate-100 dark:bg-white/5 p-0.5 rounded-lg">
-                                                 <button 
-                                                     type="button"
-                                                     onClick={() => setImageInputType('url')}
-                                                     className={`px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all ${imageInputType === 'url' ? 'bg-white dark:bg-brand-navy shadow text-brand-blue' : 'text-slate-500 hover:text-brand-navy dark:hover:text-white'}`}
-                                                 >
-                                                     Lien URL
-                                                 </button>
-                                                 <button 
-                                                     type="button"
-                                                     onClick={() => setImageInputType('upload')}
-                                                     className={`px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all ${imageInputType === 'upload' ? 'bg-white dark:bg-brand-navy shadow text-brand-blue' : 'text-slate-500 hover:text-brand-navy dark:hover:text-white'}`}
-                                                 >
-                                                     Upload
-                                                 </button>
-                                             </div>
-                                         </div>
-                                         
-                                         {imageInputType === 'url' ? (
-                                             <div className="space-y-2">
-                                                 <div className="flex gap-2">
-                                                     <input
-                                                         name="image"
-                                                         defaultValue={selectedItem?.image || ''}
-                                                         onChange={e => setImageUrlPreview(e.target.value.trim())}
-                                                         className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"
-                                                         placeholder="https://example.com/image.jpg"
-                                                     />
-                                                     <div className="w-12 h-11 bg-slate-100 dark:bg-white/5 rounded-lg border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
-                                                         {imageUrlPreview ? (
-                                                             <img
-                                                                 src={imageUrlPreview}
-                                                                 alt="Aperçu"
-                                                                 className="w-full h-full object-cover"
-                                                                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex'; }}
-                                                             />
-                                                         ) : null}
-                                                         <span style={{display: imageUrlPreview ? 'none' : 'flex'}} className="w-full h-full items-center justify-center">
-                                                             <ImageIcon className="w-5 h-5 text-slate-400" />
-                                                         </span>
-                                                     </div>
-                                                 </div>
-                                                 {imageUrlPreview && (
-                                                     <div className="w-full h-28 rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5">
-                                                         <img
-                                                             src={imageUrlPreview}
-                                                             alt="Aperçu image"
-                                                             className="w-full h-full object-cover"
-                                                             onError={e => {
-                                                                 const el = e.currentTarget.parentElement!;
-                                                                 el.innerHTML = '<p class="w-full h-full flex items-center justify-center text-xs text-red-500 font-bold p-2 text-center">URL invalide — l\'image ne peut pas être chargée. Assurez-vous d\'entrer un lien direct vers un fichier image.</p>';
-                                                             }}
-                                                         />
-                                                     </div>
-                                                 )}
-                                             </div>
-                                         ) : (
-                                             <div className="w-full h-32 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl bg-slate-50 dark:bg-white/5 flex flex-col items-center justify-center cursor-pointer hover:border-brand-blue transition-colors group relative overflow-hidden">
-                                                 <input type="file" name="image_file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-20" />
-                                                 <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-brand-blue transition-colors mb-2 z-10" />
-                                                 <p className="text-xs font-bold text-brand-navy dark:text-white z-10">Cliquez pour télécharger</p>
-                                                 <p className="text-[10px] text-slate-400 z-10">SVG, PNG, JPG ou GIF (max. 2MB)</p>
-                                             </div>
-                                         )}
-                                     </div>
-                                 </div>
-                             </div>
-                             <div className={vehicleModalTab === 'documents' ? 'block' : 'hidden'}>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {([
-                                      { id: 'doc_insurance',        expiryName: 'expiry_insurance', label: 'Assurance',        key: 'insurance',       fileKey: 'insurance',       icon: ShieldAlert },
-                                      { id: 'doc_visite_technique', expiryName: 'expiry_visite',    label: 'Visite Technique', key: 'visiteTechnique', fileKey: 'visiteTechnique', icon: Wrench },
-                                      { id: 'doc_vignette',         expiryName: 'expiry_vignette',  label: 'Vignette',         key: 'vignette',        fileKey: 'vignette',        icon: FileText },
-                                      { id: 'doc_carte_grise',      expiryName: 'expiry_carte',     label: 'Carte Grise',      key: 'carteGrise',      fileKey: 'carteGrise',      icon: FileCheck },
-                                    ] as const).map((doc) => {
-                                      const expiryDate = selectedItem?.documents?.[doc.key] || '';
-                                      const existingFileUrl = (selectedItem?.documentFiles as any)?.[doc.fileKey] || '';
-                                      const status = getExpiryStatus(expiryDate);
-                                      const Icon = doc.icon;
-                                      const selectedFileName = docFileNames[doc.id] || '';
-                                      return (
-                                        <div key={doc.id} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex flex-col gap-3 hover:border-brand-blue/40 transition-colors">
-                                          {/* Header */}
-                                          <div className="flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                              <div className="w-8 h-8 rounded-lg bg-white dark:bg-white/10 flex items-center justify-center text-slate-500"><Icon className="w-4 h-4" /></div>
-                                              <span className="font-bold text-sm text-brand-navy dark:text-white">{doc.label}</span>
-                                            </div>
-                                            <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1 ${status.color}`}><status.icon className="w-3 h-3" />{status.label}</div>
-                                          </div>
-                                          {/* Expiry date — always interactive */}
-                                          <div>
-                                            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Date d'Expiration</label>
-                                            <input name={doc.expiryName} type="date" defaultValue={expiryDate}
-                                              className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs font-mono text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/>
-                                          </div>
-                                          {/* Current file or selected file name */}
-                                          <div className="min-h-[18px]">
-                                            {selectedFileName
-                                              ? <span className="flex items-center gap-1 text-[10px] text-green-600 font-bold"><CheckCircle2 className="w-3 h-3"/>{selectedFileName}</span>
-                                              : existingFileUrl
-                                                ? <a href={existingFileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[10px] text-brand-blue hover:underline"><Eye className="w-3 h-3"/>Voir le document actuel</a>
-                                                : <span className="text-[10px] text-slate-400">Aucun fichier enregistré</span>
-                                            }
-                                          </div>
-                                          {/* Upload button — always visible, never blocks card */}
-                                          <label className="relative flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-300 dark:border-white/20 bg-white dark:bg-white/5 hover:border-brand-blue hover:bg-brand-blue/5 transition-colors cursor-pointer">
-                                            <input
-                                              type="file"
-                                              name={doc.id}
-                                              accept="image/*,application/pdf"
-                                              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                                              onChange={e => {
-                                                const f = e.target.files?.[0];
-                                                setDocFileNames(prev => ({ ...prev, [doc.id]: f ? f.name : '' }));
-                                              }}
-                                            />
-                                            <UploadCloud className="w-4 h-4 text-slate-400 pointer-events-none" />
-                                            <span className="text-[11px] font-bold text-slate-500 pointer-events-none">
-                                              {selectedFileName ? 'Changer le fichier' : 'Télécharger un document'}
-                                            </span>
-                                          </label>
-                                        </div>
-                                      );
-                                    })}
-                                </div>
-                                <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20 rounded-xl flex items-start gap-3"><div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full text-blue-600 dark:text-blue-400"><AlertCircle className="w-5 h-5" /></div><div><h4 className="text-sm font-bold text-blue-800 dark:text-blue-300">Système d'Alertes Auto</h4><p className="text-xs text-blue-600 dark:text-blue-400 mt-1">Le système notifie automatiquement le gestionnaire de flotte 30, 15 et 7 jours avant l'expiration d'un document.</p></div></div>
-                             </div>
-
-                             {/* ── INFRACTIONS TAB ── */}
-                             <div className={vehicleModalTab === 'infractions' ? 'block' : 'hidden'}>
-                               {!selectedItem?.id ? (
-                                 <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
-                                   <AlertTriangle className="w-10 h-10 opacity-40" />
-                                   <p className="text-sm font-medium">Enregistrez le véhicule pour gérer ses infractions</p>
-                                   <p className="text-xs text-slate-400">Les infractions sont liées à un véhicule existant.</p>
-                                 </div>
-                               ) : (
-                                 <div className="space-y-4">
-
-                                   {/* ── Unpaid alert banner ── */}
-                                   {modalInfractions.some(i => i.status !== 'Paid') && (
-                                     <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 rounded-xl">
-                                       <Siren className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
-                                       <div className="flex-1">
-                                         <p className="text-sm font-bold text-red-700 dark:text-red-400">
-                                           {modalInfractions.filter(i => i.status !== 'Paid').length} infraction(s) non-réglée(s) — Action requise
-                                         </p>
-                                         <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
-                                           Total impayé : {modalInfractions.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0).toLocaleString('fr-MA')} MAD
-                                         </p>
-                                       </div>
-                                     </div>
-                                   )}
-
-                                   {/* ── List ── */}
-                                   {modalInfLoading ? (
-                                     <div className="text-center py-8 text-slate-400 text-sm">Chargement des infractions…</div>
-                                   ) : modalInfractions.length > 0 ? (
-                                     <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                                       {modalInfractions.map(inf => {
-                                         const meta = INF_TYPE_META[inf.type] ?? { label: inf.type, color: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300' };
-                                         const isPaid = inf.status === 'Paid';
-                                         const today = new Date().toISOString().slice(0, 10);
-                                         const isOverdue = !isPaid && !!inf.due_date && inf.due_date < today;
-                                         return (
-                                           <div key={inf.id} className={`flex items-start gap-2.5 p-3 rounded-xl border transition-colors ${isPaid ? 'bg-green-50/60 dark:bg-green-900/5 border-green-100 dark:border-green-900/20' : isOverdue ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800/30' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10'}`}>
-                                             <span className={`shrink-0 px-2 py-1 rounded-md text-[10px] font-bold leading-none whitespace-nowrap ${meta.color}`}>{meta.label}</span>
-                                             <div className="flex-1 min-w-0 space-y-0.5">
-                                               <div className="flex items-center gap-2 flex-wrap">
-                                                 <span className="text-xs font-bold text-brand-navy dark:text-white">{inf.amount.toLocaleString('fr-MA')} MAD</span>
-                                                 <span className="text-[10px] text-slate-400 font-mono">{inf.date}</span>
-                                                 {inf.location && <span className="text-[10px] text-slate-500 truncate max-w-[120px]" title={inf.location}>{inf.location}</span>}
-                                               </div>
-                                               <div className="flex items-center gap-3 flex-wrap">
-                                                 {inf.due_date && (
-                                                   <span className={`text-[10px] font-mono ${isOverdue ? 'text-red-600 font-bold' : 'text-slate-400'}`}>
-                                                     Échéance: {inf.due_date}{isOverdue ? ' ⚠' : ''}
-                                                   </span>
-                                                 )}
-                                                 {inf.notification_ref && (
-                                                   <span className="text-[10px] text-slate-400 font-mono">Réf: {inf.notification_ref}</span>
-                                                 )}
-                                               </div>
-                                             </div>
-                                             <div className="flex items-center gap-1 shrink-0">
-                                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isPaid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : inf.status === 'Disputed' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                                                 {isPaid ? 'Payée' : inf.status === 'Disputed' ? 'Contestée' : 'Impayée'}
-                                               </span>
-                                               {!isPaid && (
-                                                 <button type="button" onClick={() => handleMarkInfPaid(inf.id)} title="Marquer comme payée" className="p-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/20 text-green-600 transition-colors">
-                                                   <CheckCircle2 className="w-3.5 h-3.5" />
-                                                 </button>
-                                               )}
-                                               <button type="button" onClick={() => handleDeleteInfraction(inf.id)} title="Supprimer" className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 text-red-500 transition-colors">
-                                                 <Trash2 className="w-3.5 h-3.5" />
-                                               </button>
-                                             </div>
-                                           </div>
-                                         );
-                                       })}
-                                     </div>
-                                   ) : !infFormVisible ? (
-                                     <div className="flex flex-col items-center justify-center py-10 text-slate-400 gap-2">
-                                       <CheckCircle2 className="w-10 h-10 opacity-40 text-green-500" />
-                                       <p className="text-sm font-medium">Aucune infraction enregistrée</p>
-                                       <p className="text-xs">Ce véhicule est en règle</p>
-                                     </div>
-                                   ) : null}
-
-                                   {/* ── Add infraction form ── */}
-                                   {infFormVisible ? (
-                                     <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 space-y-3">
-                                       <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide flex items-center gap-1.5">
-                                         <Siren className="w-3.5 h-3.5 text-red-500" /> Nouvelle infraction
-                                       </h4>
-                                       <div className="grid grid-cols-2 gap-3">
-                                         <div>
-                                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Type d'infraction</label>
-                                           <select value={infForm.type} onChange={e => setInfForm(p => ({ ...p, type: e.target.value }))} className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue">
-                                             {INF_TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                                           </select>
-                                         </div>
-                                         <div>
-                                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Date de l'infraction</label>
-                                           <input type="date" value={infForm.date} onChange={e => setInfForm(p => ({ ...p, date: e.target.value }))} className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs font-mono text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" />
-                                         </div>
-                                         <div>
-                                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Montant de l'amende (MAD)</label>
-                                           <input type="number" min="0" value={infForm.amount} onChange={e => setInfForm(p => ({ ...p, amount: e.target.value }))} placeholder="ex: 700" className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" />
-                                         </div>
-                                         <div>
-                                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Date d'échéance paiement</label>
-                                           <input type="date" value={infForm.due_date} onChange={e => setInfForm(p => ({ ...p, due_date: e.target.value }))} className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs font-mono text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" />
-                                         </div>
-                                         <div>
-                                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Lieu de l'infraction</label>
-                                           <input type="text" value={infForm.location} onChange={e => setInfForm(p => ({ ...p, location: e.target.value }))} placeholder="ex: Autoroute A3, Km 45" className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" />
-                                         </div>
-                                         <div>
-                                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Réf. notification / PV</label>
-                                           <input type="text" value={infForm.notification_ref} onChange={e => setInfForm(p => ({ ...p, notification_ref: e.target.value }))} placeholder="ex: PV/2026/00123" className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs font-mono text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" />
-                                         </div>
-                                         <div>
-                                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Statut</label>
-                                           <select value={infForm.status} onChange={e => setInfForm(p => ({ ...p, status: e.target.value }))} className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue">
-                                             <option value="Unpaid">Impayée</option>
-                                             <option value="Paid">Payée</option>
-                                             <option value="Disputed">Contestée</option>
-                                           </select>
-                                         </div>
-                                         <div>
-                                           <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Notes / Observations</label>
-                                           <input type="text" value={infForm.notes} onChange={e => setInfForm(p => ({ ...p, notes: e.target.value }))} placeholder="Informations complémentaires..." className="w-full bg-white dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-lg p-2 text-xs text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" />
-                                         </div>
-                                       </div>
-                                       <div className="flex justify-end gap-2 pt-1">
-                                         <button type="button" onClick={() => { setInfFormVisible(false); setInfForm({ ...blankInfForm }); }} className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-brand-navy dark:hover:text-white transition-colors">Annuler</button>
-                                         <button type="button" onClick={handleAddInfraction} disabled={infFormSaving || !infForm.date || !infForm.amount} className="px-4 py-1.5 bg-brand-blue text-white rounded-lg text-xs font-bold hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center gap-1.5">
-                                           {infFormSaving ? 'Enregistrement…' : <><Plus className="w-3.5 h-3.5" /> Enregistrer l'infraction</>}
-                                         </button>
-                                       </div>
-                                     </div>
-                                   ) : (
-                                     <button type="button" onClick={() => setInfFormVisible(true)} className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-xl text-xs font-bold text-slate-400 hover:border-brand-blue hover:text-brand-blue transition-colors flex items-center justify-center gap-2">
-                                       <Plus className="w-4 h-4" /> Ajouter une infraction
-                                     </button>
-                                   )}
-
-                                   {/* Legend */}
-                                   <div className="p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 rounded-xl flex items-start gap-2.5">
-                                     <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-                                     <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
-                                       Les infractions correspondent aux lettres officielles reçues (radar, stationnement, contrôle routier, documents expirés, etc.). Marquez-les comme payées une fois les amendes réglées pour maintenir la conformité de la flotte.
-                                     </p>
-                                   </div>
-                                 </div>
-                               )}
-                             </div>
-
-                         </div>
-                         <div className="pt-4 flex justify-end gap-3 border-t border-slate-200 dark:border-white/10 mt-auto"><button type="button" onClick={closeModal} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-brand-navy transition-colors">Annuler</button><button type="submit" className="px-6 py-2 bg-brand-blue text-white rounded-lg text-sm font-bold hover:bg-blue-600 transition-colors shadow-lg flex items-center gap-2"><Save className="w-4 h-4" /> Enregistrer</button></div>
-                     </form>
-                 </ModalContainer>
-             )}
+              {modalType === 'vehicle_form' && (
+                  <VehicleFormModal
+                      selectedItem={selectedItem}
+                      onClose={closeModal}
+                      onSubmit={handleSaveVehicle}
+                      vehicleModalTab={vehicleModalTab}
+                      setVehicleModalTab={setVehicleModalTab}
+                      modalQty={modalQty}
+                      setModalQty={setModalQty}
+                      modalUnitPlates={modalUnitPlates}
+                      setModalUnitPlates={setModalUnitPlates}
+                      imageInputType={imageInputType}
+                      setImageInputType={setImageInputType}
+                      imageUrlPreview={imageUrlPreview}
+                      setImageUrlPreview={setImageUrlPreview}
+                      docFileNames={docFileNames}
+                      setDocFileNames={setDocFileNames}
+                      modalInfractions={modalInfractions}
+                      modalInfLoading={modalInfLoading}
+                      infFormVisible={infFormVisible}
+                      setInfFormVisible={setInfFormVisible}
+                      infFormSaving={infFormSaving}
+                      infForm={infForm}
+                      setInfForm={setInfForm}
+                      handleMarkInfPaid={handleMarkInfPaid}
+                      handleDeleteInfraction={handleDeleteInfraction}
+                      handleAddInfraction={handleAddInfraction}
+                      blankInfForm={blankInfForm}
+                  />
+              )}
 
              {/* CLIENT DETAIL / VERIFICATION MODAL */}
              {modalType === 'client_detail' && selectedItem && (() => {
@@ -2139,7 +1807,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
              {/* CLIENT / KYC MODAL */}
              {modalType === 'client_form' && (
                  <ModalContainer title={selectedItem ? `Gérer Client: ${selectedItem.name}` : 'Nouvelle Inscription Client'} onClose={closeModal} width="max-w-4xl">
-                     <form key={selectedItem?.id ?? 'new'} onSubmit={handleSaveClient} className="flex flex-col h-[80vh]">
+                     <form key={selectedItem?.id ?? 'new'} onSubmit={handleSaveClient} className="flex flex-col h-[80vh]" autoComplete="off">
+                         {/* Hidden inputs to prevent Chrome/Edge from injecting saved credentials into phone & password */}
+                         <input type="text" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+                         <input type="password" style={{ display: 'none' }} tabIndex={-1} autoComplete="new-password" />
+
                          {/* Tabs */}
                          <div className="flex border-b border-slate-200 dark:border-white/10 mb-6">
                              <button type="button" onClick={() => setClientModalTab('profile')} className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${clientModalTab === 'profile' ? 'border-brand-blue text-brand-blue' : 'border-transparent text-slate-500 hover:text-brand-navy dark:hover:text-white'}`}>Profil Personnel</button>
@@ -2201,7 +1873,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                   Nom Complet <span className="text-red-500">*</span>
                                               </label>
-                                              <input name="name" defaultValue={selectedItem?.name || ''} required className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Prénom Nom"/>
+                                              <input name="name" defaultValue={selectedItem?.name || ''} required autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Prénom Nom"/>
                                           </div>
 
                                           {/* CIN */}
@@ -2209,7 +1881,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                   CIN (Carte Nationale)
                                               </label>
-                                              <input name="national_id" defaultValue={selectedItem?.cin || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="AB123456"/>
+                                              <input name="national_id" defaultValue={selectedItem?.cin || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="AB123456"/>
                                           </div>
 
                                           {/* Permis de Conduire & Expiration */}
@@ -2218,7 +1890,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                                   <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                       N° Permis de Conduire
                                                   </label>
-                                                  <input name="driver_license_number" defaultValue={selectedItem?.driverLicense || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono shadow-sm" placeholder="B-123456"/>
+                                                  <input name="driver_license_number" defaultValue={selectedItem?.driverLicense || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono shadow-sm" placeholder="B-123456"/>
                                               </div>
                                               <div>
                                                   <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
@@ -2233,7 +1905,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                   Permis Délivré à <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
                                               </label>
-                                              <input name="driver_license_issued_at" defaultValue={selectedItem?.driverLicenseIssuedAt || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Ville de délivrance (ex: Casablanca)"/>
+                                              <input name="driver_license_issued_at" defaultValue={selectedItem?.driverLicenseIssuedAt || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Ville de délivrance (ex: Casablanca)"/>
                                           </div>
 
                                           {/* Adresse au Maroc */}
@@ -2241,7 +1913,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                   Adresse au Maroc <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
                                               </label>
-                                              <input name="address_morocco" defaultValue={selectedItem?.addressMorocco || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Adresse de résidence au Maroc"/>
+                                              <input name="address_morocco" defaultValue={selectedItem?.addressMorocco || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Adresse de résidence au Maroc"/>
                                           </div>
                                       </div>
 
@@ -2259,7 +1931,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                   Passeport N° <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
                                               </label>
-                                              <input name="passport_number" defaultValue={selectedItem?.passportNumber || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="N° de passeport"/>
+                                              <input name="passport_number" defaultValue={selectedItem?.passportNumber || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="N° de passeport"/>
                                           </div>
 
                                           {/* Passeport Délivré à & Le */}
@@ -2268,7 +1940,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                                   <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                       Délivré à <span className="font-semibold normal-case text-slate-400">(passeport)</span>
                                                   </label>
-                                                  <input name="passport_issued_at" defaultValue={selectedItem?.passportIssuedAt || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Ville / Autorité"/>
+                                                  <input name="passport_issued_at" defaultValue={selectedItem?.passportIssuedAt || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Ville / Autorité"/>
                                               </div>
                                               <div>
                                                   <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
@@ -2283,7 +1955,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                   Adresse à l'Étranger <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
                                               </label>
-                                              <input name="address_abroad" defaultValue={selectedItem?.addressAbroad || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Adresse à l'étranger (si applicable)"/>
+                                              <input name="address_abroad" defaultValue={selectedItem?.addressAbroad || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Adresse à l'étranger (si applicable)"/>
                                           </div>
 
                                           <div className="p-3 bg-brand-blue/5 border border-brand-blue/10 rounded-xl text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mt-auto">
@@ -2309,23 +1981,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                           <div>
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">Nom & Prénom</label>
-                                              <input name="driver_name" defaultValue={selectedItem?.driverName || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Nom du conducteur"/>
+                                              <input name="driver_name" defaultValue={selectedItem?.driverName || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Nom du conducteur"/>
                                           </div>
                                           <div>
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">Téléphone</label>
-                                              <input name="driver_phone" defaultValue={selectedItem?.driverPhone || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="+212 6xx-xxxxxx"/>
+                                              <input name="driver_phone" defaultValue={selectedItem?.driverPhone || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="+212 6xx-xxxxxx"/>
                                           </div>
                                           <div>
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">CIN</label>
-                                              <input name="driver_id_number" defaultValue={selectedItem?.driverIdNumber || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="AB123456"/>
+                                              <input name="driver_id_number" defaultValue={selectedItem?.driverIdNumber || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="AB123456"/>
                                           </div>
                                           <div>
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">N° Permis</label>
-                                              <input name="driver_permit_number" defaultValue={selectedItem?.driverLicenseNumber || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono shadow-sm" placeholder="B-123456"/>
+                                              <input name="driver_permit_number" defaultValue={selectedItem?.driverLicenseNumber || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono shadow-sm" placeholder="B-123456"/>
                                           </div>
                                           <div>
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">Passeport N°</label>
-                                              <input name="driver_passport_number" defaultValue={selectedItem?.driverPassportNumber || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="N° de passeport"/>
+                                              <input name="driver_passport_number" defaultValue={selectedItem?.driverPassportNumber || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue font-mono uppercase shadow-sm" placeholder="N° de passeport"/>
                                           </div>
                                       </div>
                                   </div>
@@ -2344,20 +2016,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                   Email <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
                                               </label>
-                                              <input name="email" type="email" defaultValue={selectedItem?.email || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="client@exemple.com"/>
+                                              <input name="email" type="email" defaultValue={selectedItem?.email || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="client@exemple.com"/>
                                           </div>
                                           <div>
                                               <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                   Téléphone <span className="font-semibold normal-case text-slate-400">(Téléphone Contrat)</span>
                                               </label>
-                                              <input name="phone" defaultValue={selectedItem?.phone || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="+212 6xx-xxxxxx"/>
+                                              <input name="phone" defaultValue={selectedItem?.phone || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="+212 6xx-xxxxxx"/>
                                           </div>
                                           {!selectedItem && (
                                               <div>
                                                   <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                       Mot de passe <span className="font-semibold normal-case text-slate-400">(optionnel — généré si vide)</span>
                                                   </label>
-                                                  <input name="password" type="password" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="••••••••"/>
+                                                  <input name="password" type="password" autoComplete="new-password" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="••••••••"/>
                                               </div>
                                           )}
                                       </div>
@@ -2392,7 +2064,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                                                   <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase mb-1">
                                                       Profession <span className="font-semibold normal-case text-slate-400">(optionnel)</span>
                                                   </label>
-                                                  <input name="profession" defaultValue={selectedItem?.profession || ''} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Profession du client" />
+                                                  <input name="profession" defaultValue={selectedItem?.profession || ''} autoComplete="off" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue shadow-sm" placeholder="Profession du client" />
                                               </div>
                                           </div>
                                       )}
@@ -2484,254 +2156,35 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
              
              {/* EDIT/ADD BOOKING MODAL */}
              {modalType === 'booking_form' && (
-                 <ModalContainer title={selectedItem ? `Modifier Réservation #${selectedItem.id}` : 'Nouvelle Réservation'} onClose={closeModal} width="max-w-2xl">
-                     <form key={selectedItem?.id ?? 'new'} onSubmit={handleSaveBooking} className="space-y-5">
-
-                         {/* Automated flow banner (Client → Réservation → Contrat) */}
-                         {quickFlow && !selectedItem && (
-                             <div className="flex items-start gap-3 rounded-xl border border-brand-blue/30 bg-brand-blue/5 dark:bg-brand-blue/10 p-3">
-                                 <Zap className="w-4 h-4 text-brand-blue flex-shrink-0 mt-0.5" />
-                                 <p className="text-xs text-brand-navy dark:text-slate-200 leading-relaxed">
-                                     <strong>Flux automatique</strong> — le client <strong>{quickFlow.clientName}</strong> vient d'être créé et est déjà présélectionné.
-                                     Choisissez le véhicule et la période, puis cliquez « Créer Réservation » : le contrat sera généré automatiquement.
-                                 </p>
-                             </div>
-                         )}
-
-                         {/* Client + Car */}
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div>
-                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Client</label>
-                                 {selectedItem ? (
-                                     <div className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm font-bold text-brand-navy dark:text-white">{selectedItem.clientName}</div>
-                                 ) : (
-                                     <select name="clientId" required value={bfClientId} onChange={e => setBfClientId(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue">
-                                         <option value="">— Sélectionner un client —</option>
-                                         {clients.map(c => <option key={c.id} value={c.id}>{c.name} ({c.email})</option>)}
-                                     </select>
-                                 )}
-                             </div>
-                             <div>
-                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Véhicule</label>
-                                 {selectedItem ? (
-                                     <div className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm font-bold text-brand-navy dark:text-white">{selectedItem.vehicleName}</div>
-                                 ) : (
-                                     <select name="carId" required value={bfCarId} onChange={e => {
-                                       setBfCarId(e.target.value);
-                                       // Charger le tarif catalogue du véhicule choisi
-                                       const veh = vehicles.find(v => String(v.id) === e.target.value);
-                                       if (veh?.pricePerDay) setBfDailyRate(String(veh.pricePerDay));
-                                     }} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue">
-                                         <option value="">— Sélectionner un véhicule —</option>
-                                         {vehicles.map(v => <option key={v.id} value={String(v.id)}>{v.name}{v.plate ? ` (${v.plate})` : ''}{v.pricePerDay ? ` · ${v.pricePerDay.toLocaleString('fr-MA')} MAD/j` : ''}</option>)}
-                                     </select>
-                                 )}
-                             </div>
-                         </div>
-
-                         {/* Dates */}
-                         <div className="grid grid-cols-2 gap-4">
-                             <div>
-                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Date de Début</label>
-                                 <input name="startDate" type="date" value={bfStart} required onChange={e => setBfStart(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/>
-                             </div>
-                             <div>
-                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Date de Fin</label>
-                                 <input name="endDate" type="date" value={bfEnd} required onChange={e => setBfEnd(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"/>
-                             </div>
-                         </div>
-
-                         {/* Pickup / Dropoff Points */}
-                         {pickupPoints.length > 0 && (
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <div>
-                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Lieu de Prise en Charge</label>
-                               <select
-                                 value={bfPickupId}
-                                 onChange={e => setBfPickupId(e.target.value === '' ? '' : Number(e.target.value))}
-                                 className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"
-                               >
-                                 <option value="">— Aucun point sélectionné —</option>
-                                 {pickupPoints
-                                   .filter(p => p.is_active && (p.type === 'pickup' || p.type === 'both'))
-                                   .map(p => <option key={p.id} value={p.id}>{p.name}</option>)
-                                 }
-                               </select>
-                             </div>
-                             <div>
-                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Lieu de Retour</label>
-                               <select
-                                 value={bfDropoffId}
-                                 onChange={e => setBfDropoffId(e.target.value === '' ? '' : Number(e.target.value))}
-                                 className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue"
-                               >
-                                 <option value="">— Aucun point sélectionné —</option>
-                                 {pickupPoints
-                                   .filter(p => p.is_active && (p.type === 'dropoff' || p.type === 'both'))
-                                   .map(p => <option key={p.id} value={p.id}>{p.name}</option>)
-                                 }
-                               </select>
-                             </div>
-                           </div>
-                         )}
-
-                         {/* Availability Calendar */}
-                         {bfBookedPeriods !== null && (() => {
-                           const activeCarId = bfCarId || (selectedItem?.carId ?? '');
-                           const veh = vehicles.find(v => String(v.id) === String(activeCarId));
-                           return (
-                             <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] p-4">
-                               {/* Vehicle name header */}
-                               {veh && (
-                                 <p className="text-xs font-bold text-brand-navy dark:text-white mb-3 flex items-center gap-1.5">
-                                   <span className="w-1.5 h-1.5 rounded-full bg-brand-blue inline-block"/>
-                                   Planning — {veh.name}{veh.plate ? ` · ${veh.plate}` : ''}
-                                 </p>
-                               )}
-                               <AvailabilityCalendar
-                                 totalUnits={bfBookedPeriods.total_units}
-                                 bookedPeriods={bfBookedPeriods.booked_periods}
-                                 pickupDate={bfStart}
-                                 returnDate={bfEnd}
-                                 months={3}
-                               />
-                             </div>
-                           );
-                         })()}
-
-                         {/* Prix/Jour + Amount + Payment Status */}
-                         <div className="grid grid-cols-3 gap-4">
-                             <div>
-                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Prix/Jour (MAD)</label>
-                                 <input type="number" step="0.01" min="0" value={bfDailyRate} onChange={e => setBfDailyRate(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Tarif journalier"/>
-                                 {(() => {
-                                   const vid = bfCarId || (selectedItem?.carId ?? '');
-                                   const veh = vehicles.find(v => String(v.id) === String(vid));
-                                   if (!veh?.pricePerDay) return null;
-                                   return (
-                                     <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-                                       Tarif catalogue : <span className="font-semibold text-slate-500 dark:text-slate-400">{veh.pricePerDay.toLocaleString('fr-MA')} MAD/j</span>
-                                     </p>
-                                   );
-                                 })()}
-                             </div>
-                             <div>
-                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Montant (MAD)</label>
-                                 <input name="amount" type="number" step="0.01" min="0" value={bfAmount} onChange={e => setBfAmount(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue" placeholder="Auto-calculé"/>
-                             </div>
-                             <div>
-                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Statut Paiement</label>
-                                 <select name="paymentStatus" defaultValue={selectedItem?.paymentStatus || 'Unpaid'} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue">
-                                     <option value="Paid">Payé</option>
-                                     <option value="Deposit Only">Acompte seulement</option>
-                                     <option value="Unpaid">Impayé</option>
-                                 </select>
-                             </div>
-                         </div>
-                         {(() => {
-                           const rate = parseFloat(bfDailyRate);
-                           if (bfDailyRate === '' || isNaN(rate) || !bfStart || !bfEnd) return null;
-                           const ms = new Date(bfEnd).getTime() - new Date(bfStart).getTime();
-                           if (ms < 0) return null;
-                           const days = Math.floor(ms / 86400000) + 1;
-                           return (
-                             <p className="-mt-2 text-xs text-slate-400 dark:text-slate-500 flex flex-wrap items-center gap-1">
-                               <span className="font-semibold text-brand-blue">{days} jour{days > 1 ? 's' : ''}</span>
-                               <span>×</span>
-                               <span className="font-semibold text-brand-blue">{rate.toLocaleString('fr-MA')} MAD/j</span>
-                               <span>=</span>
-                               <span className="font-bold text-emerald-500">{(rate * days).toLocaleString('fr-MA')} MAD</span>
-                             </p>
-                           );
-                         })()}
-
-                         {/* Booking Status */}
-                         <div>
-                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Statut Réservation</label>
-                             <select name="status" defaultValue={selectedItem?.status || 'Pending'} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue">
-                                 <option value="Pending">En Attente</option>
-                                 <option value="Confirmed">Confirmé</option>
-                                 <option value="Active">Actif (En Voyage)</option>
-                                 <option value="Completed">Terminé</option>
-                                 <option value="Cancelled">Annulé</option>
-                             </select>
-                         </div>
-
-                         {/* Notes */}
-                         <div>
-                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Notes internes</label>
-                             <textarea name="notes" defaultValue={selectedItem?.notes || ''} rows={2} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-3 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue resize-none" placeholder="Remarques internes…"/>
-                         </div>
-
-                         {/* Conflict suggestion banner */}
-                         {bfConflict && (() => {
-                           const fmtD = (d: string) => {
-                             const [y, m, day] = d.split('-');
-                             const months = ['jan','fév','mar','avr','mai','juin','juil','aoû','sep','oct','nov','déc'];
-                             return `${parseInt(day)} ${months[parseInt(m) - 1]} ${y}`;
-                           };
-                           const isSameYear = bfConflict.suggestedStart.slice(0, 4) === bfConflict.suggestedEnd.slice(0, 4);
-                           const startLabel = isSameYear
-                             ? `${parseInt(bfConflict.suggestedStart.split('-')[2])} ${['jan','fév','mar','avr','mai','juin','juil','aoû','sep','oct','nov','déc'][parseInt(bfConflict.suggestedStart.split('-')[1]) - 1]}`
-                             : fmtD(bfConflict.suggestedStart);
-                           const endLabel = fmtD(bfConflict.suggestedEnd);
-                           return (
-                             <div className="rounded-xl border border-amber-300 dark:border-amber-500/50 bg-amber-50 dark:bg-amber-900/20 p-4">
-                               <div className="flex items-start gap-3">
-                                 <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                                 </svg>
-                                 <div className="flex-1 min-w-0">
-                                   <p className="text-sm font-bold text-amber-800 dark:text-amber-200">
-                                     Toutes les unités sont réservées pour cette période.
-                                   </p>
-                                   <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
-                                     Prochain créneau disponible : <strong>{startLabel}–{endLabel}</strong>. Voulez-vous ajuster les dates ?
-                                   </p>
-                                 </div>
-                               </div>
-                               <div className="mt-3 flex gap-2">
-                                 <button
-                                   type="button"
-                                   onClick={() => {
-                                     setBfStart(bfConflict.suggestedStart);
-                                     setBfEnd(bfConflict.suggestedEnd);
-                                     // bfConflict will auto-clear via the useEffect on bfStart/bfEnd change
-                                   }}
-                                   className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-colors"
-                                 >
-                                   Ajuster vers {startLabel}–{endLabel}
-                                 </button>
-                                 <button
-                                   type="button"
-                                   onClick={() => setBfConflict(null)}
-                                   className="px-3 py-1.5 text-xs font-bold text-amber-700 dark:text-amber-300 hover:underline"
-                                 >
-                                   Ignorer
-                                 </button>
-                               </div>
-                             </div>
-                           );
-                         })()}
-
-                         <div className="pt-2 flex justify-end gap-3 border-t border-slate-200 dark:border-white/10">
-                             <button type="button" onClick={closeModal} className="px-4 py-2 text-sm font-bold text-slate-500 hover:text-brand-navy transition-colors">Annuler</button>
-                             <button type="submit" disabled={isSaving} className="px-6 py-2 bg-brand-blue text-white rounded-lg text-sm font-bold hover:bg-blue-600 transition-colors shadow-lg flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
-                                 {isSaving ? (
-                                   <>
-                                     <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                                     </svg>
-                                     Enregistrement…
-                                   </>
-                                 ) : (
-                                   <><Save className="w-4 h-4" /> {selectedItem ? 'Enregistrer' : 'Créer Réservation'}</>
-                                 )}
-                             </button>
-                         </div>
-                     </form>
-                 </ModalContainer>
+                 <BookingFormModal
+                     selectedItem={selectedItem}
+                     onClose={closeModal}
+                     onSubmit={handleSaveBooking}
+                     isSaving={isSaving}
+                     quickFlow={quickFlow}
+                     clients={clients}
+                     vehicles={vehicles}
+                     pickupPoints={pickupPoints}
+                     bfClientId={bfClientId}
+                     setBfClientId={setBfClientId}
+                     bfCarId={bfCarId}
+                     setBfCarId={setBfCarId}
+                     bfStart={bfStart}
+                     setBfStart={setBfStart}
+                     bfEnd={bfEnd}
+                     setBfEnd={setBfEnd}
+                     bfDailyRate={bfDailyRate}
+                     setBfDailyRate={setBfDailyRate}
+                     bfAmount={bfAmount}
+                     setBfAmount={setBfAmount}
+                     bfPickupId={bfPickupId}
+                     setBfPickupId={setBfPickupId}
+                     bfDropoffId={bfDropoffId}
+                     setBfDropoffId={setBfDropoffId}
+                     bfConflict={bfConflict}
+                     setBfConflict={setBfConflict}
+                     bfBookedPeriods={bfBookedPeriods}
+                 />
              )}
 
              {/* CONTRACT MODAL — replaced by dedicated ContractModal component */}
