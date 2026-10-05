@@ -64,8 +64,9 @@ class GpsVehicleMapper
         return $cars->flatMap(function (Car $car) {
             $assigned = $car->gpsTrackers->pluck('unit_number')->map(fn ($unit) => (int) $unit)->all();
             $units = [];
+            $quantity = (int) $car->quantity;
 
-            for ($unit = 1; $unit <= max(1, (int) $car->quantity); $unit++) {
+            for ($unit = 1; $unit <= $quantity; $unit++) {
                 if (in_array($unit, $assigned, true)) {
                     continue;
                 }
@@ -73,7 +74,7 @@ class GpsVehicleMapper
                 $units[] = [
                     'car_id' => (int) $car->id,
                     'unit_number' => $unit,
-                    'quantity' => max(1, (int) $car->quantity),
+                    'quantity' => $quantity,
                     'vehicle_name' => $car->full_name,
                     'plate' => $this->unitPlate($car, $unit),
                     'unit_label' => $this->unitIdentity($car, $unit),
@@ -81,7 +82,7 @@ class GpsVehicleMapper
             }
 
             return $units;
-        })->values()->all();
+        })->unique(fn (array $unit) => $unit['car_id'] . ':' . $unit['unit_number'])->values()->all();
     }
 
     public function unitPlate(Car $car, int $unitNumber): ?string

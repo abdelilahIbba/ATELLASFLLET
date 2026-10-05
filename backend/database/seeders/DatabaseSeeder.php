@@ -4,11 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Setting;
 use App\Models\User;
-use Database\Seeders\CarSeeder;
-use Database\Seeders\FineSeeder;
-use Database\Seeders\MaintenanceSeeder;
-use Database\Seeders\PickupPointSeeder;
-use Database\Seeders\ReviewSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -33,17 +28,6 @@ class DatabaseSeeder extends Seeder
         // Ensure admin role is set since it's not fillable by default
         $admin->role = 'admin';
         $admin->save();
-
-        // ── Fleet, reviews, fines, maintenance ─────────────────
-        $this->call([
-            ClientPlanningSeeder::class,
-            CarSeeder::class,
-            ReviewSeeder::class,
-            FineSeeder::class,
-            MaintenanceSeeder::class,
-            PickupPointSeeder::class,
-            BookingPlanningSeeder::class,
-        ]);
 
         // ── Reservation pricing settings (admin-configurable) ──
         Setting::set('tax_rate',               20, 'reservation', 'integer');

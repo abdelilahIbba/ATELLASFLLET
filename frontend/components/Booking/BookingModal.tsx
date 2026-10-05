@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
 import { X, Calendar, MapPin, ChevronRight, CreditCard, CheckCircle, ArrowLeft, Clock, Loader2, AlertCircle, Crosshair, ScanLine, Camera, Upload, UserCheck, FileCheck, RefreshCw, Image as ImageIcon, Smartphone, Key } from 'lucide-react';
 import { Car, Booking, UserInfo } from '../../types';
-import { CARS } from '../../constants';
 import { bookingsApi, carsApi, CostBreakdown, ApiError, getToken, pickupPointsApi, PickupPoint } from '../../services/api';
 import { extractDocumentData } from '../../services/ocrUtils';
 import DocumentScanner, { DocumentScanResult } from './DocumentScanner';
@@ -97,7 +96,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
   }, []);
 
   // Load cars from the backend so we use real DB IDs for booked-periods lookups.
-  // Falls back to the CARS constant gracefully if the API fails.
   useEffect(() => {
     if (!isOpen) return;
     setApiCarsLoading(true);
@@ -113,16 +111,13 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
           image: (c.image as string) ?? 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&q=80&w=1200',
           features: Array.isArray(c.features) ? c.features : [],
         }));
-        if (mapped.length > 0) setApiCars(mapped);
+        setApiCars(mapped);
       })
-      .catch(() => { /* keep apiCars empty → grid falls back to CARS constant */ })
+      .catch(() => { setApiCars([]); setApiError('Impossible de charger les voitures.'); })
       .finally(() => setApiCarsLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // After API cars load, reconcile selectedCar — if it came from the CARS constant
-  // (IDs like 'c1', 'c2') swap it for the real API car that has the DB integer ID.
-  // Without this, finalizeReservation sends car_id='c1' → backend Car::findOrFail fails.
   useEffect(() => {
     if (apiCars.length === 0 || !selectedCar) return;
     const alreadyFromApi = apiCars.some(c => c.id === selectedCar.id);
@@ -857,7 +852,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
                       </div>
                     ) : (
                     <div className="grid grid-cols-2 gap-3">
-                      {(apiCars.length > 0 ? apiCars : CARS).map(car => (
+                      {apiCars.map(car => (
                         <div
                           key={car.id}
                           onClick={() => handleCarSelect(car)}

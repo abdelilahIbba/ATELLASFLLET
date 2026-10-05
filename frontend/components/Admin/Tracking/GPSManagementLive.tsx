@@ -134,6 +134,7 @@ const AnimatedGpsMarker: React.FC<{
       <Popup>
         <div className="min-w-48 space-y-1 text-sm">
           <strong>{vehicle.vehicle_name}</strong>
+          <p>matricule : {vehicle.plate ?? 'Non fourni par API'}</p>
           {!vehicle.linked && <p>GPS non associé à une voiture</p>}
           {vehicle.unit_identity && <p>{vehicle.unit_identity}</p>}
           {vehicle.linked && <p>Appareil GPS : {vehicle.provider_name}</p>}
@@ -270,11 +271,15 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
 
   const handleAssociate = async (deviceId: string, selection: string) => {
     if (!selection) return;
-    const [carIdText, unitText] = selection.split(':');
     setAssociatingDevice(deviceId);
     setAssociationError('');
     try {
-      await adminGpsApi.associate(deviceId, { car_id: Number(carIdText), unit_number: Number(unitText) });
+      if (selection.startsWith('matricule:')) {
+        await adminGpsApi.associate(deviceId, { matricule: selection.slice('matricule:'.length) });
+      } else {
+        const [carIdText, unitText] = selection.split(':');
+        await adminGpsApi.associate(deviceId, { car_id: Number(carIdText), unit_number: Number(unitText) });
+      }
       setReloadKey(value => value + 1);
     } catch (requestError) {
       setAssociationError(requestMessage(requestError));
@@ -336,7 +341,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">Suivi GPS des voitures</h2>
             <p className="text-xs text-slate-500">
-              {vehicles.length} appareils · {vehicles.length - unlinkedVehicles.length} associés · {unlinkedVehicles.length} non associés
+              {vehicles.length} appareils GPS · {vehicles.length - unlinkedVehicles.length} associés · {unlinkedVehicles.length} non associés · {assignableUnits.length} unités de voiture disponibles
               {fetchedAt ? ` · Actualisé ${formatDate(fetchedAt)}` : ''}
             </p>
           </div>
@@ -392,7 +397,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
               {visibleVehicles.length === 0 ? (
                 <p className="p-4 text-center text-sm text-slate-500">Aucun résultat.</p>
               ) : visibleVehicles.map(vehicle => (
-                <article key={vehicle.provider_device_id} className={`rounded-lg border p-3 transition-colors ${selectedDeviceId === vehicle.provider_device_id ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/20' : 'border-slate-200 dark:border-slate-700'}`}>
+                <article data-provider-device-id={vehicle.provider_device_id} key={vehicle.provider_device_id} className={`rounded-lg border p-3 transition-colors ${selectedDeviceId === vehicle.provider_device_id ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/20' : 'border-slate-200 dark:border-slate-700'}`}>
                   <button onClick={() => focusVehicle(vehicle.provider_device_id)} className="w-full text-left">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -402,6 +407,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                             ? `${vehicle.unit_identity} · GPS: ${vehicle.provider_name}`
                             : `GPS: ${vehicle.provider_name} · Appareil ${vehicle.provider_device_id}`}
                         </p>
+                          <p className="truncate text-xs text-slate-500">matricule : {vehicle.plate ?? 'Non fourni par API'}</p>
                         {vehicle.in_location && vehicle.location_booking && (
                           <p className="mt-0.5 truncate text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">
                             En location · {vehicle.location_booking.client_name || 'Client N/D'} · Réservation #{vehicle.location_booking.booking_id}
@@ -420,15 +426,22 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                     </div>
                   </button>
 
+                  {vehicle.linked && (vehicle.association_mode === 'matricule' || vehicle.association_mode === 'manual_matricule') && <p className="mt-2 text-xs text-slate-500">association par matricule · {vehicle.plate}</p>}
                   {canManageMappings && !vehicle.linked && (
                     <select
                       value=""
-                      disabled={associatingDevice === vehicle.provider_device_id || assignableUnits.length === 0}
+                      disabled={associatingDevice === vehicle.provider_device_id
+                        || (assignableUnits.length === 0 && (vehicle.assignable_matricules?.length ?? 0) === 0)}
                       onChange={event => void handleAssociate(vehicle.provider_device_id, event.target.value)}
                       className="mt-3 w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                       aria-label={`Associer ${vehicle.provider_name} à une voiture`}
                     >
-                      <option value="">{assignableUnits.length ? 'Associer à une voiture…' : 'Aucune unité disponible'}</option>
+                      <option value="">Associer cette voiture…</option>
+                      {(vehicle.assignable_matricules ?? []).map(plate => (
+                        <option key={`matricule:${plate}`} value={`matricule:${plate}`}>
+                          Matricule {plate}{plate === vehicle.plate ? ' · Correspondance API' : ''}
+                        </option>
+                      ))}
                       {assignableUnits.map(unit => (
                         <option key={`${unit.car_id}:${unit.unit_number}`} value={`${unit.car_id}:${unit.unit_number}`}>
                           {unit.unit_label}
@@ -436,7 +449,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                       ))}
                     </select>
                   )}
-                  {canManageMappings && vehicle.linked && (
+                  {canManageMappings && vehicle.linked && vehicle.association_mode !== 'matricule' && (
                     <button onClick={() => void handleUnassociate(vehicle.provider_device_id)} disabled={associatingDevice === vehicle.provider_device_id} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-rose-600 disabled:opacity-50">
                       <Unlink className="h-3.5 w-3.5" /> Dissocier
                     </button>

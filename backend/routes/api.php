@@ -160,6 +160,7 @@ Route::middleware(['auth:sanctum', 'api.role:admin,demo_admin'])->prefix('admin'
 
     Route::middleware('api.role:admin')->group(function () {
         Route::get('/gps/vehicles', [GpsTrackingController::class, 'index']);
+        Route::patch('/gps/cars/{car}/visibility', [GpsTrackingController::class, 'visibility']);
         Route::post('/gps/devices/{deviceId}/association', [GpsTrackingController::class, 'associate']);
         Route::delete('/gps/devices/{deviceId}/association', [GpsTrackingController::class, 'unassociate']);
     });

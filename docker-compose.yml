@@ -7,7 +7,7 @@
 #
 # Usage:
 #   docker compose up -d --build
-#   docker compose exec backend php artisan migrate --seed
+#   docker compose exec backend php artisan migrate --force
 #   docker compose exec backend php artisan storage:link
 
 services:

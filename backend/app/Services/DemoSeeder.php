@@ -39,6 +39,7 @@ class DemoSeeder
                 'odometer'        => rand(5000, 80000),
                 'condition'       => 'Bon',
                 'demo_account_id' => $demoId,
+                'gps_visible'     => false,
             ]));
         }
 

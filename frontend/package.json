@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "pretest:e2e:gps": "docker compose --project-directory .. -f ../docker-compose.yml up -d --build backend frontend",
+    "pretest:e2e:gps": "docker compose --project-directory .. -f ../docker-compose.yml up -d --build --wait backend frontend",
     "test:e2e:gps": "playwright test -c playwright.gps.config.ts"
   },
   "dependencies": {

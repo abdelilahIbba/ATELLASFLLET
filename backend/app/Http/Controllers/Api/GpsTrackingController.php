@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Car;
 use App\Models\CarGpsTracker;
+use App\Models\GpsDeviceMatricule;
 use App\Services\AlloGpsClient;
 use App\Services\GpsProviderException;
 use App\Services\GpsVehicleMapper;
+use App\Services\GpsFleetEligibility;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,6 +23,7 @@ class GpsTrackingController extends Controller
     public function __construct(
         private readonly AlloGpsClient $gpsClient,
         private readonly GpsVehicleMapper $vehicleMapper,
+        private readonly GpsFleetEligibility $eligibility,
     ) {
     }
 
@@ -37,13 +40,32 @@ class GpsTrackingController extends Controller
             return response()->json(['message' => 'GPS provider is unavailable.'], 503);
         }
 
-        $associations = CarGpsTracker::with('car')->get()->keyBy('provider_device_id');
+        $cars = Car::with('gpsTrackers')->get();
+        $matches = $this->eligibility->matches($cars, $devices, $this->vehicleMapper, false);
+        $associations = $matches->mapWithKeys(function ($match) {
+            $association = new CarGpsTracker([
+                'car_id' => $match['car']->id,
+                'unit_number' => $match['unit_number'],
+                'provider_device_id' => (string) $match['device']['id'],
+            ]);
+            $association->setRelation('car', $match['car']);
+
+            return [(string) $match['device']['id'] => $association];
+        });
+        $manualMatricules = GpsDeviceMatricule::query()
+            ->whereIn('provider_device_id', array_map(fn ($device) => (string) $device['id'], $devices))
+            ->get()->keyBy('provider_device_id');
+        $configuredMatricules = collect(explode(',', (string) config('services.allogps.visible_matricules', '')))
+            ->map(fn ($plate) => trim($plate))->filter()
+            ->unique(fn ($plate) => $this->eligibility->matricule($plate))->values();
         $locationBookings = $this->currentLocationBookings();
         $locationBookingsByUnit = $locationBookings->keyBy(fn (Booking $booking) =>
             $this->unitKey((int) $booking->car_id, (int) ($booking->unit_number ?? 1))
         );
-        $vehicles = array_map(function (array $device) use ($associations, $locationBookingsByUnit) {
-            $association = $associations->get((string) $device['id']);
+        $vehicles = array_map(function (array $device) use ($associations, $locationBookingsByUnit, $manualMatricules, $configuredMatricules, $devices) {
+            $deviceId = (string) $device['id'];
+            $association = $associations->get($deviceId);
+            $manualMatricule = $manualMatricules->get($deviceId);
             $vehicle = $this->vehicleMapper->transform(
                 $device,
                 $association,
@@ -53,14 +75,37 @@ class GpsTrackingController extends Controller
                 ? $locationBookingsByUnit->get($this->unitKey((int) $association->car_id, (int) $association->unit_number))
                 : null;
             $vehicle['in_location'] = $locationBooking !== null;
+            $vehicle['association_mode'] = 'matricule';
+            $vehicle['vehicle_name'] = $vehicle['provider_name'] ?: 'Voiture GPS';
+            $vehicle['plate'] = $this->eligibility->deviceMatricule($device);
             $vehicle['location_booking'] = $locationBooking ? $this->bookingSummary($locationBooking) : null;
+            if ($manualMatricule) {
+                $vehicle['linked'] = true;
+                $vehicle['association_mode'] = 'manual_matricule';
+                $vehicle['plate'] = $manualMatricule->matricule;
+                $vehicle['unit_identity'] = 'Matricule ' . $manualMatricule->matricule;
+            } else {
+                $vehicle['association_mode'] = $association ? 'matricule' : 'unassociated';
+            }
+            $vehicle['assignable_matricules'] = $configuredMatricules->filter(function ($plate) use ($device, $deviceId, $devices, $manualMatricules) {
+                $canonical = $this->eligibility->matricule($plate);
+                $manualOwner = $manualMatricules->first(fn ($mapping) => $this->eligibility->matricule($mapping->matricule) === $canonical);
+                if ($manualOwner && (string) $manualOwner->provider_device_id !== $deviceId) {
+                    return false;
+                }
+
+                return !collect($devices)->contains(fn ($candidate) => (string) $candidate['id'] !== $deviceId
+                    && $this->eligibility->deviceMatricule($candidate) === $canonical);
+            })->values()->all();
 
             return $vehicle;
         }, $devices);
         $gpsVehiclesByUnit = collect($vehicles)
             ->filter(fn (array $vehicle) => $vehicle['linked'])
             ->keyBy(fn (array $vehicle) => $this->unitKey((int) $vehicle['car_id'], (int) $vehicle['unit_number']));
-        $locationVehicles = $locationBookings->map(function (Booking $booking) use ($gpsVehiclesByUnit) {
+        $locationVehicles = $locationBookings->filter(fn (Booking $booking) => $gpsVehiclesByUnit->has(
+            $this->unitKey((int) $booking->car_id, (int) ($booking->unit_number ?? 1))
+        ))->map(function (Booking $booking) use ($gpsVehiclesByUnit) {
             $car = $booking->car;
             $unitNumber = (int) ($booking->unit_number ?? 1);
             $gpsVehicle = $gpsVehiclesByUnit->get($this->unitKey((int) $booking->car_id, $unitNumber));
@@ -95,8 +140,15 @@ class GpsTrackingController extends Controller
         })->values()->all();
 
         return response()->json([
+            'source' => 'gps_api',
             'vehicles' => $vehicles,
-            'assignable_units' => $this->vehicleMapper->assignableUnits(Car::with('gpsTrackers')->get()),
+            'assignable_units' => collect($this->vehicleMapper->assignableUnits($cars))->filter(fn ($unit) =>
+                $matches->contains(fn ($match) => $match['car']->id === $unit['car_id']
+                    && $match['unit_number'] === $unit['unit_number'])
+            )->values()->all(),
+            'available_matricules' => $configuredMatricules->all(),
+            'visibility_units' => [],
+            'excluded_device_count' => 0,
             'location_vehicles' => $locationVehicles,
             'refresh_interval_seconds' => $this->refreshIntervalSeconds(),
             'fetched_at' => now()->toIso8601String(),
@@ -105,13 +157,17 @@ class GpsTrackingController extends Controller
 
     public function associate(Request $request, string $deviceId): JsonResponse
     {
+        if ($request->has('matricule')) {
+            return $this->associateMatricule($request, $deviceId);
+        }
+
         $validated = $request->validate([
             'car_id' => 'required|integer|exists:cars,id',
             'unit_number' => 'required|integer|min:1',
         ]);
 
         $car = Car::with('gpsTrackers')->findOrFail($validated['car_id']);
-        if ($validated['unit_number'] > max(1, (int) $car->quantity)) {
+        if ((int) $car->quantity < 1 || $validated['unit_number'] > (int) $car->quantity) {
             return response()->json(['message' => 'This unit number is not valid for the selected voiture.'], 422);
         }
 
@@ -125,7 +181,8 @@ class GpsTrackingController extends Controller
         }
 
         try {
-            $device = collect($this->gpsClient->devices())
+            $devices = $this->gpsClient->devices();
+            $device = collect($devices)
                 ->first(fn (array $item) => (string) $item['id'] === $deviceId);
         } catch (GpsProviderException $exception) {
             return response()->json([
@@ -136,6 +193,13 @@ class GpsTrackingController extends Controller
 
         if (!$device) {
             return response()->json(['message' => 'GPS device was not found in the provider list.'], 404);
+        }
+
+        $matches = $this->eligibility->matches(Car::with('gpsTrackers')->get(), $devices, $this->vehicleMapper, false);
+        if (!$matches->contains(fn ($match) => $match['car']->id === $car->id
+            && $match['unit_number'] === $validated['unit_number']
+            && (string) $match['device']['id'] === $deviceId)) {
+            return response()->json(['message' => 'association requires a unique matching matricule.'], 422);
         }
 
         $association = DB::transaction(fn () => CarGpsTracker::updateOrCreate(
@@ -158,11 +222,64 @@ class GpsTrackingController extends Controller
 
     public function unassociate(string $deviceId): JsonResponse
     {
-        $deleted = CarGpsTracker::where('provider_device_id', $deviceId)->delete();
+        $deleted = CarGpsTracker::where('provider_device_id', $deviceId)->delete()
+            + GpsDeviceMatricule::where('provider_device_id', $deviceId)->delete();
 
         return response()->json([
             'message' => $deleted ? 'GPS association removed.' : 'GPS association was not found.',
         ], $deleted ? 200 : 404);
+    }
+
+    private function associateMatricule(Request $request, string $deviceId): JsonResponse
+    {
+        $validated = $request->validate(['matricule' => 'required|string|max:30']);
+        $matricule = trim($validated['matricule']);
+        $canonical = $this->eligibility->matricule($matricule);
+        $configured = collect(explode(',', (string) config('services.allogps.visible_matricules', '')))
+            ->map(fn ($plate) => trim($plate))->filter()
+            ->contains(fn ($plate) => $this->eligibility->matricule($plate) === $canonical);
+        if (!$canonical || !$configured) {
+            return response()->json(['message' => 'Choose one of the configured real matricules.'], 422);
+        }
+
+        try {
+            $devices = $this->gpsClient->devices();
+        } catch (GpsProviderException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 503);
+        }
+
+        $device = collect($devices)->first(fn ($item) => (string) $item['id'] === $deviceId);
+        if (!$device) {
+            return response()->json(['message' => 'GPS device was not found in the provider list.'], 404);
+        }
+        $alreadyIdentifiedByAnotherDevice = collect($devices)->contains(fn ($candidate) =>
+            (string) $candidate['id'] !== $deviceId
+            && $this->eligibility->deviceMatricule($candidate) === $canonical
+        );
+        $claimedByAnotherDevice = GpsDeviceMatricule::query()->where('matricule', $matricule)
+            ->where('provider_device_id', '!=', $deviceId)->exists();
+        if ($alreadyIdentifiedByAnotherDevice || $claimedByAnotherDevice) {
+            return response()->json(['message' => 'This matricule is already associated with another GPS device.'], 422);
+        }
+
+        $mapping = GpsDeviceMatricule::updateOrCreate(
+            ['provider_device_id' => $deviceId],
+            ['matricule' => $matricule],
+        );
+
+        return response()->json([
+            'message' => 'GPS device associated with the matricule.',
+            'provider_device_id' => $mapping->provider_device_id,
+            'matricule' => $mapping->matricule,
+        ], 201);
+    }
+
+    public function visibility(Request $request, Car $car): JsonResponse
+    {
+        $validated = $request->validate(['gps_visible' => 'required|boolean']);
+        $car->update($validated);
+
+        return response()->json(['car_id' => $car->id, 'gps_visible' => $car->gps_visible]);
     }
 
     private function currentLocationBookings(): Collection

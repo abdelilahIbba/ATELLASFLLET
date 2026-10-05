@@ -1281,7 +1281,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     <div className={`h-screen w-full flex overflow-hidden ${isDark ? 'bg-brand-navy' : 'bg-slate-100'} p-4 gap-4 transition-colors duration-500`}>
          
          {/* Sidebar */}
-         <div className="w-64 flex-shrink-0 flex flex-col bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-white/5 p-4 shadow-xl z-20 print:hidden">
+         <div className={`w-64 flex-shrink-0 ${activeTab === 'gps' ? 'hidden md:flex' : 'flex'} flex-col bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-white/5 p-4 shadow-xl z-20 print:hidden`}>
              <div className="px-4 py-4 mb-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-3">
                  <img src="/rlv-emblem.png" alt="RLV Logo" className="w-8 h-8 object-contain drop-shadow-sm" />
                  <div>
@@ -1349,7 +1349,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
          </div>
 
          {/* Main Content Area */}
-         <div className="flex-grow bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden relative flex flex-col z-10 print:w-full print:border-none print:shadow-none print:bg-white print:dark:bg-white print:text-black">
+         <div className="min-w-0 flex-grow bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden relative flex flex-col z-10 print:w-full print:border-none print:shadow-none print:bg-white print:dark:bg-white print:text-black">
+            {activeTab === 'gps' && (
+              <nav className="border-b border-slate-200 p-2 md:hidden" aria-label="Navigation administration">
+                <select value="/admin/gps" onChange={event => adminNav(event.target.value)}
+                  aria-label="Vue administration" className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm dark:bg-slate-900 dark:text-white">
+                  <option value="/admin">Tableau de Bord</option>
+                  <option value="/admin/fleet">Flotte &amp; Inventaire</option>
+                  <option value="/admin/bookings">Réservations</option>
+                  <option value="/admin/contracts">Contrats &amp; Factures</option>
+                  <option value="/admin/gps">Suivi GPS des voitures</option>
+                  <option value="/admin/settings">Paramètres Système</option>
+                </select>
+              </nav>
+            )}
             
             {/* Demo mode top banner */}
             {currentUser?.role === 'demo_admin' && (() => {

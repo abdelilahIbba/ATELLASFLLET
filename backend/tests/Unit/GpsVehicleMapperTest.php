@@ -163,3 +163,23 @@ test('assignable unit mapping excludes assigned units and preserves plate orderi
         ],
     ]);
 });
+
+test('assignable mapping does not duplicate a voiture input or invent a unit for qté zero', function () {
+    $car = Car::factory()->make([
+        'id' => 29,
+        'make' => 'Renault', 'model' => 'Clio', 'year' => 2024,
+        'quantity' => 2, 'plate' => 'D-56789-E',
+        'unit_plates' => ['D-56789-E', 'E-56789-E'],
+    ]);
+    $car->setRelation('gpsTrackers', new Collection);
+
+    $mapper = new GpsVehicleMapper;
+    $choices = $mapper->assignableUnits(new Collection([$car, $car]));
+
+    expect($choices)->toHaveCount(2)
+        ->and(collect($choices)->pluck('unit_label')->unique())->toHaveCount(2);
+
+    $zeroQuantityCar = Car::factory()->make(['id' => 30, 'quantity' => 0]);
+    $zeroQuantityCar->setRelation('gpsTrackers', new Collection);
+    expect($mapper->assignableUnits(new Collection([$zeroQuantityCar])))->toBe([]);
+});

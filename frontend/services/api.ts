@@ -272,6 +272,8 @@ export const adminCarsApi = {
 };
 
 export interface AdminGpsVehicle {
+  association_mode?: 'matricule' | 'manual_matricule' | 'unassociated';
+  assignable_matricules?: string[];
   provider_device_id: string;
   provider_name: string;
   vehicle_name: string;
@@ -336,16 +338,22 @@ export interface AdminGpsLocationVehicle {
 }
 
 export interface AdminGpsResponse {
+  source?: 'gps_api';
   vehicles: AdminGpsVehicle[];
   assignable_units: AdminGpsAssignableUnit[];
+  available_matricules?: string[];
   location_vehicles: AdminGpsLocationVehicle[];
+  visibility_units?: Array<{ car_id: number; plate: string; vehicle_name: string; gps_visible: boolean }>;
+  excluded_device_count?: number;
   refresh_interval_seconds: number;
   fetched_at: string;
 }
 
 export const adminGpsApi = {
   list: (signal?: AbortSignal) => api.get<AdminGpsResponse>('/admin/gps/vehicles', undefined, signal),
-  associate: (deviceId: string, payload: { car_id: number; unit_number: number }) =>
+  visibility: (carId: number, gpsVisible: boolean) =>
+    api.patch<{ car_id: number; gps_visible: boolean }>(`/admin/gps/cars/${carId}/visibility`, { gps_visible: gpsVisible }),
+  associate: (deviceId: string, payload: { car_id: number; unit_number: number } | { matricule: string }) =>
     api.post<{ message: string }>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/association`, payload),
   unassociate: (deviceId: string) =>
     api.delete<{ message: string }>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/association`),

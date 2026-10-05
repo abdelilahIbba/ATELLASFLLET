@@ -55,6 +55,7 @@ return [
         'password'          => env('GPS_API_PASSWORD'),
         'stale_after_seconds' => (int) env('GPS_STALE_AFTER_SECONDS', 300),
         'refresh_interval_seconds' => (int) env('GPS_REFRESH_INTERVAL_SECONDS', 15),
+        'visible_matricules' => env('GPS_VISIBLE_MATRICULES', ''),
     ],
 
 ];

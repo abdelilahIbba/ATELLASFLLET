@@ -123,6 +123,18 @@ test('re-authenticates once when an expired cached JWT receives 401', function (
     );
 });
 
+test('retries one transient GPS list 5xx and returns the successful snapshot', function () {
+    Http::fake([
+        '*/auth/login' => Http::response(['token' => 'unit-jwt'], 200),
+        '*/list/RH_746999' => Http::sequence()
+            ->push(['message' => 'temporarily unavailable'], 502)
+            ->push(alloGpsAgencyPayload([alloGpsUnitDevice()]), 200),
+    ]);
+
+    expect((new AlloGpsClient)->devices())->toHaveCount(1);
+    Http::assertSentCount(3);
+});
+
 test('translates login network failures into service-unavailable errors', function () {
     Http::fake(fn () => throw new ConnectionException('cURL error 28: operation timed out'));
 
@@ -211,4 +223,24 @@ test('handles large agency feeds without dropping valid devices', function () {
     expect($result)->toHaveCount(500)
         ->and($result[0]['id'])->toBe('1')
         ->and($result[499]['id'])->toBe('500');
+});
+
+test('deduplicates repeated provider device ids and keeps the newest sample', function () {
+    $older = alloGpsUnitDevice('duplicate-device');
+    $older['name'] = 'Older name';
+    $older['timestamp'] = '1790968537000';
+    $newer = alloGpsUnitDevice('duplicate-device');
+    $newer['name'] = 'Newest name';
+    $newer['timestamp'] = '1790968547000';
+
+    Http::fake([
+        '*/auth/login' => Http::response(['token' => 'unit-jwt'], 200),
+        '*/list/RH_746999' => Http::response(alloGpsAgencyPayload([$older, $newer]), 200),
+    ]);
+
+    $devices = (new AlloGpsClient)->devices();
+
+    expect($devices)->toHaveCount(1)
+        ->and($devices[0]['name'])->toBe('Newest name')
+        ->and($devices[0]['timestamp'])->toBe('1790968547000');
 });

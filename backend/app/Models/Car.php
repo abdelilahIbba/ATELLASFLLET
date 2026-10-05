@@ -43,6 +43,7 @@ class Car extends Model
         'doc_vignette',
         'doc_carte_grise',
         'unit_plates',
+        'gps_visible',
         'demo_account_id',
     ];
 
@@ -56,6 +57,7 @@ class Car extends Model
         'longitude'               => 'float',
         'features'                => 'array',
         'unit_plates'             => 'array',
+        'gps_visible'             => 'boolean',
         'insurance_expiry'        => 'date',
         'visite_technique_expiry' => 'date',
         'vignette_expiry'         => 'date',

@@ -11,6 +11,7 @@ const gpsMocks = vi.hoisted(() => ({
   list: vi.fn(),
   associate: vi.fn(),
   unassociate: vi.fn(),
+  visibility: vi.fn(),
   flyTo: vi.fn(),
   setView: vi.fn(),
   fitBounds: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock('../../../services/api', () => ({
     list: gpsMocks.list,
     associate: gpsMocks.associate,
     unassociate: gpsMocks.unassociate,
+    visibility: gpsMocks.visibility,
   },
 }));
 
@@ -288,8 +290,32 @@ describe('GPSManagement at /admin/gps', () => {
     render(<GPSManagement canManageMappings />);
 
     const selector = await screen.findByRole('combobox', { name: /Associer 771223 WW HYUNDAI I20/ });
+    expect(screen.getByText(/2 unités de voiture disponibles/)).toBeInTheDocument();
     expect(within(selector).getByRole('option', { name: freeUnit.unit_label })).toBeInTheDocument();
     expect(within(selector).getByRole('option', { name: secondUnit.unit_label })).toBeInTheDocument();
+  });
+
+  it('replaces repeated GPS snapshots without accumulating duplicate device cards', async () => {
+    const refresh = installRefreshTimer();
+    gpsMocks.list
+      .mockResolvedValueOnce(responseFor([gpsVehicle()]))
+      .mockResolvedValueOnce(responseFor([
+        gpsVehicle({ speed: 0, is_moving: false, reported_at: '2026-10-02T19:16:07.000Z' }),
+        gpsVehicle({ provider_name: 'Duplicate stale row', reported_at: '2026-10-02T19:15:00.000Z' }),
+      ]));
+
+    render(<GPSManagement canManageMappings={false} />);
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1));
+
+    await act(async () => {
+      refresh();
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(within(screen.getAllByRole('article')[0]).getByText('Vitesse 0')).toBeInTheDocument());
+    expect(screen.getAllByRole('article')).toHaveLength(1);
+    expect(screen.queryByText('Duplicate stale row')).not.toBeInTheDocument();
+    expect(screen.getByText(/1 appareils GPS · 0 associés · 1 non associés · 1 unités de voiture disponibles/)).toBeInTheDocument();
   });
 
   it('shows every current location reservation, including a voiture without a GPS association', async () => {
@@ -360,6 +386,22 @@ describe('GPSManagement at /admin/gps', () => {
     expect(screen.getByText('La liste GPS du fournisseur est vide.')).toBeInTheDocument();
     expect(screen.queryAllByTestId('gps-marker')).toHaveLength(0);
     expect(screen.queryByText(/V-00[1-4]/)).not.toBeInTheDocument();
+  });
+
+  it('displays every API voiture without database visibility controls or seed voitures', async () => {
+    const devices = Array.from({ length: 9 }, (_, index) => gpsVehicle({
+      provider_device_id: `api-${index}`, provider_name: `WW API voiture ${index}`,
+      vehicle_name: `WW API voiture ${index}`, association_mode: 'matricule',
+    }));
+    gpsMocks.list.mockResolvedValue({
+      ...responseFor(devices, []), source: 'gps_api', excluded_device_count: 0,
+      visibility_units: [{ car_id: 1, plate: '40-D-27155', vehicle_name: 'Renault Clio', gps_visible: false }],
+    });
+    render(<GPSManagement canManageMappings />);
+    expect(await screen.findAllByTestId('gps-marker')).toHaveLength(9);
+    expect(screen.queryByText(/A-12345-B/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Voitures visibles sur la map')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
   it('automatically refreshes after 30 seconds and keeps last data when refresh fails', async () => {
@@ -551,6 +593,32 @@ describe('GPSManagement at /admin/gps', () => {
     }));
     await waitFor(() => expect(screen.getAllByText(/771223 WW HYUNDAI I20/).length).toBeGreaterThan(0));
     expect(screen.getByRole('button', { name: 'Dissocier' })).toBeInTheDocument();
+  });
+
+  it('associates a live API voiture with its selected matricule and persists the association', async () => {
+    const liveDevice = gpsVehicle({
+      provider_device_id: 'ww-live-device',
+      provider_name: 'WW live voiture',
+      vehicle_name: 'WW live voiture',
+      association_mode: 'unassociated',
+      assignable_matricules: ['40-D-27155'],
+    });
+    const associatedDevice = gpsVehicle({
+      ...liveDevice,
+      plate: '40-D-27155',
+      linked: true,
+      association_mode: 'manual_matricule',
+      unit_identity: 'Matricule 40-D-27155',
+    });
+    gpsMocks.list.mockResolvedValueOnce(responseFor([liveDevice], []))
+      .mockResolvedValueOnce(responseFor([associatedDevice], []));
+
+    render(<GPSManagement canManageMappings />);
+    const association = await screen.findByRole('combobox', { name: 'Associer WW live voiture à une voiture' });
+    await userEvent.selectOptions(association, 'matricule:40-D-27155');
+
+    expect(gpsMocks.associate).toHaveBeenCalledWith('ww-live-device', { matricule: '40-D-27155' });
+    expect(await screen.findByText('association par matricule · 40-D-27155')).toBeInTheDocument();
   });
 
   it('surfaces association errors and does not claim an unlinked device is linked', async () => {

@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { CARS } from "../constants";
+import { carsApi } from './api';
 
 let aiClient: GoogleGenerativeAI | null = null;
 
@@ -21,9 +21,16 @@ export const getCarRecommendation = async (userQuery: string): Promise<string> =
     return "Je suis actuellement hors ligne (Clé API manquante). Veuillez explorer notre flotte manuellement !";
   }
 
-  const carContext = CARS.map(c => 
-    `${c.name} (${c.category}): $${c.pricePerDay}/jour. Caractéristiques: ${c.features.join(', ')}. Autonomie: ${c.range}.`
-  ).join('\n');
+  let carContext: string;
+  try {
+    const fleet = await carsApi.list({ per_page: 100 });
+    carContext = fleet.data.map((car: any) =>
+      `${car.full_name}: ${car.daily_price}/jour. Caractéristiques: ${(car.features ?? []).join(', ')}.`
+    ).join('\n');
+    if (!carContext) return 'Aucune voiture disponible actuellement.';
+  } catch {
+    return 'Impossible de charger les voitures actuellement.';
+  }
 
   const systemInstruction = `
     Vous êtes Aero, un assistant IA pour une agence de location de voitures futuriste appelée Atellas Fleet.

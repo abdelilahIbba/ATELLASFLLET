@@ -59,16 +59,39 @@ class AlloGpsClient
 
         for ($attempt = 0; $attempt < 2; $attempt++) {
             try {
+                try {
+                    $token = $this->token();
+                } catch (GpsProviderException $exception) {
+                    if ($attempt === 0 && $exception->providerStatus >= 500) {
+                        Cache::forget($this->tokenCacheKey());
+                        usleep(250_000);
+                        continue;
+                    }
+
+                    throw $exception;
+                }
+
                 $response = Http::acceptJson()
-                    ->withToken($this->token())
+                    ->withToken($token)
                     ->timeout(15)
                     ->get($this->baseUrl() . '/list/' . rawurlencode($agencyId));
             } catch (ConnectionException $exception) {
+                if ($attempt === 0) {
+                    Cache::forget($this->tokenCacheKey());
+                    usleep(250_000);
+                    continue;
+                }
+
                 throw new GpsProviderException(503, 'GPS provider is unavailable.', previous: $exception);
             }
 
             if ($response->status() === 401 && $attempt === 0) {
                 Cache::forget($this->tokenCacheKey());
+                continue;
+            }
+
+            if ($response->serverError() && $attempt === 0) {
+                usleep(250_000);
                 continue;
             }
 
@@ -86,16 +109,34 @@ class AlloGpsClient
                 throw new GpsProviderException(502, 'GPS provider returned an invalid vehicle list.');
             }
 
-            return array_values(array_filter($devices, static function ($device): bool {
+            $uniqueDevices = [];
+            foreach ($devices as $device) {
                 if (!is_array($device) || !isset($device['id'], $device['key'])) {
-                    return false;
+                    continue;
                 }
 
                 $idIsValid = is_string($device['id']) || is_int($device['id']);
                 $keyIsValid = is_string($device['key']) && $device['key'] !== '';
+                if (!$idIsValid || (string) $device['id'] === '' || !$keyIsValid) {
+                    continue;
+                }
 
-                return $idIsValid && (string) $device['id'] !== '' && $keyIsValid;
-            }));
+                $id = (string) $device['id'];
+                $existing = $uniqueDevices[$id] ?? null;
+                $existingTimestamp = is_array($existing) && is_numeric($existing['timestamp'] ?? null)
+                    ? (float) $existing['timestamp']
+                    : null;
+                $incomingTimestamp = is_numeric($device['timestamp'] ?? null)
+                    ? (float) $device['timestamp']
+                    : null;
+
+                if ($existing === null || ($incomingTimestamp !== null
+                    && ($existingTimestamp === null || $incomingTimestamp > $existingTimestamp))) {
+                    $uniqueDevices[$id] = $device;
+                }
+            }
+
+            return array_values($uniqueDevices);
         }
 
         throw new GpsProviderException(401, 'GPS provider authentication failed.');
