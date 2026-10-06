@@ -1368,7 +1368,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
          </div>
 
          {/* Main Content Area */}
-         <div className="min-w-0 flex-grow bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden relative flex flex-col z-10 print:w-full print:border-none print:shadow-none print:bg-white print:dark:bg-white print:text-black">
+         <div className="min-w-0 flex-grow bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden relative flex flex-col print:w-full print:border-none print:shadow-none print:bg-white print:dark:bg-white print:text-black">
             {activeTab === 'gps' && (
               <nav className="border-b border-slate-200 p-2 md:hidden" aria-label="Navigation administration">
                 <select value="/admin/gps" onChange={event => adminNav(event.target.value)}

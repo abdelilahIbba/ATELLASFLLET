@@ -56,7 +56,7 @@ RUN composer install \
 FROM php:8.2-fpm-alpine
 
 # Composer available in the final image (for in-container composer commands)
-COPY --from=composer:2.7 /usr/local/bin/composer /usr/local/bin/composer
+COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
 
 # Install system dependencies and PHP extensions required by Laravel
 RUN apk add --no-cache \

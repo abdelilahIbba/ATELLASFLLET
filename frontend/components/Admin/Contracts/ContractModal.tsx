@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -584,21 +585,24 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
   const goNext = () => setStep(s => Math.min(s + 1, 3) as Step);
   const goPrev = () => setStep(s => Math.max(s - 1, 0) as Step);
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <AnimatePresence>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-[9998] flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm overflow-y-auto"
         onClick={e => {
           if (e.target === e.currentTarget) onClose();
         }}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white dark:bg-[#0B1120] w-full max-w-5xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col"
+          className="bg-white dark:bg-[#0B1120] w-full max-w-5xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col my-auto"
           style={{ maxHeight: '92vh' }}
+          onClick={e => e.stopPropagation()}
         >
           {/* ── Header ── */}
           <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5 flex items-center justify-between flex-shrink-0 rounded-t-2xl">
@@ -891,7 +895,8 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
           onClose={() => setShowRlvModal(false)}
         />
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 
