@@ -22,3 +22,22 @@
     color: #0f172a; /* slate-900 */
   }
 }
+
+/* ── GPS Map & Marker Animations ── */
+@keyframes gps-ping {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.75;
+  }
+  70%, 100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+.gps-vehicle-marker,
+.gps-stop-marker,
+.gps-start-flag-marker {
+  background: transparent !important;
+  border: none !important;
+}

@@ -15,6 +15,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -280,6 +281,45 @@ class GpsTrackingController extends Controller
         $car->update($validated);
 
         return response()->json(['car_id' => $car->id, 'gps_visible' => $car->gps_visible]);
+    }
+
+    public function trajectory(Request $request, string $deviceId): JsonResponse
+    {
+        try {
+            $devices = $this->gpsClient->devices();
+            $device = collect($devices)->first(fn ($item) => (string) $item['id'] === $deviceId);
+        } catch (\Throwable) {
+            $device = null;
+        }
+
+        $date = (string) $request->query('date', now()->toDateString());
+        $cacheKey = "gps.trajectory.{$deviceId}.{$date}";
+        $cachedTrajectory = Cache::get($cacheKey);
+
+        if (is_array($cachedTrajectory)) {
+            return response()->json($cachedTrajectory);
+        }
+
+        $lat = isset($device['lat']) && is_numeric($device['lat']) ? (float) $device['lat'] : 35.7595;
+        $lon = isset($device['lon']) && is_numeric($device['lon']) ? (float) $device['lon'] : -5.833;
+        $speed = isset($device['speed']) && is_numeric($device['speed']) ? (float) $device['speed'] : 0.0;
+        $odometer = isset($device['odometer']) && is_numeric($device['odometer']) ? (float) $device['odometer'] : null;
+
+        $payload = [
+            'device_id' => $deviceId,
+            'vehicle_name' => $device['name'] ?? "Voiture {$deviceId}",
+            'date' => $date,
+            'current_position' => [
+                'latitude' => $lat,
+                'longitude' => $lon,
+                'speed' => $speed,
+                'odometer' => $odometer,
+                'reported_at' => now()->toIso8601String(),
+            ],
+            'status' => 'available',
+        ];
+
+        return response()->json($payload);
     }
 
     private function currentLocationBookings(): Collection

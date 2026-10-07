@@ -201,8 +201,10 @@ class InvoiceController extends Controller
         }
 
         $contract->load(['booking', 'user']);
-        $days = max(1, $contract->start_date->diffInDays($contract->end_date));
+        // Durée de location inclusive (+1 pour compter le premier et dernier jour)
+        $days = max(1, $contract->start_date->diffInDays($contract->end_date) + 1);
 
+        // Ligne principale de facturation utilisant le tarif journalier négocié du contrat
         $items = [
             [
                 'label'      => "Location véhicule — {$contract->vehicle_name} ({$days} jours)",

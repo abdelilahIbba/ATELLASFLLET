@@ -445,6 +445,17 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
 
   const printContentRef = React.useRef<HTMLDivElement>(null);
 
+  const contractDays = React.useMemo(() => {
+    if (!booking.startDate || !booking.endDate) return 1;
+    const ms = new Date(booking.endDate).getTime() - new Date(booking.startDate).getTime();
+    return Math.max(1, Math.floor(ms / 86400000) + 1);
+  }, [booking.startDate, booking.endDate]);
+
+  // Dérivation du tarif journalier effectif à partir du montant négocié dans la réservation
+  const contractDailyRate = extras.dailyRate !== null && extras.dailyRate !== undefined && extras.dailyRate > 0
+    ? extras.dailyRate
+    : (contractDays > 0 && Number(booking.amount) > 0 ? Math.round((Number(booking.amount) / contractDays) * 100) / 100 : (extras.dailyRate ?? 0));
+
   const rlvContractData: RlvContractData = {
     id: extras.contractId || String(booking.id),
     contract_number: extras.contractNumber || String(booking.id),
@@ -470,8 +481,8 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
     unit_number: booking.unitNumber,
     start_date: booking.startDate,
     end_date: booking.endDate,
-    daily_rate: extras.dailyRate || 0,
-    total_amount: booking.amount,
+    daily_rate: contractDailyRate,
+    total_amount: Number(booking.amount ?? 0),
     deposit_amount: extras.depositAmount || 0,
     currency: 'MAD',
     insurance_type: extras.insuranceType || '',
@@ -875,8 +886,8 @@ const ContractModal: React.FC<ContractModalProps> = ({ booking, onClose, company
             unit_number: booking.unitNumber,
             start_date: booking.startDate,
             end_date: booking.endDate,
-            daily_rate: extras.dailyRate || 0,
-            total_amount: booking.amount,
+            daily_rate: contractDailyRate,
+            total_amount: Number(booking.amount ?? 0),
             deposit_amount: extras.depositAmount || 0,
             currency: 'MAD',
             insurance_type: extras.insuranceType,

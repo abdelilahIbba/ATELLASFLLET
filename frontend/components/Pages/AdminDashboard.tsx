@@ -719,16 +719,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     setBfCarId(selectedItem?.carId ?? '');
     setBfStart(selectedItem?.startDate ?? '');
     setBfEnd(selectedItem?.endDate ?? '');
-    setBfAmount(selectedItem?.amount ? String(selectedItem.amount) : '');
+    const rawAmt = selectedItem?.amount;
+    const hasAmount = rawAmt !== undefined && rawAmt !== null && !isNaN(Number(rawAmt));
+    setBfAmount(hasAmount ? String(rawAmt) : '');
     // Prix/Jour : dérivé de la réservation existante (montant ÷ jours) pour conserver
-    // les tarifs personnalisés ; sinon tarif catalogue du véhicule.
-    if (selectedItem?.amount && selectedItem?.startDate && selectedItem?.endDate) {
+    // les tarifs personnalisés (même si 0 MAD) ; sinon tarif catalogue du véhicule (ou 0).
+    if (hasAmount && selectedItem?.startDate && selectedItem?.endDate) {
       const ms  = new Date(selectedItem.endDate).getTime() - new Date(selectedItem.startDate).getTime();
       const d   = Math.max(1, Math.floor(ms / 86400000) + 1);
-      setBfDailyRate(String(Math.round((selectedItem.amount / d) * 100) / 100));
+      setBfDailyRate(String(Math.round((Number(rawAmt) / d) * 100) / 100));
     } else {
       const veh = vehicles.find(v => String(v.id) === String(selectedItem?.carId ?? ''));
-      setBfDailyRate(veh?.pricePerDay ? String(veh.pricePerDay) : '');
+      setBfDailyRate(veh?.pricePerDay !== undefined ? String(veh.pricePerDay) : '0');
     }
     setBfPickupId(selectedItem?.pickupPointId ?? '');
     setBfDropoffId(selectedItem?.dropoffPointId ?? '');
@@ -1038,7 +1040,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     const form   = e.target as HTMLFormElement;
     const fd     = new FormData(form);
     const g      = (k: string) => fd.get(k)?.toString() ?? '';
-    const amount = g('amount') ? Number(g('amount')) : undefined;
+    // Support des montants à 0 MAD ou négociés (0 ne doit pas être considéré comme falsy/undefined)
+    const rawAmount = g('amount')?.trim();
+    const amount = rawAmount !== '' && rawAmount !== undefined && !isNaN(Number(rawAmount)) ? Number(rawAmount) : undefined;
     setIsSaving(true);
     try {
       let saved: Booking;
@@ -1145,7 +1149,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
     fd.set('availability', statusVal === 'Available' ? 'available' : 'unavailable');
     fd.set('odometer',    raw.get('odometer')?.toString()    ?? '0');
     fd.set('fuel_level',  raw.get('fuel')?.toString()        ?? '100');
-    fd.set('daily_price', raw.get('pricePerDay')?.toString() ?? '0');
+    const pDay = raw.get('pricePerDay')?.toString().trim();
+    fd.set('daily_price', pDay !== '' && pDay !== undefined ? pDay : '0');
     fd.set('quantity',    String(modalQty));
     fd.set('condition',   selectedItem?.condition           ?? 'Excellent');
     fd.set('latitude',    String(selectedItem?.location?.lat ?? 33.5731));

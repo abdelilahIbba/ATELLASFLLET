@@ -281,15 +281,19 @@ export const VehicleDetailsTab: React.FC<VehicleDetailsTabProps> = ({
             <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Prix / Jour (MAD)
             </label>
+            {/* Prix catalogue par défaut à 0 MAD pour permettre la tarification libre/négociée selon le client */}
             <input 
               name="pricePerDay" 
               type="number" 
               step="0.01"
               min="0"
-              defaultValue={selectedItem?.pricePerDay ?? 1000} 
+              defaultValue={selectedItem ? (selectedItem.pricePerDay ?? 0) : 0} 
               className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm font-mono font-medium focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/15 shadow-xs transition-all"
-              placeholder="1000"
+              placeholder="0 (Tarif flexible / négociable)"
             />
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+              Peut être fixé à 0 MAD si le tarif est négocié par réservation/client.
+            </p>
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">

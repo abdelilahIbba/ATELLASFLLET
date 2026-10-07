@@ -92,7 +92,9 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
     value: String(v.id),
     label: v.name,
     secondaryBadge: v.plate || undefined,
-    badge: v.pricePerDay ? `${v.pricePerDay.toLocaleString('fr-MA')} MAD/j` : undefined,
+    badge: (v.pricePerDay !== undefined && v.pricePerDay > 0)
+      ? `${v.pricePerDay.toLocaleString('fr-MA')} MAD/j`
+      : '0 MAD/j (Tarif flexible)',
   }));
 
   // Calculation details
@@ -194,7 +196,8 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                   onChange={(val) => {
                     setBfCarId(val);
                     const veh = vehicles.find(v => String(v.id) === val);
-                    if (veh?.pricePerDay) setBfDailyRate(String(veh.pricePerDay));
+                    // Initialiser avec le prix du véhicule ou 0 MAD (tarif libre négocié par client)
+                    setBfDailyRate(veh?.pricePerDay !== undefined ? String(veh.pricePerDay) : '0');
                   }}
                   placeholder="— Sélectionner un véhicule —"
                   searchPlaceholder="Rechercher par modèle, matricule..."
@@ -317,11 +320,15 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                 className="w-full bg-slate-50/70 hover:bg-slate-50 dark:bg-white/5 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/10 rounded-xl p-2.5 text-sm text-brand-navy dark:text-white focus:outline-none focus:border-brand-blue transition-colors font-semibold"
                 placeholder="Tarif journalier"
               />
-              {activeVehicle?.pricePerDay && (
+              {activeVehicle && (activeVehicle.pricePerDay > 0 ? (
                 <p className="mt-1 text-[11px] text-slate-400">
                   Catalogue : <span className="font-semibold text-slate-600 dark:text-slate-300">{activeVehicle.pricePerDay.toLocaleString('fr-MA')} MAD/j</span>
                 </p>
-              )}
+              ) : (
+                <p className="mt-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  Tarif flexible : 0 MAD/j (prix à convenir selon le client)
+                </p>
+              ))}
             </div>
 
             {/* Total Amount (DISTINCTIVE AUTO-CALCULATED STYLING) */}
@@ -346,7 +353,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                   placeholder="0.00"
                 />
               </div>
-              {daysDiff > 0 && bfDailyRate && (
+              {daysDiff > 0 && bfDailyRate !== '' && !isNaN(parseFloat(bfDailyRate)) && (
                 <p className="mt-1 text-[11px] text-brand-blue/80 dark:text-blue-300/80 font-medium">
                   {daysDiff} jour{daysDiff > 1 ? 's' : ''} × {parseFloat(bfDailyRate).toLocaleString('fr-MA')} MAD
                 </p>

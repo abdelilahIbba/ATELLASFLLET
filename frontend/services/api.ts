@@ -360,6 +360,8 @@ export const adminGpsApi = {
     api.post<{ message: string }>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/association`, payload),
   unassociate: (deviceId: string) =>
     api.delete<{ message: string }>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/association`),
+  trajectory: (deviceId: string, date?: string) =>
+    api.get<any>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/trajectory${date ? `?date=${encodeURIComponent(date)}` : ''}`),
 };
 
 // ---------------------------------------------------------------------------

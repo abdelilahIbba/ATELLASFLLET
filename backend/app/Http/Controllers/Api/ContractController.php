@@ -94,6 +94,17 @@ class ContractController extends Controller
         $validated['user_id'] = $booking->user_id;
         $validated['car_id']  = $booking->car_id;
 
+        // Héritage du montant négocié de la réservation :
+        // Si aucun montant n'est saisi manuellement, on reprend le montant total négocié de la réservation
+        // et on calcule le taux journalier effectif (montant / nombre de jours inclusifs).
+        if (!array_key_exists('total_amount', $validated) || $validated['total_amount'] === null) {
+            $validated['total_amount'] = (float) $booking->amount;
+        }
+        if (!array_key_exists('daily_rate', $validated) || $validated['daily_rate'] === null) {
+            $days = max(1, \Carbon\Carbon::parse($validated['start_date'])->diffInDays(\Carbon\Carbon::parse($validated['end_date'])) + 1);
+            $validated['daily_rate'] = $days > 0 ? round((float) $validated['total_amount'] / $days, 2) : (float) $validated['total_amount'];
+        }
+
         $contract = Contract::create($validated);
         $contract->load(['booking', 'user', 'car']);
 
@@ -174,9 +185,27 @@ class ContractController extends Controller
      */
     public function createFromBooking(Booking $booking): JsonResponse
     {
-        // Return existing if already generated
+        // Si un contrat existe déjà pour cette réservation, on s'assure qu'il reflète le tarif négocié
+        // actuel de la réservation (au cas où le tarif a été ajusté dans le rendez-vous après la création initiale).
         $existing = Contract::where('booking_id', $booking->id)->first();
         if ($existing) {
+            if (in_array($existing->status, ['draft', 'active'])) {
+                $days = max(1, $booking->start_date->diffInDays($booking->end_date) + 1);
+                $dailyRate = $days > 0 ? round((float) $booking->amount / $days, 2) : (float) $booking->amount;
+                $existing->update([
+                    'total_amount'           => $booking->amount,
+                    'daily_rate'             => $dailyRate,
+                    'start_date'             => $booking->start_date,
+                    'end_date'               => $booking->end_date,
+                    'booking_payment_status' => $booking->payment_status ?? $existing->booking_payment_status,
+                ]);
+                $existing->refresh();
+
+                // Re-synchroniser les factures non payées liées à ce contrat
+                $existing->invoices()
+                    ->whereNotIn('status', ['paid', 'cancelled'])
+                    ->each(fn ($inv) => app(InvoiceController::class)->rebuildFromContract($inv, $existing));
+            }
             $existing->load(['booking', 'user', 'car', 'invoices']);
             return response()->json([
                 'message'  => 'Contract already exists for this booking.',
@@ -186,8 +215,9 @@ class ContractController extends Controller
 
         $booking->load(['user', 'car']);
 
-        $days = max(1, $booking->start_date->diffInDays($booking->end_date));
-        $dailyRate = $days > 0 ? round($booking->amount / $days, 2) : $booking->amount;
+        // Calcul du tarif journalier issu du montant négocié dans la réservation (et non du catalogue voiture)
+        $days = max(1, $booking->start_date->diffInDays($booking->end_date) + 1);
+        $dailyRate = $days > 0 ? round((float) $booking->amount / $days, 2) : (float) $booking->amount;
 
         $contract = Contract::create([
             'booking_id'              => $booking->id,

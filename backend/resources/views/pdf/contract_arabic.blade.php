@@ -203,9 +203,10 @@
     $logoSrc = $imageData([public_path('rlv-emblem.png'), public_path('images/rlv-emblem.png')]);
     $carImgSrc = $imageData([public_path('car-inspection.png'), public_path('images/car-inspection.png')]);
 
-    $start = $contract->start_date ? \Carbon\Carbon::parse($contract->start_date) : now();
-    $end = $contract->end_date ? \Carbon\Carbon::parse($contract->end_date) : now();
-    $days = max(1, $start->diffInDays($end));
+    $start = $contract->start_date ? \Carbon\Carbon::parse($contract->start_date)->startOfDay() : now()->startOfDay();
+    $end = $contract->end_date ? \Carbon\Carbon::parse($contract->end_date)->startOfDay() : now()->startOfDay();
+    // Calcul inclusif de la durée de location en jours (+1 jour pour inclure la date de départ et retour)
+    $days = max(1, $start->diffInDays($end) + 1);
     $totalTTC = (float) ($contract->total_amount ?? 0);
     $totalHT = $totalTTC / 1.2;
     $tvaAmount = $totalTTC - $totalHT;

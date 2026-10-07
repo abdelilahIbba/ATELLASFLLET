@@ -327,10 +327,15 @@ class BookingController extends Controller
             }
         }
 
-        $rentalDays = $startDate->diffInDays($endDate) + 1; // inclusive (1 day when start == end)
-        $amount     = isset($validated['amount']) && $validated['amount'] !== null
-                      ? (float) $validated['amount']
-                      : $rentalDays * (float) $car->daily_price;
+        // Calcul inclusif de la durée de location (1 jour si début == fin)
+        $rentalDays = $startDate->diffInDays($endDate) + 1;
+
+        // Support du tarif dynamique / flexible :
+        // Si l'administrateur a saisi un montant explicite (même 0 MAD pour un tarif libre/négocié),
+        // on conserve exactement ce montant. Sinon, on se base sur le tarif journalier du catalogue.
+        $amount = array_key_exists('amount', $validated) && $validated['amount'] !== null
+            ? (float) $validated['amount']
+            : $rentalDays * (float) $car->daily_price;
 
         $booking = Booking::create([
             'user_id'        => $validated['user_id'],
@@ -430,24 +435,32 @@ class BookingController extends Controller
             }
         }
 
-        // Recalculate the rental amount when the period changes but no explicit
-        // amount was provided, so the price always follows the new duration.
+        // Recalcul du montant lors d'un changement de dates uniquement si aucun montant
+        // explicite n'a été fourni dans la requête.
+        // Important pour les tarifs négociés : si la réservation avait un tarif personnalisé
+        // (ex: 250 DH/j ou 400 DH/j), on préserve le taux journalier négocié ($amount / $oldDays)
+        // au lieu de forcer le prix catalogue du véhicule.
         if (!array_key_exists('amount', $validated) && (isset($validated['start_date']) || isset($validated['end_date']))) {
             $car = $booking->car ?? Car::findOrFail($booking->car_id);
             $inclusiveDays = max(1, Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1);
-            $validated['amount'] = round($inclusiveDays * (float) $car->daily_price, 2);
+            $oldDays = max(1, $booking->start_date->diffInDays($booking->end_date) + 1);
+            $dailyRate = $oldDays > 0 && (float) $booking->amount > 0
+                ? ((float) $booking->amount / $oldDays)
+                : (float) $car->daily_price;
+            $validated['amount'] = round($inclusiveDays * $dailyRate, 2);
         }
 
         $booking->update($validated);
         $booking->load(['car', 'user']);
 
-        // Update associated draft/active contracts so they follow booking edits.
-        // Completed/cancelled contracts are historical records and must not change.
+        // Synchronisation automatique des contrats brouillons et actifs :
+        // Dès que le montant ou la période de la réservation est modifié (ex: négociation client),
+        // on répercute automatiquement le nouveau tarif total et le taux journalier dans le contrat
+        // ainsi que dans la facture liée.
         $syncableContracts = $booking->contracts()->whereIn('status', ['draft', 'active'])->get();
         foreach ($syncableContracts as $contract) {
-            // Calculate new daily rate if amount or dates changed
             $days = max(1, $booking->start_date->diffInDays($booking->end_date) + 1);
-            $dailyRate = $days > 0 ? round($booking->amount / $days, 2) : $booking->amount;
+            $dailyRate = $days > 0 ? round((float) $booking->amount / $days, 2) : (float) $booking->amount;
 
             $contract->update([
                 'unit_number' => $booking->unit_number,

@@ -197,6 +197,21 @@ export const ContractForm: React.FC<ContractFormProps> = ({ contract, rawBooking
 
   const booking = rawBookings.find(b => String(b.id) === selectedBooking);
 
+  const bookingDays = React.useMemo(() => {
+    if (!booking?.start_date || !booking?.end_date) return 1;
+    const ms = new Date(booking.end_date).getTime() - new Date(booking.start_date).getTime();
+    return Math.max(1, Math.floor(ms / 86400000) + 1);
+  }, [booking?.start_date, booking?.end_date]);
+
+  // Calcul automatique du tarif journalier issu de la réservation sélectionnée (montant / jours)
+  const negotiatedDailyRate = React.useMemo(() => {
+    if (contract?.daily_rate !== undefined && contract.daily_rate !== null) return contract.daily_rate;
+    if (booking?.amount !== undefined && booking.amount !== null && bookingDays > 0) {
+      return Math.round((Number(booking.amount) / bookingDays) * 100) / 100;
+    }
+    return '';
+  }, [contract?.daily_rate, booking?.amount, bookingDays]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (saving) return;
@@ -265,7 +280,7 @@ export const ContractForm: React.FC<ContractFormProps> = ({ contract, rawBooking
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="overflow-y-auto custom-scrollbar flex-grow">
+        <form key={selectedBooking || (contract?.id ? String(contract.id) : 'new')} onSubmit={handleSubmit} className="overflow-y-auto custom-scrollbar flex-grow">
           <div className="p-6 space-y-6">
             {/* Booking selector */}
             {!contract && (
@@ -345,7 +360,7 @@ export const ContractForm: React.FC<ContractFormProps> = ({ contract, rawBooking
               <div>
                 <label className={labelClass}>Tarif / jour (MAD)</label>
                 <input name="daily_rate" type="number" step="0.01" min="0" className={inputClass}
-                  defaultValue={contract?.daily_rate ?? ''} />
+                  defaultValue={contract?.daily_rate ?? negotiatedDailyRate} />
               </div>
               <div>
                 <label className={labelClass}>Total (MAD)</label>

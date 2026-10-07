@@ -117,7 +117,14 @@
             </tr>
             <tr>
                 <th>Daily Price</th>
-                <td>{{ number_format($booking->car->daily_price, 2) }} Dhs</td>
+                @php
+                    // Affichage du tarif journalier effectif négocié avec le client (montant / jours)
+                    $bStart = \Carbon\Carbon::parse($booking->start_date)->startOfDay();
+                    $bEnd   = \Carbon\Carbon::parse($booking->end_date)->startOfDay();
+                    $bDays  = max(1, $bStart->diffInDays($bEnd) + 1);
+                    $bDaily = $bDays > 0 && (float) $booking->amount > 0 ? round((float) $booking->amount / $bDays, 2) : (float) ($booking->car->daily_price ?? 0);
+                @endphp
+                <td>{{ number_format($bDaily, 2) }} Dhs</td>
             </tr>
         </table>
     </div>
