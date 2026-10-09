@@ -34,7 +34,7 @@ const HeroOverlay: React.FC<HeroOverlayProps> = ({ isDark, onViewFleet }) => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
           >
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.2rem] font-black text-slate-900 dark:text-white leading-[0.9] tracking-tighter mb-6 md:mb-7 font-['Space_Grotesk'] drop-shadow-xl">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5.2rem] font-black text-slate-900 dark:text-white leading-[0.95] sm:leading-[0.9] tracking-tighter mb-5 sm:mb-6 md:mb-7 font-['Space_Grotesk'] drop-shadow-xl">
               LOCATION <span className="text-brand-red">PREMIUM</span><br className="block" />
               À TANGER
             </h1>
@@ -44,11 +44,11 @@ const HeroOverlay: React.FC<HeroOverlayProps> = ({ isDark, onViewFleet }) => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.35 }}
-            className="flex items-center gap-4"
+            className="flex items-center gap-3 sm:gap-4"
           >
             <button
               onClick={onViewFleet}
-              className="group relative px-6 md:px-7 py-3 md:py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full font-bold overflow-hidden transition-all hover:scale-[1.03] shadow-2xl hover:shadow-brand-red/40"
+              className="group relative px-5 sm:px-7 py-2.5 sm:py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full font-bold text-sm sm:text-base overflow-hidden transition-all hover:scale-[1.03] shadow-2xl hover:shadow-brand-red/40"
             >
               <div className="absolute inset-0 bg-brand-red/0 group-hover:bg-brand-red/10 transition-colors" />
               <span className="relative z-10 flex items-center gap-2">
@@ -59,28 +59,28 @@ const HeroOverlay: React.FC<HeroOverlayProps> = ({ isDark, onViewFleet }) => {
 
             <button
               onClick={() => setIsVideoOpen(true)}
-              className="w-12 h-12 md:w-13 md:h-13 rounded-full border border-slate-900/20 dark:border-white/20 bg-white/15 dark:bg-black/25 backdrop-blur-md flex items-center justify-center group hover:bg-white/25 transition-all"
+              className="w-11 h-11 sm:w-12 sm:h-12 md:w-13 md:h-13 rounded-full border border-slate-900/20 dark:border-white/20 bg-white/15 dark:bg-black/25 backdrop-blur-md flex items-center justify-center group hover:bg-white/25 transition-all"
             >
-              <Play className="w-5 h-5 text-slate-900 dark:text-white fill-current opacity-85 group-hover:scale-110 transition-transform" />
+              <Play className="w-4 h-4 sm:w-5 sm:h-5 text-slate-900 dark:text-white fill-current opacity-85 group-hover:scale-110 transition-transform" />
             </button>
           </motion.div>
         </div>
 
-        <div className="lg:col-span-5 xl:col-span-4 pointer-events-auto w-full mt-8 lg:mt-0">
-          <div className="flex flex-row lg:flex-col lg:items-end xl:flex-row gap-3 md:gap-4 justify-start lg:justify-end">
+        <div className="lg:col-span-5 xl:col-span-4 pointer-events-auto w-full mt-6 lg:mt-0">
+          <div className="grid grid-cols-2 sm:flex sm:flex-row lg:flex-col lg:items-end xl:flex-row gap-2.5 sm:gap-4 justify-start lg:justify-end">
             <motion.div
               initial={{ opacity: 0, x: 32 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.55, delay: 0.6 }}
-              className="w-full min-w-[10.5rem] max-w-[13rem] lg:max-w-none lg:w-48 xl:w-[12rem] bg-white/82 dark:bg-black/45 backdrop-blur-xl border border-white/25 p-3 md:p-3.5 rounded-2xl shadow-xl"
+              className="w-full min-w-0 sm:min-w-[9.5rem] max-w-none sm:max-w-[13rem] lg:max-w-none lg:w-48 xl:w-[12rem] bg-white/82 dark:bg-black/45 backdrop-blur-xl border border-white/25 p-2.5 sm:p-3 md:p-3.5 rounded-2xl shadow-xl"
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                 <span className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">Autonomie</span>
                 <Battery className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-500" />
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl md:text-[2rem] font-bold text-slate-900 dark:text-white font-['Space_Grotesk']">620</span>
-                <span className="text-sm font-medium text-slate-500 dark:text-gray-400">km</span>
+                <span className="text-2xl sm:text-3xl md:text-[2rem] font-bold text-slate-900 dark:text-white font-['Space_Grotesk']">620</span>
+                <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-gray-400">km</span>
               </div>
             </motion.div>
 
@@ -88,15 +88,15 @@ const HeroOverlay: React.FC<HeroOverlayProps> = ({ isDark, onViewFleet }) => {
               initial={{ opacity: 0, x: 32 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.55, delay: 0.72 }}
-              className="w-full min-w-[10.5rem] max-w-[13rem] lg:max-w-none lg:w-48 xl:w-[12rem] bg-white/82 dark:bg-black/45 backdrop-blur-xl border border-white/25 p-3 md:p-3.5 rounded-2xl shadow-xl"
+              className="w-full min-w-0 sm:min-w-[9.5rem] max-w-none sm:max-w-[13rem] lg:max-w-none lg:w-48 xl:w-[12rem] bg-white/82 dark:bg-black/45 backdrop-blur-xl border border-white/25 p-2.5 sm:p-3 md:p-3.5 rounded-2xl shadow-xl"
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                 <span className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider">Top Speed</span>
                 <Gauge className="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-500" />
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl md:text-[2rem] font-bold text-slate-900 dark:text-white font-['Space_Grotesk']">230</span>
-                <span className="text-sm font-medium text-slate-500 dark:text-gray-400">km/h</span>
+                <span className="text-2xl sm:text-3xl md:text-[2rem] font-bold text-slate-900 dark:text-white font-['Space_Grotesk']">230</span>
+                <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-gray-400">km/h</span>
               </div>
             </motion.div>
           </div>

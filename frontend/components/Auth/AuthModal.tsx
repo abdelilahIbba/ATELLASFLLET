@@ -95,11 +95,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, onRegis
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-5xl min-h-[600px] bg-white dark:bg-[#0B1120] rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-white/10"
+        className="relative w-full max-w-5xl max-h-[92vh] md:min-h-[580px] bg-white dark:bg-[#0B1120] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-white/10"
       >
         <button 
           onClick={onClose}
-          className="absolute top-6 right-6 z-30 p-2 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors text-brand-navy dark:text-white"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 z-30 p-2 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors text-brand-navy dark:text-white"
         >
           <X className="w-5 h-5" />
         </button>
@@ -153,11 +153,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, onRegis
         </div>
 
         {/* Right Panel - Form */}
-        <div className="w-full md:w-1/2 p-8 md:p-12 bg-white dark:bg-[#0B1120] relative flex flex-col justify-center overflow-y-auto">
+        <div className="w-full md:w-1/2 p-5 sm:p-8 md:p-12 bg-white dark:bg-[#0B1120] relative flex flex-col justify-center overflow-y-auto">
            
            <div className="max-w-md mx-auto w-full">
-             <div className="mb-8 text-center md:text-left">
-                <h3 className="text-2xl font-bold text-brand-navy dark:text-white font-space mb-2">
+             <div className="mb-5 sm:mb-8 text-center md:text-left">
+                <h3 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white font-space mb-1.5 sm:mb-2">
                   {isLogin ? 'Se Connecter' : 'Créer un Compte'}
                 </h3>
                 <p className="text-slate-500 text-sm">
@@ -282,7 +282,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, onRegis
                </motion.form>
              </AnimatePresence>
 
-             <div className="my-8 flex items-center gap-4">
+             <div className="my-5 sm:my-6 md:my-8 flex items-center gap-4">
                 <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
                 <span className="text-xs text-slate-400 font-medium uppercase">Ou continuer avec</span>
                 <div className="h-px bg-slate-200 dark:bg-white/10 flex-1"></div>
@@ -299,7 +299,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin, onRegis
                 </button>
              </div>
 
-             <div className="mt-8 text-center">
+             <div className="mt-5 sm:mt-6 md:mt-8 text-center">
                 <p className="text-sm text-slate-500">
                   {isLogin ? "Vous n'avez pas de compte ?" : "Vous avez déjà un compte ?"}
                   <button 

@@ -12,6 +12,7 @@ const gpsMocks = vi.hoisted(() => ({
   associate: vi.fn(),
   unassociate: vi.fn(),
   visibility: vi.fn(),
+  reverseGeocode: vi.fn(),
   flyTo: vi.fn(),
   setView: vi.fn(),
   fitBounds: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock('../../../services/api', () => ({
     associate: gpsMocks.associate,
     unassociate: gpsMocks.unassociate,
     visibility: gpsMocks.visibility,
+    reverseGeocode: gpsMocks.reverseGeocode,
   },
 }));
 
@@ -42,6 +44,8 @@ vi.mock('react-leaflet', async () => {
       }, props.children);
     }),
     Popup: (props: { children?: React.ReactNode }) => ReactModule.createElement('div', {}, props.children),
+    Tooltip: (props: { children?: React.ReactNode }) =>
+      ReactModule.createElement('div', { 'data-testid': 'gps-tooltip' }, props.children),
     useMap: () => ({
       flyTo: gpsMocks.flyTo,
       setView: gpsMocks.setView,
@@ -713,5 +717,106 @@ describe('GPS live update reconciliation', () => {
     expect(interpolateGpsPosition([10, 20], [20, 40], 1)).toEqual([20, 40]);
     expect(interpolateGpsPosition([10, 20], [20, 40], -1)).toEqual([10, 20]);
     expect(interpolateGpsPosition([10, 20], [20, 40], 2)).toEqual([20, 40]);
+  });
+});
+
+describe('Vehicle Parking Address & Hover Tooltip', () => {
+  it('displays the hover tooltip and parking address information', async () => {
+    gpsMocks.list.mockResolvedValue({
+      vehicles: [
+        gpsVehicle({
+          provider_device_id: 'dev-1',
+          vehicle_name: 'Dacia Logan 2024',
+          plate: '40-D-27399',
+          latitude: 35.7595,
+          longitude: -5.834,
+          speed: 0,
+          is_moving: false,
+        }),
+      ],
+      assignable_units: [],
+      location_vehicles: [],
+      refresh_interval_seconds: 15,
+      fetched_at: currentTime,
+    });
+
+    gpsMocks.reverseGeocode.mockResolvedValue({
+      formatted_address: 'Avenue des Forces Armées Royales, Quartier Malabata, Tanger',
+      display_name: 'Avenue des Forces Armées Royales, Quartier Malabata, Tanger, Maroc',
+      road: 'Avenue des Forces Armées Royales',
+      district: 'Quartier Malabata',
+      city: 'Tanger',
+      country: 'Maroc',
+      latitude: 35.7595,
+      longitude: -5.834,
+    });
+
+    render(<GPSManagement canManageMappings={true} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Dacia Logan 2024')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('gps-tooltip')).toBeInTheDocument();
+    expect(screen.getAllByText(/Stationn/i).length).toBeGreaterThan(0);
+  });
+
+  it('filters vehicles by clicking legend filter buttons (En mouvement, À l’arrêt, etc.)', async () => {
+    gpsMocks.list.mockResolvedValue({
+      vehicles: [
+        gpsVehicle({
+          provider_device_id: 'dev-1',
+          vehicle_name: 'Voiture Roulante 1',
+          speed: 60,
+          is_moving: true,
+          linked: true,
+          latitude: 35.75,
+          longitude: -5.83,
+        }),
+        gpsVehicle({
+          provider_device_id: 'dev-2',
+          vehicle_name: 'Voiture Garée 2',
+          speed: 0,
+          is_moving: false,
+          linked: true,
+          latitude: 35.76,
+          longitude: -5.84,
+        }),
+      ],
+      assignable_units: [],
+      location_vehicles: [],
+      refresh_interval_seconds: 15,
+      fetched_at: currentTime,
+    });
+
+    render(<GPSManagement canManageMappings={true} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Voiture Roulante 1')).toBeInTheDocument();
+      expect(screen.getByText('Voiture Garée 2')).toBeInTheDocument();
+    });
+
+    // Click "En mouvement" filter button
+    const movingBtn = screen.getByRole('button', { name: /En mouvement/i });
+    fireEvent.click(movingBtn);
+
+    // Only "Voiture Roulante 1" should be visible
+    expect(screen.getByText('Voiture Roulante 1')).toBeInTheDocument();
+    expect(screen.queryByText('Voiture Garée 2')).not.toBeInTheDocument();
+
+    // Click "À l'arrêt" filter button
+    const stoppedBtn = screen.getByRole('button', { name: /À l’arrêt/i });
+    fireEvent.click(stoppedBtn);
+
+    // Only "Voiture Garée 2" should be visible
+    expect(screen.queryByText('Voiture Roulante 1')).not.toBeInTheDocument();
+    expect(screen.getByText('Voiture Garée 2')).toBeInTheDocument();
+
+    // Click "Toutes" to reset
+    const allBtn = screen.getByRole('button', { name: /^Toutes/i });
+    fireEvent.click(allBtn);
+
+    expect(screen.getByText('Voiture Roulante 1')).toBeInTheDocument();
+    expect(screen.getByText('Voiture Garée 2')).toBeInTheDocument();
   });
 });

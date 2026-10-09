@@ -227,7 +227,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSave, onClose }) =
             </div>
 
             {/* Date + Status */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className={labelClass}>Date *</label>
                 <input name="date" type="date" required className={inputClass}
@@ -244,7 +244,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSave, onClose }) =
             </div>
 
             {/* Paid by + Payment method */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className={labelClass}>Payé par</label>
                 <input name="paid_by" className={inputClass}
@@ -264,7 +264,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onSave, onClose }) =
             </div>
 
             {/* Reference + Car */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className={labelClass}>N° Référence / Facture</label>
                 <input name="reference" className={inputClass}
@@ -631,7 +631,7 @@ const ExpenseManagement: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[700px]">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-white/5">
                   {['Date', 'Catégorie', 'Intitulé', 'Véhicule', 'Mode', 'Montant', 'Statut', 'Actions'].map(h => (

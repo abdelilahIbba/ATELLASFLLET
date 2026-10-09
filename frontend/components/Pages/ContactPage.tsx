@@ -632,7 +632,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ isDark, toggleTheme, onLoginC
 
               ) : (
                 /* â”€â”€ GUEST FORM â”€â”€ */
-                <div className="p-8 md:p-12">
+                <div className="p-4 sm:p-8 md:p-12">
                   {isSubmitted ? (
                     <div className="h-full flex flex-col items-center justify-center text-center py-20">
                       <div className="w-20 h-20 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center mb-6">

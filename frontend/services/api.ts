@@ -352,6 +352,18 @@ export interface AdminGpsResponse {
   fetched_at: string;
 }
 
+export interface ReverseGeocodeResponse {
+  formatted_address: string;
+  display_name: string;
+  road: string | null;
+  district: string | null;
+  city: string;
+  country: string;
+  postcode?: string | null;
+  latitude: number;
+  longitude: number;
+}
+
 export const adminGpsApi = {
   list: (signal?: AbortSignal) => api.get<AdminGpsResponse>('/admin/gps/vehicles', undefined, signal),
   visibility: (carId: number, gpsVisible: boolean) =>
@@ -362,6 +374,8 @@ export const adminGpsApi = {
     api.delete<{ message: string }>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/association`),
   trajectory: (deviceId: string, date?: string) =>
     api.get<any>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/trajectory${date ? `?date=${encodeURIComponent(date)}` : ''}`),
+  reverseGeocode: (lat: number, lng: number) =>
+    api.get<ReverseGeocodeResponse>(`/admin/gps/reverse-geocode?lat=${lat}&lng=${lng}`),
 };
 
 // ---------------------------------------------------------------------------

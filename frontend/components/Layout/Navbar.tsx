@@ -320,21 +320,51 @@ const Navbar: React.FC<NavbarProps> = ({ isDark, toggleTheme, onLoginClick, onNa
               
               {/* User card in mobile drawer if logged in */}
               {currentUser ? (
-                <div className="flex items-center gap-3 mb-6 p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
-                  <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${currentUser.role === 'admin' ? 'border-brand-red' : 'border-brand-teal'}`}>
-                    {currentUser.photo ? (
-                      <img src={currentUser.photo} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-brand-navy flex items-center justify-center text-white text-lg font-bold">
-                        {currentUser.firstName.charAt(0)}
-                      </div>
-                    )}
+                <div className="mb-6 p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${currentUser.role === 'admin' ? 'border-brand-red' : 'border-brand-teal'}`}>
+                      {currentUser.photo ? (
+                        <img src={currentUser.photo} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-brand-navy flex items-center justify-center text-white text-lg font-bold">
+                          {currentUser.firstName.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-bold text-slate-900 dark:text-white truncate">{currentUser.firstName} {currentUser.lastName}</p>
+                      <p className={`text-[10px] uppercase tracking-wider font-bold mt-0.5 px-2 py-0.5 rounded w-fit ${currentUser.role === 'admin' ? 'bg-brand-red/10 text-brand-red' : 'bg-brand-teal/10 text-brand-teal'}`}>
+                        {currentUser.role === 'admin' ? 'SYSTEM ADMIN' : 'Client VIP'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-base font-bold text-slate-900 dark:text-white">{currentUser.firstName} {currentUser.lastName}</p>
-                    <p className={`text-[10px] uppercase tracking-wider font-bold mt-0.5 px-2 py-0.5 rounded w-fit ${currentUser.role === 'admin' ? 'bg-brand-red/10 text-brand-red' : 'bg-brand-teal/10 text-brand-teal'}`}>
-                      {currentUser.role === 'admin' ? 'SYSTEM ADMIN' : 'Client VIP'}
-                    </p>
+                  <div className="mt-3 pt-3 border-t border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-2">
+                    {currentUser.role === 'admin' ? (
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          handleNav('admin');
+                        }}
+                        className="text-xs font-bold text-brand-red flex items-center gap-1.5 py-1.5 px-3 rounded-lg hover:bg-brand-red/10 transition-colors"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>Espace Admin</span>
+                      </button>
+                    ) : (
+                      <span className="text-xs text-slate-500 truncate max-w-[150px]">{currentUser.email}</span>
+                    )}
+                    {onLogout && (
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          onLogout();
+                        }}
+                        className="text-xs font-bold text-rose-500 hover:text-rose-600 flex items-center gap-1.5 py-1.5 px-3 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors ml-auto"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Déconnexion</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : (

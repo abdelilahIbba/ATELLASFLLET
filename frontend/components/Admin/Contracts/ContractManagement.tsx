@@ -303,7 +303,7 @@ export const ContractForm: React.FC<ContractFormProps> = ({ contract, rawBooking
             )}
 
             {/* Client info */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className={labelClass}>Nom du client *</label>
                 <input name="client_name" className={inputClass} required
@@ -332,7 +332,7 @@ export const ContractForm: React.FC<ContractFormProps> = ({ contract, rawBooking
             </div>
 
             {/* Vehicle & period */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className={labelClass}>Véhicule *</label>
                 <input name="vehicle_name" className={inputClass} required
@@ -356,7 +356,7 @@ export const ContractForm: React.FC<ContractFormProps> = ({ contract, rawBooking
             </div>
 
             {/* Financial */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div>
                 <label className={labelClass}>Tarif / jour (MAD)</label>
                 <input name="daily_rate" type="number" step="0.01" min="0" className={inputClass}
@@ -375,7 +375,7 @@ export const ContractForm: React.FC<ContractFormProps> = ({ contract, rawBooking
             </div>
 
             {/* Vehicle state */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div>
                 <label className={labelClass}>Kilométrage départ</label>
                 <input name="mileage_start" type="number" min="0" className={inputClass}
@@ -394,7 +394,7 @@ export const ContractForm: React.FC<ContractFormProps> = ({ contract, rawBooking
             </div>
 
             {/* Status */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className={labelClass}>Statut</label>
                 <select name="status" className={inputClass}
@@ -804,7 +804,7 @@ const ContractManagement: React.FC<ContractManagementProps> = ({ onNavigateInvoi
     <div className="space-y-6">
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: 'Total Contrats', value: total, color: 'bg-brand-blue/10', textColor: 'text-brand-blue' },
           { label: 'En cours',       value: active, color: 'bg-blue-100 dark:bg-blue-900/20', textColor: 'text-blue-700 dark:text-blue-400' },

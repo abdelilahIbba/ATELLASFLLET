@@ -95,6 +95,7 @@ import {
   Share2,
   TrendingDown,
   Clock,
+  Menu,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -487,19 +488,19 @@ interface ModalContainerProps {
 }
 
 const ModalContainer: React.FC<ModalContainerProps> = ({ title, children, onClose, width = "max-w-2xl" }) => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className={`bg-white dark:bg-[#0B1120] w-full ${width} rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10`}
+          className={`bg-white dark:bg-[#0B1120] w-full ${width} rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-white/10 flex flex-col max-h-[92vh] my-auto`}
         >
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-slate-50 dark:bg-white/5">
-                <h3 className="text-lg font-bold text-brand-navy dark:text-white font-space">{title}</h3>
-                <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-colors">
+            <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-slate-50 dark:bg-white/5 shrink-0">
+                <h3 className="text-base sm:text-lg font-bold text-brand-navy dark:text-white font-space truncate pr-2">{title}</h3>
+                <button onClick={onClose} className="p-1.5 sm:p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-colors shrink-0" aria-label="Fermer">
                     <X className="w-5 h-5 text-slate-500" />
                 </button>
             </div>
-            <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <div className="p-3 sm:p-6 overflow-y-auto custom-scrollbar flex-grow min-h-0">
                 {children}
             </div>
         </motion.div>
@@ -572,6 +573,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   }, [activeTab, currentUser]);
   const [selectedItem, setSelectedItem] = useState<any | null>(null); 
   const [modalType, setModalType] = useState<string | null>(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   
   // Modal Tab State for Vehicles & Clients
   const [vehicleModalTab, setVehicleModalTab] = useState<'details' | 'documents' | 'infractions'>('details');
@@ -1283,7 +1285,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
 
   const TabButton = ({ id, icon: Icon, label, alertCount }: { id: typeof activeTab, icon: any, label: string, alertCount?: number }) => (
     <button 
-      onClick={() => setActiveTab(id)}
+      onClick={() => {
+        setActiveTab(id);
+        setIsMobileSidebarOpen(false);
+      }}
       className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
         activeTab === id 
           ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/20' 
@@ -1303,10 +1308,110 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
   );
 
   return (
-    <div className={`h-screen w-full flex overflow-hidden ${isDark ? 'bg-brand-navy' : 'bg-slate-100'} p-4 gap-4 transition-colors duration-500`}>
+    <div className={`h-screen w-full flex overflow-hidden ${isDark ? 'bg-brand-navy' : 'bg-slate-100'} p-2 sm:p-4 gap-2 sm:gap-4 transition-colors duration-500`}>
          
-         {/* Sidebar */}
-         <div className={`w-64 flex-shrink-0 ${activeTab === 'gps' ? 'hidden md:flex' : 'flex'} flex-col bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-white/5 p-4 shadow-xl z-20 print:hidden`}>
+         {/* Mobile Drawer (visible on < md when isMobileSidebarOpen is true) */}
+         <AnimatePresence>
+           {isMobileSidebarOpen && (
+             <div className="fixed inset-0 z-50 flex md:hidden">
+               <motion.div
+                 initial={{ opacity: 0 }}
+                 animate={{ opacity: 1 }}
+                 exit={{ opacity: 0 }}
+                 onClick={() => setIsMobileSidebarOpen(false)}
+                 className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+               />
+               <motion.div
+                 initial={{ x: '-100%' }}
+                 animate={{ x: 0 }}
+                 exit={{ x: '-100%' }}
+                 transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+                 className="relative w-72 max-w-[85vw] h-full bg-white dark:bg-[#0B1120] border-r border-slate-200 dark:border-white/10 p-4 shadow-2xl flex flex-col z-10"
+               >
+                 <div className="px-3 py-3 mb-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                   <div className="flex items-center gap-2.5">
+                     <img src="/rlv-emblem.png" alt="RLV Logo" className="w-7 h-7 object-contain" />
+                     <div>
+                       <h2 className="text-sm font-bold font-space text-brand-navy dark:text-white">RLV <span className="text-brand-red">RAHIMI CAR</span></h2>
+                       <p className="text-[9px] text-slate-400 uppercase tracking-widest">Admin Tanger</p>
+                     </div>
+                   </div>
+                   <button
+                     type="button"
+                     onClick={() => setIsMobileSidebarOpen(false)}
+                     className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/5"
+                     aria-label="Fermer le menu"
+                   >
+                     <X className="w-5 h-5" />
+                   </button>
+                 </div>
+
+                 {/* Demo badge in mobile drawer */}
+                 {currentUser?.role === 'demo_admin' && (() => {
+                   const daysLeft = currentUser.demoExpiresAt
+                     ? Math.max(0, Math.ceil((new Date(currentUser.demoExpiresAt).getTime() - Date.now()) / 86400000))
+                     : null;
+                   return (
+                     <div className={`mb-3 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 ${daysLeft !== null && daysLeft <= 3 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                       <Clock className="w-4 h-4 flex-shrink-0" />
+                       <span>{daysLeft !== null ? `Démo · ${daysLeft} jour${daysLeft !== 1 ? 's' : ''}` : 'Mode Démo'}</span>
+                     </div>
+                   );
+                 })()}
+
+                 <nav className="space-y-1 flex-grow overflow-y-auto custom-scrollbar">
+                   {(() => {
+                     const can = canTab;
+                     return (
+                       <>
+                         {can('overview')     && <TabButton id="overview"     icon={LayoutDashboard} label="Tableau de Bord" />}
+                         {can('analytics')    && <TabButton id="analytics"    icon={BarChart3}       label="Analytique & Rapports" />}
+                         {can('fleet')        && <TabButton id="fleet"        icon={Car}             label="Flotte & Inventaire" />}
+                         {can('infractions')  && <TabButton id="infractions"  icon={ShieldAlert}     label="Infractions" />}
+                         {can('bookings')     && <TabButton id="bookings"     icon={CalendarRange}   label="Réservations" alertCount={pendingRequests} />}
+                         {can('contracts')    && <TabButton id="contracts"    icon={FileSignature}   label="Contrats & Factures" />}
+                         {can('expenses')     && <TabButton id="expenses"     icon={TrendingDown}    label="Dépenses Agence" />}
+                         {can('clients')      && <TabButton id="clients"      icon={Users}           label="Clients (KYC)" />}
+                         {can('gps')          && <TabButton id="gps"          icon={MapIcon}         label="Suivi GPS en Direct" />}
+                         {can('messages')     && <TabButton id="messages"     icon={MessageSquare}   label="Messages" alertCount={messages.filter(m => m.unread).length} />}
+                         {can('reviews')      && <TabButton id="reviews"      icon={Star}            label="Avis & Réputation" />}
+                         {can('blog')         && <TabButton id="blog"         icon={PenTool}         label="Blog & Contenu" />}
+                       </>
+                     );
+                   })()}
+                 </nav>
+
+                 <div className="mt-auto pt-3 border-t border-slate-100 dark:border-white/5 space-y-2">
+                   {currentUser?.role !== 'demo_admin' && canTab('settings') && (
+                     <button 
+                       onClick={() => {
+                         adminNav('/admin/settings');
+                         setIsMobileSidebarOpen(false);
+                       }}
+                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${activeTab === 'settings' ? 'bg-brand-blue/10 text-brand-blue font-bold shadow-sm' : 'text-slate-500 hover:text-brand-navy dark:hover:text-white'}`}
+                     >
+                       <Settings className="w-5 h-5" />
+                       <span className="font-medium text-sm">Paramètres Système</span>
+                     </button>
+                   )}
+                   <button 
+                     onClick={() => {
+                       setIsMobileSidebarOpen(false);
+                       handleLogout();
+                     }}
+                     className="w-full flex items-center gap-3 px-4 py-3 text-brand-red hover:bg-brand-red/10 rounded-xl transition-colors"
+                   >
+                     <LogOut className="w-5 h-5" />
+                     <span className="font-bold text-sm">Déconnexion</span>
+                   </button>
+                 </div>
+               </motion.div>
+             </div>
+           )}
+         </AnimatePresence>
+
+         {/* Desktop Sidebar (hidden on small/tablet screens, visible on md+) */}
+         <div className="w-64 flex-shrink-0 hidden md:flex flex-col bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-white/5 p-4 shadow-xl z-20 print:hidden">
              <div className="px-4 py-4 mb-4 border-b border-slate-100 dark:border-white/5 flex items-center gap-3">
                  <img src="/rlv-emblem.png" alt="RLV Logo" className="w-8 h-8 object-contain drop-shadow-sm" />
                  <div>
@@ -1374,20 +1479,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
 
          {/* Main Content Area */}
          <div className="min-w-0 flex-grow bg-white dark:bg-[#0B1120] rounded-2xl border border-slate-200 dark:border-white/5 shadow-xl overflow-hidden relative flex flex-col print:w-full print:border-none print:shadow-none print:bg-white print:dark:bg-white print:text-black">
-            {activeTab === 'gps' && (
-              <nav className="border-b border-slate-200 p-2 md:hidden" aria-label="Navigation administration">
-                <select value="/admin/gps" onChange={event => adminNav(event.target.value)}
-                  aria-label="Vue administration" className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm dark:bg-slate-900 dark:text-white">
-                  <option value="/admin">Tableau de Bord</option>
-                  <option value="/admin/fleet">Flotte &amp; Inventaire</option>
-                  <option value="/admin/bookings">Réservations</option>
-                  <option value="/admin/contracts">Contrats &amp; Factures</option>
-                  <option value="/admin/gps">Suivi GPS des voitures</option>
-                  <option value="/admin/settings">Paramètres Système</option>
-                </select>
-              </nav>
-            )}
-            
             {/* Demo mode top banner */}
             {currentUser?.role === 'demo_admin' && (() => {
               const daysLeft = currentUser.demoExpiresAt
@@ -1409,28 +1500,35 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
             })()}
 
             {/* Header / Topbar */}
-            {activeTab !== 'gps' && (
-                <div className="h-16 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-6 bg-slate-50/50 dark:bg-white/[0.02] print:hidden">
-                   <div className="flex items-center gap-4">
-                      <h3 className="text-lg font-bold text-brand-navy dark:text-white uppercase tracking-wider">
-                         {{
-                            overview: "Vue d'ensemble",
-                            analytics: "Analytique",
-                            fleet: "Gestion de Flotte",
-                            infractions: "Infractions",
-                            expenses: "Dépenses Agence",
-                            bookings: "Réservations",
-                            contracts: "Contrats & Factures",
-                            clients: "Gestion Clients",
-                            gps: "Suivi GPS",
-                            messages: "Messagerie",
-                            reviews: "Avis Clients",
-                            blog: "Gestion de Contenu",
-                            settings: "Paramètres"
-                          }[activeTab]}
-                      </h3>
-                   </div>
-                   <div className="flex items-center gap-4">
+            <div className="h-14 sm:h-16 border-b border-slate-100 dark:border-white/5 flex items-center justify-between px-3 sm:px-6 bg-slate-50/50 dark:bg-white/[0.02] shrink-0 print:hidden">
+               <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileSidebarOpen(true)}
+                    className="md:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10 transition-colors shrink-0"
+                    aria-label="Ouvrir le menu"
+                  >
+                    <Menu className="w-5 h-5" />
+                  </button>
+                  <h3 className="text-base sm:text-lg font-bold text-brand-navy dark:text-white uppercase tracking-wider truncate">
+                     {{
+                        overview: "Vue d'ensemble",
+                        analytics: "Analytique",
+                        fleet: "Gestion de Flotte",
+                        infractions: "Infractions",
+                        expenses: "Dépenses Agence",
+                        bookings: "Réservations",
+                        contracts: "Contrats & Factures",
+                        clients: "Gestion Clients",
+                        gps: "Suivi GPS",
+                        messages: "Messagerie",
+                        reviews: "Avis Clients",
+                        blog: "Gestion de Contenu",
+                        settings: "Paramètres"
+                      }[activeTab]}
+                  </h3>
+               </div>
+               <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                       {/* Notifications */}
                       <div className="relative" ref={notificationRef}>
                           <button 
@@ -1512,16 +1610,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                        >
                          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                        </button>
-                      <div className="flex items-center gap-2 px-3 py-1.5 bg-brand-teal/10 rounded-full">
+                      <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-brand-teal/10 rounded-full">
                          <div className="w-2 h-2 bg-brand-teal rounded-full animate-pulse"></div>
                          <span className="text-xs font-bold text-brand-teal uppercase">Casablanca HQ</span>
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-brand-navy dark:bg-white flex items-center justify-center text-white dark:text-brand-navy font-bold text-xs">
+                      <div className="w-8 h-8 rounded-full bg-brand-navy dark:bg-white flex items-center justify-center text-white dark:text-brand-navy font-bold text-xs shrink-0">
                          AD
                       </div>
                    </div>
                 </div>
-            )}
 
             {/* Content Body */}
             <div className={`flex-grow ${activeTab === 'gps' ? 'p-0' : 'p-6 overflow-y-auto custom-scrollbar'} relative`}>
@@ -1725,7 +1822,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                const statusColor = c.status === 'VIP' ? 'bg-purple-100 text-purple-700 border border-purple-200' : c.status === 'Active' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600';
                return (
                  <ModalContainer title={`Fiche Client — ${c.name}`} onClose={closeModal} width="max-w-4xl">
-                   <div className="flex flex-col h-[80vh]">
+                   <div className="flex flex-col min-h-0 max-h-[78vh]">
                      <div className="flex-grow overflow-y-auto pr-1 custom-scrollbar space-y-6">
 
                        {/* Header row: avatar + key info */}
@@ -1844,7 +1941,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
              {/* CLIENT / KYC MODAL */}
              {modalType === 'client_form' && (
                  <ModalContainer title={selectedItem ? `Gérer Client: ${selectedItem.name}` : 'Nouvelle Inscription Client'} onClose={closeModal} width="max-w-4xl">
-                     <form key={selectedItem?.id ?? 'new'} onSubmit={handleSaveClient} className="flex flex-col h-[80vh]" autoComplete="off">
+                     <form key={selectedItem?.id ?? 'new'} onSubmit={handleSaveClient} className="flex flex-col min-h-0 max-h-[78vh]" autoComplete="off">
                          {/* Hidden inputs to prevent Chrome/Edge from injecting saved credentials into phone & password */}
                          <input type="text" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
                          <input type="password" style={{ display: 'none' }} tabIndex={-1} autoComplete="new-password" />

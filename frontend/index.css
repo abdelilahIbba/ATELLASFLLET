@@ -41,3 +41,36 @@
   background: transparent !important;
   border: none !important;
 }
+
+/* ── GPS Car Hover Tooltip Custom Styling ── */
+.leaflet-tooltip.gps-car-tooltip-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  pointer-events: auto !important;
+  cursor: default !important;
+  z-index: 1000 !important;
+}
+
+.leaflet-tooltip-top.gps-car-tooltip-container::before {
+  border-top-color: rgba(2, 6, 23, 0.95) !important;
+  bottom: -6px !important;
+}
+
+.leaflet-tooltip-bottom.gps-car-tooltip-container::before {
+  border-bottom-color: rgba(2, 6, 23, 0.95) !important;
+  top: -6px !important;
+}
+
+.leaflet-tooltip-left.gps-car-tooltip-container::before {
+  border-left-color: rgba(2, 6, 23, 0.95) !important;
+  right: -6px !important;
+}
+
+.leaflet-tooltip-right.gps-car-tooltip-container::before {
+  border-right-color: rgba(2, 6, 23, 0.95) !important;
+  left: -6px !important;
+}
+

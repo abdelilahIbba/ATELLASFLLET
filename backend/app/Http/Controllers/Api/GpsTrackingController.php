@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Throwable;
 
 class GpsTrackingController extends Controller
@@ -154,6 +155,76 @@ class GpsTrackingController extends Controller
             'refresh_interval_seconds' => $this->refreshIntervalSeconds(),
             'fetched_at' => now()->toIso8601String(),
         ]);
+    }
+
+    public function reverseGeocode(Request $request): JsonResponse
+    {
+        $lat = filter_var($request->query('lat'), FILTER_VALIDATE_FLOAT);
+        $lng = filter_var($request->query('lng') ?? $request->query('lon'), FILTER_VALIDATE_FLOAT);
+
+        if ($lat === false || $lng === false || $lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+            return response()->json(['message' => 'Coordonnées GPS invalides.'], 422);
+        }
+
+        $roundedLat = round((float) $lat, 4);
+        $roundedLng = round((float) $lng, 4);
+        $cacheKey = "reverse_geo_{$roundedLat}_{$roundedLng}";
+
+        $result = Cache::remember($cacheKey, 86400 * 30, function () use ($lat, $lng, $roundedLat, $roundedLng) {
+            try {
+                $response = Http::withHeaders([
+                    'User-Agent' => 'AtellasFleet/1.0 (fleet-gps-geocoding; contact@atellasfleet.com)',
+                    'Accept-Language' => 'fr,ar;q=0.9,en;q=0.8',
+                ])->timeout(4)->get('https://nominatim.openstreetmap.org/reverse', [
+                    'format' => 'jsonv2',
+                    'lat' => $lat,
+                    'lon' => $lng,
+                    'addressdetails' => 1,
+                ]);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $addressData = is_array($data) ? ($data['address'] ?? []) : [];
+
+                    $road = $addressData['road'] ?? $addressData['pedestrian'] ?? $addressData['street'] ?? null;
+                    $district = $addressData['suburb'] ?? $addressData['neighbourhood'] ?? $addressData['residential'] ?? $addressData['quarter'] ?? null;
+                    $city = $addressData['city'] ?? $addressData['town'] ?? $addressData['village'] ?? $addressData['municipality'] ?? 'Tanger';
+                    $country = $addressData['country'] ?? 'Maroc';
+                    $postcode = $addressData['postcode'] ?? null;
+
+                    $parts = array_filter([$road, $district, $city]);
+                    $cleanAddress = count($parts) > 0 ? implode(', ', $parts) : ($data['display_name'] ?? "{$roundedLat}, {$roundedLng}");
+
+                    return [
+                        'formatted_address' => $cleanAddress,
+                        'display_name' => $data['display_name'] ?? $cleanAddress,
+                        'road' => $road,
+                        'district' => $district,
+                        'city' => $city,
+                        'country' => $country,
+                        'postcode' => $postcode,
+                        'latitude' => (float) $lat,
+                        'longitude' => (float) $lng,
+                    ];
+                }
+            } catch (Throwable) {
+                // Ignore and fall through to fallback
+            }
+
+            return [
+                'formatted_address' => "Position GPS ({$roundedLat}, {$roundedLng})",
+                'display_name' => "Position GPS ({$roundedLat}, {$roundedLng})",
+                'road' => null,
+                'district' => null,
+                'city' => 'Tanger',
+                'country' => 'Maroc',
+                'postcode' => null,
+                'latitude' => (float) $lat,
+                'longitude' => (float) $lng,
+            ];
+        });
+
+        return response()->json($result);
     }
 
     public function associate(Request $request, string $deviceId): JsonResponse

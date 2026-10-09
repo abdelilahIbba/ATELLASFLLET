@@ -14,7 +14,8 @@ interface ClientTableProps {
 const ClientTable: React.FC<ClientTableProps> = ({ clients, onView, onEdit, onDelete, openModal, onContact }) => {
   return (
     <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
-        <table className="w-full text-left">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left min-w-[680px]">
             <thead className="bg-slate-50 dark:bg-white/5 text-xs font-bold text-slate-500 uppercase">
                 <tr>
                     <th className="p-4">Client</th>
@@ -109,6 +110,7 @@ const ClientTable: React.FC<ClientTableProps> = ({ clients, onView, onEdit, onDe
                 )}
             </tbody>
         </table>
+      </div>
     </div>
   );
 };

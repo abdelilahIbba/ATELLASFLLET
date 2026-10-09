@@ -45,8 +45,8 @@ const Banner: React.FC<{ kind: 'error' | 'success'; text: string; onClose: () =>
 );
 
 const Modal: React.FC<{ title: string; onClose: () => void; children: React.ReactNode; wide?: boolean }> = ({ title, onClose, children, wide }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div className={`bg-white dark:bg-brand-navy w-full ${wide ? 'max-w-4xl' : 'max-w-lg'} max-h-[90vh] overflow-y-auto rounded-2xl p-6 shadow-xl`}>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2.5 sm:p-4">
+    <div className={`bg-white dark:bg-brand-navy w-full ${wide ? 'max-w-4xl' : 'max-w-lg'} max-h-[92vh] sm:max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 shadow-xl`}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-brand-navy dark:text-white">{title}</h3>
         <button className={btnGhost} onClick={onClose}><X size={18} /></button>
@@ -144,7 +144,7 @@ const StaffUsers: React.FC<{ roles: RoleRecord[] }> = ({ roles }) => {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="text-left text-xs uppercase text-slate-500 border-b border-slate-200 dark:border-white/10">
               <th className="py-2 pr-3">Nom</th><th className="py-2 pr-3">E-mail</th><th className="py-2 pr-3">Role</th>
@@ -300,7 +300,7 @@ const Clients: React.FC<{ roles: RoleRecord[] }> = ({ roles }) => {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="text-left text-xs uppercase text-slate-500 border-b border-slate-200 dark:border-white/10">
               <th className="py-2 pr-3">Client</th><th className="py-2 pr-3">Téléphone</th><th className="py-2 pr-3">KYC</th>
@@ -607,7 +607,7 @@ const AuditLog: React.FC = () => {
         <input className={`${input} w-56`} placeholder="Action (ex. user.created)" value={action} onChange={e => { setAction(e.target.value); setPage(1); }} />
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="text-left text-xs uppercase text-slate-500 border-b border-slate-200 dark:border-white/10">
               <th className="py-2 pr-3">Date</th><th className="py-2 pr-3">Auteur</th><th className="py-2 pr-3">Action</th>
@@ -660,10 +660,10 @@ const UserManagement: React.FC = () => {
         <h2 className="text-xl font-bold text-brand-navy dark:text-white">Gestion des utilisateurs</h2>
         <p className="text-sm text-slate-500">Utilisateurs admin / agence, clients du site, roles et permissions.</p>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-nowrap overflow-x-auto gap-2 custom-scrollbar pb-1">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-colors ${tab === t.id
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors flex-shrink-0 whitespace-nowrap ${tab === t.id
               ? 'bg-brand-blue text-white shadow-md'
               : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10'}`}>
             <t.icon size={16} /> {t.label}

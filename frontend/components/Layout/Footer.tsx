@@ -13,17 +13,17 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   };
 
   return (
-    <footer className="bg-slate-900 dark:bg-neutral-900 text-white pt-20 pb-10 relative z-10 border-t border-slate-800 dark:border-white/5 transition-colors duration-700">
+    <footer className="bg-slate-900 dark:bg-neutral-900 text-white pt-12 sm:pt-16 md:pt-20 pb-8 sm:pb-10 relative z-10 border-t border-slate-800 dark:border-white/5 transition-colors duration-700">
       <div className="w-full lg:px-16 xl:px-20 2xl:px-28 mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-1 md:col-span-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 md:gap-12 mb-10 sm:mb-16">
+          <div className="col-span-1 sm:col-span-2 md:col-span-1">
             <div className="flex items-center gap-3 mb-4 cursor-pointer" onClick={() => handleNav('home')}>
-                <img src="/rlv-emblem.png" alt="RLV Rahimi Car" className="h-10 w-auto object-contain" />
-                <span className="text-xl font-extrabold tracking-tight font-space">
+                <img src="/rlv-emblem.png" alt="RLV Rahimi Car" className="h-9 sm:h-10 w-auto object-contain" />
+                <span className="text-lg sm:text-xl font-extrabold tracking-tight font-space">
                     <span className="text-brand-red">RLV</span> <span className="text-white">RAHIMI CAR</span>
                 </span>
             </div>
-            <p className="text-slate-400 dark:text-neutral-400 text-sm leading-relaxed mb-5">
+            <p className="text-slate-400 dark:text-neutral-400 text-xs sm:text-sm leading-relaxed mb-5">
               Location de voitures à Tanger pour particuliers et professionnels. Service premium, réservation rapide et suivi professionnel.
             </p>
             <div className="space-y-2.5 text-xs text-slate-300">
@@ -43,8 +43,8 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
           
           <div>
-            <h4 className="text-white font-bold mb-6 text-xs tracking-widest uppercase">Découvrir</h4>
-            <ul className="space-y-3 text-slate-400 dark:text-neutral-500 text-sm">
+            <h4 className="text-white font-bold mb-4 sm:mb-6 text-xs tracking-widest uppercase">Découvrir</h4>
+            <ul className="space-y-2.5 sm:space-y-3 text-slate-400 dark:text-neutral-500 text-sm">
               <li onClick={() => handleNav('fleet')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Notre Flotte</li>
               <li onClick={() => handleNav('#agency')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Agence à Tanger</li>
               <li onClick={() => handleNav('#services')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Services</li>
@@ -53,27 +53,27 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           </div>
 
           <div>
-            <h4 className="text-white font-bold mb-6 text-xs tracking-widest uppercase">Entreprise</h4>
-            <ul className="space-y-3 text-slate-400 dark:text-neutral-500 text-sm">
+            <h4 className="text-white font-bold mb-4 sm:mb-6 text-xs tracking-widest uppercase">Entreprise</h4>
+            <ul className="space-y-2.5 sm:space-y-3 text-slate-400 dark:text-neutral-500 text-sm">
               <li onClick={() => handleNav('contact')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Comptes Entreprise</li>
               <li onClick={() => handleNav('contact')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Demande Devis</li>
               <li onClick={() => handleNav('contact')} className="hover:text-brand-blue dark:hover:text-white cursor-pointer transition-colors">Contact</li>
             </ul>
           </div>
 
-          <div>
-             <h4 className="text-white font-bold mb-6 text-xs tracking-widest uppercase">Newsletter</h4>
-             <p className="text-slate-400 dark:text-neutral-500 text-sm mb-4">Recevez nos offres de location à Tanger et nos disponibilités en priorité.</p>
+          <div className="sm:col-span-2 md:col-span-1">
+             <h4 className="text-white font-bold mb-4 sm:mb-6 text-xs tracking-widest uppercase">Newsletter</h4>
+             <p className="text-slate-400 dark:text-neutral-500 text-xs sm:text-sm mb-4">Recevez nos offres de location à Tanger et nos disponibilités en priorité.</p>
              <div className="flex">
-               <input type="email" placeholder="Adresse E-mail" className="bg-slate-800 dark:bg-neutral-800 border-none rounded-l-md px-4 py-3 text-sm text-white focus:ring-1 focus:ring-brand-blue w-full placeholder:text-slate-500 dark:placeholder:text-neutral-600" />
-               <button className="bg-brand-blue hover:bg-blue-600 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-black px-5 py-3 rounded-r-md text-xs font-bold transition-colors uppercase tracking-wider">OK</button>
+               <input type="email" placeholder="Adresse E-mail" className="bg-slate-800 dark:bg-neutral-800 border-none rounded-l-md px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm text-white focus:ring-1 focus:ring-brand-blue w-full placeholder:text-slate-500 dark:placeholder:text-neutral-600" />
+               <button className="bg-brand-blue hover:bg-blue-600 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-black px-4 sm:px-5 py-2.5 sm:py-3 rounded-r-md text-xs font-bold transition-colors uppercase tracking-wider shrink-0">OK</button>
              </div>
           </div>
         </div>
 
-        <div className="border-t border-slate-800 dark:border-neutral-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <div className="border-t border-slate-800 dark:border-neutral-800 pt-6 sm:pt-8 flex flex-col md:flex-row justify-between items-center gap-3 text-center md:text-left">
             <p className="text-slate-500 dark:text-neutral-600 text-xs">© 2026 RLV Rahimi Car : Location de voitures. Tous droits réservés.</p>
-            <div className="flex space-x-8 mt-4 md:mt-0">
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-8 mt-2 md:mt-0">
                 <span className="text-slate-500 hover:text-white cursor-pointer text-xs">Conditions d'Utilisation</span>
                 <span className="text-slate-500 hover:text-white cursor-pointer text-xs">Politique de Confidentialité</span>
             </div>

@@ -108,19 +108,19 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
   const activeVehicle = vehicles.find(v => String(v.id) === String(bfCarId || selectedItem?.carId));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-navy/60 backdrop-blur-sm animate-in fade-in-0 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-brand-navy/60 backdrop-blur-sm animate-in fade-in-0 duration-200">
       <div 
-        className="w-full max-w-3xl bg-white dark:bg-[#0b1929] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-3xl bg-white dark:bg-[#0b1929] border border-slate-200 dark:border-white/10 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh]"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue">
-              <Calendar className="w-5 h-5" />
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-5 border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="p-2 sm:p-2.5 rounded-xl bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-brand-navy dark:text-white">
+              <h3 className="text-base sm:text-lg font-bold text-brand-navy dark:text-white">
                 {selectedItem ? `Modifier Réservation #${selectedItem.id}` : 'Nouvelle Réservation'}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -138,7 +138,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
         </div>
 
         {/* Scrollable Form Body */}
-        <form key={selectedItem?.id ?? 'new'} onSubmit={onSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+        <form key={selectedItem?.id ?? 'new'} onSubmit={onSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6 custom-scrollbar">
 
           {/* Automated Flow Banner (Client → Réservation → Contrat) */}
           {quickFlow && !selectedItem && (
@@ -447,18 +447,18 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
           )}
 
           {/* Footer Actions */}
-          <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100 dark:border-white/10">
+          <div className="pt-4 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 sm:gap-3 border-t border-slate-100 dark:border-white/10">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-semibold text-slate-500 hover:text-brand-navy dark:hover:text-white transition-colors"
+              className="w-full sm:w-auto px-5 py-2.5 text-sm font-semibold text-slate-500 hover:text-brand-navy dark:hover:text-white transition-colors text-center"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="px-6 py-2.5 bg-brand-blue text-white rounded-xl text-sm font-bold hover:bg-blue-600 transition-all shadow-lg hover:shadow-blue-500/25 flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto px-6 py-2.5 bg-brand-blue text-white rounded-xl text-sm font-bold hover:bg-blue-600 transition-all shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isSaving ? (
                 <>

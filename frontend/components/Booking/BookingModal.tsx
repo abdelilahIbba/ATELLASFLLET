@@ -1002,10 +1002,10 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
                     </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                     
                     {/* 1. National ID */}
-                    <div className="relative h-36 md:h-48 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 overflow-hidden flex flex-col items-center justify-center p-2 md:p-4">
+                    <div className="relative h-auto min-h-[140px] sm:min-h-[160px] md:h-48 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 overflow-hidden flex flex-col items-center justify-center p-3 sm:p-2 md:p-4">
                         {ocrProgress?.type === 'id' ? (
                             <div className="flex flex-col items-center gap-3 w-full px-2">
                                 <Loader2 className="w-8 h-8 text-brand-blue animate-spin" />
@@ -1059,7 +1059,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
                     </div>
 
                     {/* 2. Driving License */}
-                    <div className="relative h-36 md:h-48 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 overflow-hidden flex flex-col items-center justify-center p-2 md:p-4">
+                    <div className="relative h-auto min-h-[140px] sm:min-h-[160px] md:h-48 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 overflow-hidden flex flex-col items-center justify-center p-3 sm:p-2 md:p-4">
                         {ocrProgress?.type === 'license' ? (
                             <div className="flex flex-col items-center gap-3 w-full px-2">
                                 <Loader2 className="w-8 h-8 text-brand-blue animate-spin" />
@@ -1113,7 +1113,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
                     </div>
 
                     {/* 3. Profile Photo */}
-                    <div className="relative h-36 md:h-48 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 overflow-hidden flex flex-col items-center justify-center p-2 md:p-4">
+                    <div className="relative h-auto min-h-[140px] sm:min-h-[160px] md:h-48 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 overflow-hidden flex flex-col items-center justify-center p-3 sm:p-2 md:p-4">
                         {docImages.face ? (
                             <div className="relative w-full h-full">
                                 <img src={docImages.face} alt="Face" className="w-full h-full object-cover rounded-lg opacity-60" />
@@ -1279,9 +1279,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {/* Names */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Prénom</label>
                       <input
@@ -1303,7 +1303,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
                   </div>
 
                   {/* IDs */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="relative">
                       <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Carte Nationale</label>
                       <input
@@ -1329,7 +1329,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
                   </div>
 
                   {/* Contact */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
                       <input
@@ -1484,22 +1484,23 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, initialDat
 
                         <div className="absolute inset-0 bg-gradient-to-t from-brand-blue/10 to-transparent pointer-events-none"></div>
 
-                        <div className="absolute top-3 left-3 bg-white/95 dark:bg-black/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 shadow-xl max-w-[300px] text-left z-20">
-                          <p className="text-[10px] font-bold text-slate-500 uppercase mb-0.5">Point de Prise en Charge</p>
-                          <p className="text-xs font-bold text-brand-navy dark:text-white truncate">{formData.location}</p>
+                        <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 bg-white/95 dark:bg-black/90 backdrop-blur-md px-2.5 sm:px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 shadow-xl max-w-[160px] sm:max-w-[280px] text-left z-20">
+                          <p className="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase mb-0.5 truncate">Point de Prise en Charge</p>
+                          <p className="text-[11px] sm:text-xs font-bold text-brand-navy dark:text-white truncate">{formData.location}</p>
                         </div>
 
                         <button 
                            onClick={() => handleUseCurrentLocation()}
                            disabled={isLocating}
-                          className="absolute top-3 right-3 bg-white dark:bg-brand-navy text-brand-navy dark:text-white px-3 py-2 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10 z-[500]"
+                          className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 bg-white dark:bg-brand-navy text-brand-navy dark:text-white px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-bold shadow-lg flex items-center gap-1.5 sm:gap-2 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10 z-[500]"
                         >
                            {isLocating ? (
                                <Loader2 className="w-3 h-3 animate-spin" />
                            ) : (
                                <Crosshair className="w-3 h-3 text-brand-blue" />
                            )}
-                             Utiliser ma position GPS
+                             <span className="hidden sm:inline">Utiliser ma position GPS</span>
+                             <span className="sm:hidden">GPS</span>
                         </button>
                     </div>
                 </div>

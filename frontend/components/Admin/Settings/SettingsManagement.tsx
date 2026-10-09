@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import RoleManagement from './RoleManagement';
 import UserManagement from './UserManagement';
 import PickupPointsManager from './PickupPointsManager';
@@ -376,30 +376,30 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-brand-navy dark:text-white font-space">Paramètres Système</h2>
-          <p className="text-xs text-slate-500 mt-1">Gérer les configurations globales et les préférences.</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white font-space">Paramètres Système</h2>
+          <p className="text-xs text-slate-500 mt-0.5 sm:mt-1">Gérer les configurations globales et les préférences.</p>
         </div>
         <button 
           onClick={handleSave}
           disabled={loading}
-          className="px-6 py-2 bg-brand-blue text-white rounded-lg text-sm font-bold uppercase flex items-center gap-2 hover:bg-blue-600 transition-colors shadow-lg disabled:opacity-50"
+          className="px-3.5 sm:px-6 py-2 bg-brand-blue text-white rounded-lg text-xs sm:text-sm font-bold uppercase flex items-center gap-1.5 sm:gap-2 hover:bg-blue-600 transition-colors shadow-lg disabled:opacity-50 flex-shrink-0"
         >
           {loading ? (
             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
           ) : (
             <Save className="w-4 h-4" />
           )}
-          Enregistrer
+          <span>Enregistrer</span>
         </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col lg:flex-row gap-5 sm:gap-8">
         {/* Settings Sidebar */}
         <div className="w-full lg:w-64 flex-shrink-0">
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
-            <nav className="flex flex-col p-2 space-y-1">
+            <nav className="flex flex-row lg:flex-col p-1.5 sm:p-2 gap-1.5 overflow-x-auto custom-scrollbar">
               {[
                 { id: 'general', label: 'Général & Marque', icon: Building },
                 { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -414,7 +414,7 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
                 <button
                   key={item.id}
                   onClick={() => onTabChange(item.id as any)}
-                  className={`flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-lg transition-colors text-left ${
+                  className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-bold rounded-lg transition-colors text-left flex-shrink-0 whitespace-nowrap ${
                     activeTab === item.id
                       ? 'bg-brand-blue text-white shadow-md' 
                       : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-brand-navy dark:hover:text-white'
@@ -430,7 +430,7 @@ const SettingsManagement: React.FC<SettingsManagementProps> = ({ activeTab, onTa
 
         {/* Content Area */}
         <div className="flex-grow">
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6 md:p-8">
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-6 md:p-8">
             
             {/* GENERAL TAB */}
             {activeTab === 'general' && (

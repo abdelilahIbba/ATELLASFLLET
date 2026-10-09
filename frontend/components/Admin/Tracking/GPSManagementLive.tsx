@@ -3,16 +3,20 @@ import {
   Activity,
   Calendar,
   Car,
+  Check,
   ChevronLeft,
   ChevronRight,
   Clock,
   Compass,
+  Copy,
   Eye,
+  Filter,
   Fuel,
   Gauge,
   Info,
   Layers,
   Map as MapIcon,
+  MapPin,
   Maximize2,
   Minimize2,
   Navigation,
@@ -28,7 +32,7 @@ import {
   Zap,
 } from 'lucide-react';
 import * as ReactLeaflet from 'react-leaflet';
-import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, Marker, Popup, TileLayer, Tooltip, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { LatLngBoundsExpression, LatLngExpression } from 'leaflet';
 import L from 'leaflet';
@@ -48,8 +52,17 @@ import {
   type TrajectoryStop,
   type VehicleTrajectoryData,
 } from './trajectoryService';
+import {
+  fetchAddress,
+  prefetchAddress,
+  useVehicleAddress,
+} from './reverseGeocodingService';
+import { VehicleHoverTooltipCard } from './VehicleHoverTooltipCard';
+import { VehicleHudAddressCard } from './VehicleHudAddressCard';
+import { VehicleSidebarAddressRow } from './VehicleSidebarAddressRow';
 
 const PolylineComponent = (ReactLeaflet as any).Polyline || (() => null);
+const TooltipComponent = (ReactLeaflet as any).Tooltip || Tooltip || (({ children }: any) => children);
 
 const DEFAULT_REFRESH_INTERVAL_SECONDS = 15;
 const MIN_REFRESH_INTERVAL_SECONDS = 15;
@@ -169,14 +182,88 @@ const startFlagMarkerIcon = (): L.DivIcon => L.divIcon({
   popupAnchor: [0, -34],
 });
 
+const ParkingStopHoverCard: React.FC<{ stop: TrajectoryStop }> = ({ stop }) => {
+  const { address, loading } = useVehicleAddress(stop.latitude, stop.longitude, true);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const text = address?.formattedAddress
+      ? `${stop.name} - ${address.formattedAddress}`
+      : `${stop.name} - GPS: ${stop.latitude}, ${stop.longitude}`;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div
+      className="w-64 sm:w-72 rounded-xl border border-blue-500/40 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-md text-white text-left font-sans select-text pointer-events-auto"
+      onClick={e => e.stopPropagation()}
+    >
+      <div className="flex items-center justify-between gap-1 border-b border-slate-800 pb-2">
+        <div className="flex items-center gap-1.5 font-bold text-blue-400 text-xs">
+          <span className="rounded bg-blue-600 px-1.5 py-0.5 text-[10px] font-black text-white">P</span>
+          <span>{stop.name}</span>
+        </div>
+        <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-300">
+          {stop.durationFormatted}
+        </span>
+      </div>
+
+      <div className="mt-2 rounded-lg bg-slate-900/90 border border-slate-800 p-2 text-xs">
+        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-400 mb-1">
+          <MapPin className="h-3 w-3 text-amber-400 shrink-0" />
+          Adresse de cet arrêt :
+        </span>
+        {loading ? (
+          <span className="text-slate-400 text-[11px] italic">Recherche de l’adresse…</span>
+        ) : address ? (
+          <p className="text-xs font-semibold text-slate-100 leading-snug">{address.formattedAddress}</p>
+        ) : (
+          <p className="text-[11px] text-slate-400">{stop.latitude.toFixed(4)}, {stop.longitude.toFixed(4)}</p>
+        )}
+      </div>
+
+      <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-400">
+        <span>Arrivée : {stop.arrivedAt}</span>
+        <span>Départ : {stop.departedAt}</span>
+      </div>
+
+      <div className="mt-2 pt-1.5 border-t border-slate-800/80 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex items-center gap-1 text-[10px] text-cyan-300 hover:text-cyan-200 font-bold"
+        >
+          {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+          <span>{copied ? 'Copié !' : 'Copier'}</span>
+        </button>
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${stop.latitude},${stop.longitude}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-[10px] text-emerald-400 hover:text-emerald-300 font-bold"
+        >
+          <Navigation className="h-3 w-3" />
+          <span>Google Maps</span>
+        </a>
+      </div>
+    </div>
+  );
+};
+
 const MapViewport: React.FC<{
   vehicles: AdminGpsVehicle[];
   focusVehicle: AdminGpsVehicle | null;
   focusSequence: number;
-}> = ({ vehicles, focusVehicle, focusSequence }) => {
+  filterKey?: string;
+}> = ({ vehicles, focusVehicle, focusSequence, filterKey }) => {
   const map = useMap();
   const initialViewSet = useRef(false);
   const lastFocusSequence = useRef(0);
+  const lastFilterKey = useRef(filterKey);
   const pointKey = vehicles
     .filter(validLocation)
     .map(vehicle => `${vehicle.latitude},${vehicle.longitude}`)
@@ -191,6 +278,17 @@ const MapViewport: React.FC<{
       return;
     }
 
+    if (filterKey !== lastFilterKey.current) {
+      lastFilterKey.current = filterKey;
+      const points = vehicles.filter(validLocation).map(vehicle => [vehicle.latitude, vehicle.longitude] as LatLngExpression);
+      if (points.length === 1) {
+        map.flyTo(points[0], 13, { duration: 0.5 });
+      } else if (points.length > 1) {
+        map.fitBounds(points as LatLngBoundsExpression, { padding: [40, 40], maxZoom: 14 });
+      }
+      return;
+    }
+
     if (initialViewSet.current) return;
     const points = vehicles.filter(validLocation).map(vehicle => [vehicle.latitude, vehicle.longitude] as LatLngExpression);
     if (points.length === 0) return;
@@ -200,7 +298,7 @@ const MapViewport: React.FC<{
     } else if (points.length > 1) {
       map.fitBounds(points as LatLngBoundsExpression, { padding: [36, 36], maxZoom: 13 });
     }
-  }, [map, pointKey, focusSequence, focusVehicle?.provider_device_id, focusVehicle?.latitude, focusVehicle?.longitude]);
+  }, [map, pointKey, focusSequence, filterKey, focusVehicle?.provider_device_id, focusVehicle?.latitude, focusVehicle?.longitude]);
 
   return null;
 };
@@ -254,20 +352,39 @@ const AnimatedGpsMarker: React.FC<{
         isSelected,
         vehicle.plate || vehicle.vehicle_name,
       )}
-      eventHandlers={{ click: onSelect }}
+      eventHandlers={{
+        click: onSelect,
+        mouseover: () => {
+          prefetchAddress(vehicle.latitude, vehicle.longitude);
+        },
+      }}
     >
+      <TooltipComponent
+        direction="top"
+        offset={[0, -46]}
+        opacity={1}
+        className="gps-car-tooltip-container"
+        interactive
+      >
+        <VehicleHoverTooltipCard vehicle={vehicle} />
+      </TooltipComponent>
+
       <Popup>
-        <div className="min-w-48 space-y-1 text-sm">
-          <strong className="text-base text-slate-900">{vehicle.vehicle_name}</strong>
+        <div className="min-w-56 space-y-1.5 text-sm font-sans">
+          <strong className="text-base text-slate-900 block">{vehicle.vehicle_name}</strong>
           <p className="font-semibold text-emerald-700">matricule : {vehicle.plate ?? 'Non fourni par API'}</p>
           {!vehicle.linked && <p className="text-amber-600 font-medium">GPS non associé à une voiture</p>}
           {vehicle.unit_identity && <p className="text-slate-600">{vehicle.unit_identity}</p>}
           {vehicle.linked && <p className="text-slate-500">Appareil GPS : {vehicle.provider_name}</p>}
           {vehicle.in_location && vehicle.location_booking && (
-            <p className="font-semibold text-emerald-800">
+            <p className="font-semibold text-emerald-800 text-xs">
               En location · {vehicle.location_booking.client_name || 'Client N/D'} · Réservation #{vehicle.location_booking.booking_id}
             </p>
           )}
+
+          {/* Exact Address & Google Maps link in Popup */}
+          <VehicleHudAddressCard vehicle={vehicle} />
+
           <div className="mt-2 grid grid-cols-2 gap-1 border-t border-slate-200 pt-2 text-xs text-slate-600">
             <p>Vitesse API : <strong>{formatNumber(vehicle.speed)} km/h</strong></p>
             <p>Kilométrage : <strong>{formatNumber(vehicle.odometer)}</strong></p>
@@ -314,6 +431,9 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
   const [associationError, setAssociationError] = useState('');
   const [associatingDevice, setAssociatingDevice] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+
+  // Quick status filter for map & sidebar: 'all' | 'moving' | 'stopped' | 'unlinked' | 'stale' | 'in_location'
+  const [statusFilter, setStatusFilter] = useState<'all' | 'moving' | 'stopped' | 'unlinked' | 'stale' | 'in_location'>('all');
 
   // Map layer toggle: Realistic Satellite vs Plan (Streets)
   const [mapLayer, setMapLayer] = useState<'satellite' | 'streets'>('satellite');
@@ -441,16 +561,62 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
     };
   }, [reloadKey]);
 
+  // Live count for each filter category
+  const filterCounts = useMemo(() => {
+    let moving = 0;
+    let stopped = 0;
+    let unlinked = 0;
+    let stale = 0;
+    let inLocation = 0;
+
+    vehicles.forEach(v => {
+      const kind = markerKind(v);
+      if (kind === 'moving') moving++;
+      else if (kind === 'stopped') stopped++;
+      else if (kind === 'unlinked') unlinked++;
+      else if (kind === 'stale') stale++;
+
+      if (v.in_location) inLocation++;
+    });
+
+    return {
+      all: vehicles.length,
+      moving,
+      stopped,
+      unlinked,
+      stale,
+      in_location: inLocation,
+    };
+  }, [vehicles]);
+
+  // Vehicles matching the selected status filter
+  const filteredVehicles = useMemo(() => {
+    if (statusFilter === 'all') return vehicles;
+    return vehicles.filter(v => {
+      if (statusFilter === 'moving') return markerKind(v) === 'moving';
+      if (statusFilter === 'stopped') return markerKind(v) === 'stopped';
+      if (statusFilter === 'unlinked') return markerKind(v) === 'unlinked';
+      if (statusFilter === 'stale') return markerKind(v) === 'stale';
+      if (statusFilter === 'in_location') return v.in_location === true;
+      return true;
+    });
+  }, [vehicles, statusFilter]);
+
   const selectedVehicle = vehicles.find(vehicle => vehicle.provider_device_id === selectedDeviceId) ?? null;
   const unlinkedVehicles = vehicles.filter(vehicle => !vehicle.linked);
-  const vehiclesWithLocation = vehicles.filter(validLocation);
   const query = search.trim().toLocaleLowerCase();
-  const visibleVehicles = query
-    ? vehicles.filter(vehicle =>
-        [vehicle.vehicle_name, vehicle.provider_name, vehicle.plate ?? '']
-          .some(value => value.toLocaleLowerCase().includes(query)),
-      )
-    : vehicles;
+  const visibleVehicles = useMemo(() => {
+    if (!query) return filteredVehicles;
+    return filteredVehicles.filter(vehicle =>
+      [vehicle.vehicle_name, vehicle.provider_name, vehicle.plate ?? '']
+        .some(value => value.toLocaleLowerCase().includes(query)),
+    );
+  }, [filteredVehicles, query]);
+
+  // Filtered vehicles with valid GPS coordinates for the map
+  const vehiclesWithLocation = useMemo(() => {
+    return visibleVehicles.filter(validLocation);
+  }, [visibleVehicles]);
 
   // Build today's trajectory data for the selected vehicle when trajectory view is active
   const trajectory: VehicleTrajectoryData | null = useMemo(() => {
@@ -567,43 +733,45 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
   }
 
   return (
-    <section className="flex h-[calc(100vh-150px)] min-h-[560px] flex-col gap-3 font-sans">
+    <section className="flex h-auto min-h-[500px] lg:h-[calc(100vh-150px)] flex-col gap-3 font-sans">
       {/* Top Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-3 dark:border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 p-2.5 text-white shadow-md shadow-emerald-500/20">
-            <MapIcon className="h-5 w-5" />
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 dark:border-slate-800">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 p-2 sm:p-2.5 text-white shadow-md shadow-emerald-500/20 flex-shrink-0">
+            <MapIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">Suivi GPS des voitures</h2>
+              <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">Suivi GPS des voitures</h2>
               <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
                 AlloGPS Live
               </span>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 line-clamp-1 sm:line-clamp-none">
               {vehicles.length} appareils GPS · {vehicles.length - unlinkedVehicles.length} associés · {unlinkedVehicles.length} non associés · {assignableUnits.length} unités de voiture disponibles
               {fetchedAt ? ` · Actualisé ${formatDate(fetchedAt)}` : ''}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed(v => !v)}
             title={isSidebarCollapsed ? "Afficher la liste des voitures" : "Masquer la liste des voitures pour agrandir la carte"}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           >
             {isSidebarCollapsed ? (
               <>
                 <ChevronRight className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
-                <span>Afficher liste ({vehicles.length})</span>
+                <span className="hidden sm:inline">Afficher liste ({vehicles.length})</span>
+                <span className="sm:hidden">Liste ({vehicles.length})</span>
               </>
             ) : (
               <>
                 <ChevronLeft className="h-3.5 w-3.5 text-slate-500" />
-                <span>Masquer liste</span>
+                <span className="hidden sm:inline">Masquer liste</span>
+                <span className="sm:hidden">Masquer</span>
               </>
             )}
           </button>
@@ -612,55 +780,187 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
             type="button"
             onClick={() => setIsFullscreen(true)}
             title="Agrandir la carte en plein écran"
-            className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 dark:border-emerald-600/40 dark:bg-emerald-950/40 dark:text-emerald-300"
+            className="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-emerald-700 shadow-sm transition hover:bg-emerald-100 dark:border-emerald-600/40 dark:bg-emerald-950/40 dark:text-emerald-300"
           >
             <Maximize2 className="h-3.5 w-3.5" />
-            <span>Agrandir la carte</span>
+            <span className="hidden sm:inline">Agrandir la carte</span>
+            <span className="sm:hidden">Plein écran</span>
           </button>
 
           <button
             onClick={retry}
             disabled={refreshing}
             title="Actualiser les données GPS"
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="flex items-center gap-1.5 sm:gap-2 rounded-lg border border-slate-200 bg-white px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin text-emerald-600' : ''}`} />
-            <span>Actualiser</span>
+            <span className="hidden sm:inline">Actualiser</span>
           </button>
         </div>
       </header>
 
-      {/* Legend Bar */}
+      {/* Interactive Filter & Legend Bar */}
       <div
-        aria-label="Légende de la map"
-        className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs backdrop-blur dark:border-slate-800 dark:bg-slate-900/80"
+        aria-label="Filtres et légende GPS"
+        className="flex items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 text-xs backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 overflow-x-auto whitespace-nowrap custom-scrollbar shadow-sm"
       >
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <span className="font-extrabold text-slate-900 dark:text-white">Légende</span>
-          {([
-            ['moving', 'En mouvement'],
-            ['stopped', 'À l’arrêt'],
-            ['unlinked', 'GPS non associé'],
-            ['stale', 'Données GPS anciennes'],
-          ] as const).map(([kind, label]) => (
-            <span key={kind} className="inline-flex items-center gap-2 text-slate-700 dark:text-slate-300">
-              <span
-                aria-hidden="true"
-                className="h-3.5 w-3.5 rounded-full border-2 border-white shadow-sm"
-                style={{ backgroundColor: markerColors[kind] }}
-              />
-              <span className="font-medium">{label}</span>
-            </span>
-          ))}
-          <span className="inline-flex items-center gap-2 text-slate-700 dark:text-slate-300">
-            <span aria-hidden="true" className="h-3.5 w-3.5 rounded-full border-[3px] border-emerald-700 bg-white shadow-sm" />
-            <span className="font-medium">Voiture en location</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mr-1 flex items-center gap-1">
+            <Filter className="h-3.5 w-3.5" />
+            <span>Filtrer :</span>
           </span>
+
+          {/* Button: All cars */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter('all')}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+              statusFilter === 'all'
+                ? 'bg-slate-900 text-white shadow-sm dark:bg-white dark:text-slate-950 ring-2 ring-slate-900/20 dark:ring-white/30'
+                : 'bg-slate-100/80 text-slate-600 hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700'
+            }`}
+            title="Afficher toutes les voitures"
+          >
+            <span>Toutes</span>
+            <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-black ${
+              statusFilter === 'all'
+                ? 'bg-white/20 text-white dark:bg-black/20 dark:text-slate-950'
+                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+            }`}>
+              {filterCounts.all}
+            </span>
+          </button>
+
+          {/* Button: En mouvement */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter(prev => (prev === 'moving' ? 'all' : 'moving'))}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+              statusFilter === 'moving'
+                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-500/50'
+                : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/50 border border-emerald-500/20'
+            }`}
+            title="Filtrer pour afficher uniquement les voitures qui roulent actuellement"
+          >
+            <span
+              aria-hidden="true"
+              className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm animate-pulse border border-white"
+            />
+            <span>En mouvement</span>
+            <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-black ${
+              statusFilter === 'moving' ? 'bg-white/30 text-white' : 'bg-emerald-200/70 text-emerald-900 dark:bg-emerald-800/60 dark:text-emerald-200'
+            }`}>
+              {filterCounts.moving}
+            </span>
+          </button>
+
+          {/* Button: À l'arrêt */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter(prev => (prev === 'stopped' ? 'all' : 'stopped'))}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+              statusFilter === 'stopped'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-2 ring-blue-500/50'
+                : 'bg-blue-50 text-blue-800 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50 border border-blue-500/20'
+            }`}
+            title="Filtrer pour afficher uniquement les voitures garées / à l'arrêt"
+          >
+            <span
+              aria-hidden="true"
+              className="h-2.5 w-2.5 rounded-full bg-blue-600 shadow-sm border border-white"
+            />
+            <span>À l’arrêt</span>
+            <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-black ${
+              statusFilter === 'stopped' ? 'bg-white/30 text-white' : 'bg-blue-200/70 text-blue-900 dark:bg-blue-800/60 dark:text-blue-200'
+            }`}>
+              {filterCounts.stopped}
+            </span>
+          </button>
+
+          {/* Button: GPS non associé */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter(prev => (prev === 'unlinked' ? 'all' : 'unlinked'))}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+              statusFilter === 'unlinked'
+                ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30 ring-2 ring-amber-500/50'
+                : 'bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50 border border-amber-500/20'
+            }`}
+            title="Filtrer les appareils GPS non encore associés à un véhicule"
+          >
+            <span
+              aria-hidden="true"
+              className="h-2.5 w-2.5 rounded-full bg-amber-500 shadow-sm border border-white"
+            />
+            <span>GPS non associé</span>
+            <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-black ${
+              statusFilter === 'unlinked' ? 'bg-white/30 text-white' : 'bg-amber-200/70 text-amber-900 dark:bg-amber-800/60 dark:text-amber-200'
+            }`}>
+              {filterCounts.unlinked}
+            </span>
+          </button>
+
+          {/* Button: Données GPS anciennes */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter(prev => (prev === 'stale' ? 'all' : 'stale'))}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+              statusFilter === 'stale'
+                ? 'bg-slate-600 text-white shadow-md shadow-slate-600/30 ring-2 ring-slate-500/50'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700'
+            }`}
+            title="Filtrer les véhicules dont le signal GPS est ancien ou inactif"
+          >
+            <span
+              aria-hidden="true"
+              className="h-2.5 w-2.5 rounded-full bg-slate-500 shadow-sm border border-white"
+            />
+            <span>Données anciennes</span>
+            <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-black ${
+              statusFilter === 'stale' ? 'bg-white/30 text-white' : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200'
+            }`}>
+              {filterCounts.stale}
+            </span>
+          </button>
+
+          {/* Button: Voiture en location */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter(prev => (prev === 'in_location' ? 'all' : 'in_location'))}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+              statusFilter === 'in_location'
+                ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/30 ring-2 ring-emerald-600/50'
+                : 'bg-emerald-50/90 text-emerald-900 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-200 border border-emerald-600/30'
+            }`}
+            title="Filtrer pour afficher uniquement les voitures actuellement louées à des clients"
+          >
+            <span
+              aria-hidden="true"
+              className="h-2.5 w-2.5 rounded-full border-2 border-emerald-700 bg-white shadow-sm"
+            />
+            <span>Voiture en location</span>
+            <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-black ${
+              statusFilter === 'in_location' ? 'bg-white/30 text-white' : 'bg-emerald-200 text-emerald-900 dark:bg-emerald-800 dark:text-emerald-200'
+            }`}>
+              {filterCounts.in_location}
+            </span>
+          </button>
+
+          {/* Reset button if filter is active */}
+          {statusFilter !== 'all' && (
+            <button
+              type="button"
+              onClick={() => setStatusFilter('all')}
+              className="inline-flex items-center gap-1 text-[11px] font-extrabold text-rose-600 hover:text-rose-700 dark:text-rose-400 ml-1 underline decoration-dotted"
+            >
+              <span>✕ Réinitialiser</span>
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 text-[11px] text-slate-500">
+        <div className="flex items-center gap-2 text-[11px] text-slate-500 shrink-0">
           <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-          <span>Ligne rouge = Trajet parcouru aujourd'hui</span>
+          <span className="hidden sm:inline">Ligne rouge = Trajet parcouru aujourd'hui</span>
         </div>
       </div>
 
@@ -717,8 +1017,34 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
             </div>
 
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2">
+              {statusFilter !== 'all' && (
+                <div className="mb-2 flex items-center justify-between rounded-lg bg-slate-100/90 px-3 py-1.5 text-xs dark:bg-slate-800/80">
+                  <span className="font-bold text-slate-700 dark:text-slate-300">
+                    Filtre : {statusFilter === 'moving' ? 'En mouvement' : statusFilter === 'stopped' ? 'À l’arrêt' : statusFilter === 'unlinked' ? 'GPS non associé' : statusFilter === 'stale' ? 'Données anciennes' : 'En location'} ({visibleVehicles.length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('all')}
+                    className="font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400"
+                  >
+                    Effacer ✕
+                  </button>
+                </div>
+              )}
+
               {visibleVehicles.length === 0 ? (
-                <p className="p-4 text-center text-sm text-slate-500">Aucun résultat.</p>
+                <div className="p-6 text-center space-y-2">
+                  <p className="text-sm font-medium text-slate-500">Aucune voiture ne correspond à ce filtre.</p>
+                  {statusFilter !== 'all' && (
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter('all')}
+                      className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      Afficher toutes les voitures ({filterCounts.all})
+                    </button>
+                  )}
+                </div>
               ) : (
                 visibleVehicles.map(vehicle => {
                   const isSelected = selectedDeviceId === vehicle.provider_device_id;
@@ -727,6 +1053,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                     <article
                       data-provider-device-id={vehicle.provider_device_id}
                       key={vehicle.provider_device_id}
+                      onMouseEnter={() => validLocation(vehicle) && prefetchAddress(vehicle.latitude, vehicle.longitude)}
                       className={`group relative rounded-xl border p-3 transition-all ${
                         isSelected
                           ? 'border-emerald-500 bg-emerald-50/70 shadow-sm ring-1 ring-emerald-500/30 dark:bg-emerald-950/20'
@@ -771,6 +1098,15 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                               : 'À l’arrêt'}
                           </span>
                         </div>
+
+                        {/* Real-time Parking Address in Sidebar */}
+                        {validLocation(vehicle) && (
+                          <VehicleSidebarAddressRow
+                            latitude={vehicle.latitude}
+                            longitude={vehicle.longitude}
+                            isStopped={kind === 'stopped'}
+                          />
+                        )}
 
                         <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-slate-600 dark:text-slate-300">
                           <span className="inline-flex items-center gap-1.5 font-medium">
@@ -1047,7 +1383,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                   />
                 )}
 
-                <MapViewport vehicles={vehicles} focusVehicle={selectedVehicle} focusSequence={focusSequence} />
+                <MapViewport vehicles={vehiclesWithLocation} focusVehicle={selectedVehicle} focusSequence={focusSequence} filterKey={statusFilter} />
                 <MapResizeHandler isFullscreen={isFullscreen} isSidebarCollapsed={isSidebarCollapsed} />
 
               {/* Red Line Trajectory for selected vehicle */}
@@ -1102,15 +1438,30 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                     key={stop.id}
                     position={[stop.latitude, stop.longitude]}
                     icon={parkingStopMarkerIcon(stop)}
+                    eventHandlers={{
+                      mouseover: () => {
+                        prefetchAddress(stop.latitude, stop.longitude);
+                      },
+                    }}
                   >
+                    <TooltipComponent
+                      direction="top"
+                      offset={[0, -36]}
+                      opacity={1}
+                      className="gps-car-tooltip-container"
+                      interactive
+                    >
+                      <ParkingStopHoverCard stop={stop} />
+                    </TooltipComponent>
                     <Popup>
-                      <div className="p-1 text-xs space-y-1">
+                      <div className="p-1.5 text-xs space-y-1 font-sans">
                         <div className="flex items-center gap-1.5 font-bold text-blue-600">
                           <span className="rounded bg-blue-600 text-white px-1 text-[10px]">P</span>
                           <span>{stop.name}</span>
                         </div>
                         <p className="text-slate-700">Durée d'arrêt : <strong>{stop.durationFormatted}</strong></p>
                         <p className="text-slate-500">Arrivée : {stop.arrivedAt} · Départ : {stop.departedAt}</p>
+                        <VehicleSidebarAddressRow latitude={stop.latitude} longitude={stop.longitude} isStopped={true} />
                       </div>
                     </Popup>
                   </Marker>
@@ -1257,6 +1608,11 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                     </button>
                   </div>
                 </div>
+
+                {/* Real-time Parking Address & Location Card */}
+                {validLocation(selectedVehicle) && (
+                  <VehicleHudAddressCard vehicle={selectedVehicle} />
+                )}
 
                 {trajectory ? (
                   <>
