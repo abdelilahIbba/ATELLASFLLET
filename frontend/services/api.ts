@@ -374,6 +374,14 @@ export const adminGpsApi = {
     api.delete<{ message: string }>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/association`),
   trajectory: (deviceId: string, date?: string) =>
     api.get<any>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/trajectory${date ? `?date=${encodeURIComponent(date)}` : ''}`),
+  report: (deviceId: string, period?: string, startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (period) params.append('period', period);
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return api.get<any>(`/admin/gps/devices/${encodeURIComponent(deviceId)}/report${qs}`);
+  },
   reverseGeocode: (lat: number, lng: number) =>
     api.get<ReverseGeocodeResponse>(`/admin/gps/reverse-geocode?lat=${lat}&lng=${lng}`),
 };

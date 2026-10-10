@@ -26,14 +26,34 @@ export const VehicleHudAddressCard: React.FC<VehicleHudAddressCardProps> = ({ ve
   };
 
   return (
-    <div className="mt-2.5 rounded-xl border border-amber-500/30 bg-slate-900/90 p-3 shadow-inner">
+    <div className={`mt-2.5 rounded-xl border p-3 shadow-inner ${
+      address?.isAgencyParking
+        ? 'border-emerald-500/40 bg-gradient-to-br from-emerald-950/40 to-slate-900/90'
+        : 'border-amber-500/30 bg-slate-900/90'
+    }`}>
+      {address?.isAgencyParking && (
+        <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-1 text-[11px] font-black text-emerald-300">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>🅿️ AU PARKING DE L'AGENCE (Tanger HQ)</span>
+        </div>
+      )}
       <div className="flex items-center justify-between gap-1 mb-1.5">
-        <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-amber-400">
-          <MapPin className="h-3.5 w-3.5 text-amber-400" />
-          {isStopped ? 'Adresse du stationnement (Parking)' : 'Position actuelle'}
+        <span className={`flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider ${
+          address?.isAgencyParking ? 'text-emerald-400' : 'text-amber-400'
+        }`}>
+          <MapPin className={`h-3.5 w-3.5 ${address?.isAgencyParking ? 'text-emerald-400' : 'text-amber-400'}`} />
+          {address?.isAgencyParking
+            ? 'Emplacement Parking Agence'
+            : isStopped
+            ? 'Adresse du stationnement (Parking)'
+            : 'Position actuelle'}
         </span>
         {address?.city && (
-          <span className="rounded bg-amber-500/20 px-2 py-0.5 text-[9px] font-bold text-amber-300">
+          <span className={`rounded px-2 py-0.5 text-[9px] font-bold ${
+            address?.isAgencyParking
+              ? 'bg-emerald-500/20 text-emerald-300'
+              : 'bg-amber-500/20 text-amber-300'
+          }`}>
             {address.city}
           </span>
         )}

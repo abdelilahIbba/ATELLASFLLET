@@ -188,6 +188,7 @@ Route::middleware(['auth:sanctum', 'api.role:admin,demo_admin'])->prefix('admin'
         Route::get('/gps/vehicles', [GpsTrackingController::class, 'index']);
         Route::get('/gps/reverse-geocode', [GpsTrackingController::class, 'reverseGeocode']);
         Route::get('/gps/devices/{deviceId}/trajectory', [GpsTrackingController::class, 'trajectory']);
+        Route::get('/gps/devices/{deviceId}/report', [GpsTrackingController::class, 'report']);
         Route::patch('/gps/cars/{car}/visibility', [GpsTrackingController::class, 'visibility']);
         Route::post('/gps/devices/{deviceId}/association', [GpsTrackingController::class, 'associate'])->middleware('permission:gps,edit');
         Route::delete('/gps/devices/{deviceId}/association', [GpsTrackingController::class, 'unassociate'])->middleware('permission:gps,edit');

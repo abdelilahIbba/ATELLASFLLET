@@ -9,12 +9,16 @@ import {
   Clock,
   Compass,
   Copy,
+  Crosshair,
+  ExternalLink,
   Eye,
+  FileText,
   Filter,
   Fuel,
   Gauge,
   Info,
   Layers,
+  List,
   Map as MapIcon,
   MapPin,
   Maximize2,
@@ -25,6 +29,7 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
+  SlidersHorizontal,
   Unlink,
   Wifi,
   WifiOff,
@@ -56,12 +61,17 @@ import {
   fetchAddress,
   prefetchAddress,
   useVehicleAddress,
+  isNearAgencyParking,
+  getAgencyParkingSlot,
+  AGENCY_CONFIG,
 } from './reverseGeocodingService';
 import { VehicleHoverTooltipCard } from './VehicleHoverTooltipCard';
 import { VehicleHudAddressCard } from './VehicleHudAddressCard';
 import { VehicleSidebarAddressRow } from './VehicleSidebarAddressRow';
+import { VehicleReportsView, formatMoroccanPlate } from './VehicleReportsView';
 
 const PolylineComponent = (ReactLeaflet as any).Polyline || (() => null);
+const CircleComponent = (ReactLeaflet as any).Circle || (() => null);
 const TooltipComponent = (ReactLeaflet as any).Tooltip || Tooltip || (({ children }: any) => children);
 
 const DEFAULT_REFRESH_INTERVAL_SECONDS = 15;
@@ -152,20 +162,20 @@ const vehicleMarkerIcon = (
 };
 
 /** Blue teardrop pin marker with white "P" for intermediate parking stops along today's route */
-const parkingStopMarkerIcon = (stop: TrajectoryStop): L.DivIcon => L.divIcon({
+const parkingStopMarkerIcon = (stop: TrajectoryStop, isSelected: boolean = false): L.DivIcon => L.divIcon({
   className: 'gps-stop-marker',
   html: `
-    <div style="position:relative;width:30px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-      <span style="position:relative;display:block;width:30px;height:38px;border:2px solid #ffffff;border-radius:18px 18px 18px 0;transform:rotate(-45deg);background:#2563eb;box-shadow:0 2px 6px rgba(0,0,0,0.45);box-sizing:border-box;margin-top:-4px;"></span>
-      <div style="position:absolute;top:0;left:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;">
-        <span style="color:#ffffff;font-size:14px;font-weight:900;font-family:system-ui,-apple-system,sans-serif;margin-top:-3px;">P</span>
+    <div style="position:relative;width:34px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;${isSelected ? 'transform:scale(1.22);z-index:999;' : ''}">
+      <span style="position:relative;display:block;width:32px;height:40px;border:2.5px solid #ffffff;border-radius:20px 20px 20px 0;transform:rotate(-45deg);background:#2563eb;box-shadow:0 3px 8px rgba(37,99,235,0.5);box-sizing:border-box;margin-top:-4px;"></span>
+      <div style="position:absolute;top:0;left:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;">
+        <span style="color:#ffffff;font-size:15px;font-weight:900;font-family:system-ui,-apple-system,sans-serif;margin-top:-3px;">P</span>
       </div>
-      <div style="position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(37,99,235,0.92);color:#ffffff;font-size:9px;font-weight:700;padding:0px 4px;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,0.4);pointer-events:none;">${stop.durationFormatted}</div>
+      <div style="position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(15,23,42,0.92);color:#93c5fd;font-size:9px;font-weight:800;padding:1px 4px;border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,0.5);border:1px solid rgba(147,197,253,0.3);pointer-events:none;">${stop.durationFormatted}</div>
     </div>
   `,
-  iconSize: [30, 38],
-  iconAnchor: [15, 34],
-  popupAnchor: [0, -32],
+  iconSize: [34, 42],
+  iconAnchor: [17, 38],
+  popupAnchor: [0, -36],
 });
 
 /** Start of route checkered flag icon */
@@ -259,17 +269,30 @@ const MapViewport: React.FC<{
   focusVehicle: AdminGpsVehicle | null;
   focusSequence: number;
   filterKey?: string;
-}> = ({ vehicles, focusVehicle, focusSequence, filterKey }) => {
+  targetBounds?: LatLngBoundsExpression | null;
+  boundsSequence?: number;
+}> = ({ vehicles, focusVehicle, focusSequence, filterKey, targetBounds, boundsSequence }) => {
   const map = useMap();
   const initialViewSet = useRef(false);
   const lastFocusSequence = useRef(0);
   const lastFilterKey = useRef(filterKey);
+  const lastBoundsSequence = useRef(0);
   const pointKey = vehicles
     .filter(validLocation)
     .map(vehicle => `${vehicle.latitude},${vehicle.longitude}`)
     .join('|');
 
   useEffect(() => {
+    if (boundsSequence !== undefined && boundsSequence !== lastBoundsSequence.current && targetBounds) {
+      lastBoundsSequence.current = boundsSequence;
+      try {
+        map.fitBounds(targetBounds, { padding: [50, 50], maxZoom: 16 });
+      } catch {
+        // Fallback in case of bounds error
+      }
+      return;
+    }
+
     if (focusSequence !== lastFocusSequence.current) {
       lastFocusSequence.current = focusSequence;
       if (focusVehicle && validLocation(focusVehicle)) {
@@ -298,7 +321,7 @@ const MapViewport: React.FC<{
     } else if (points.length > 1) {
       map.fitBounds(points as LatLngBoundsExpression, { padding: [36, 36], maxZoom: 13 });
     }
-  }, [map, pointKey, focusSequence, filterKey, focusVehicle?.provider_device_id, focusVehicle?.latitude, focusVehicle?.longitude]);
+  }, [map, pointKey, focusSequence, filterKey, boundsSequence, targetBounds, focusVehicle?.provider_device_id, focusVehicle?.latitude, focusVehicle?.longitude]);
 
   return null;
 };
@@ -443,11 +466,26 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [hudCollapsed, setHudCollapsed] = useState(false);
 
+  // View toggle: 'map' (live tracking map) vs 'reports' (detailed telemetry reports)
+  const [currentView, setCurrentView] = useState<'map' | 'reports'>('map');
+  const [reportVehicleId, setReportVehicleId] = useState<string | null>(null);
+
+  // Agency parking snapping: neat alignment of stationary vehicles in agency parking
+  const [snapAgencyParking, setSnapAgencyParking] = useState(true);
+
+  // Map camera framing bounds for trajectory and stops
+  const [mapTargetBounds, setMapTargetBounds] = useState<LatLngBoundsExpression | null>(null);
+  const [boundsSequence, setBoundsSequence] = useState<number>(0);
+
+  // Stops drawer / inspector panel
+  const [isStopsDrawerOpen, setIsStopsDrawerOpen] = useState(false);
+  const [focusedStopId, setFocusedStopId] = useState<string | null>(null);
+
   // Trajectory view: active when user clicks on a vehicle
   const [activeTrajectoryDeviceId, setActiveTrajectoryDeviceId] = useState<string | null>(null);
 
   // Trajectory view & playback controls
-  const [showStops, setShowStops] = useState(true);
+  const [showStops, setShowStops] = useState(false);
   const [playbackActive, setPlaybackActive] = useState(false);
   const [playbackIndex, setPlaybackIndex] = useState(0);
   const [playbackSpeedMultiplier, setPlaybackSpeedMultiplier] = useState<number>(300);
@@ -618,6 +656,36 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
     return visibleVehicles.filter(validLocation);
   }, [visibleVehicles]);
 
+  // Process vehicles for map display: if snapAgencyParking is on, stationary cars near agency parking are neatly aligned
+  const processedVehiclesWithLocation = useMemo(() => {
+    if (!snapAgencyParking) return vehiclesWithLocation;
+
+    // Find all stationary vehicles near agency parking
+    const agencyParked = vehiclesWithLocation.filter(
+      v => !v.is_moving && !v.is_stale && isNearAgencyParking(v.latitude, v.longitude)
+    );
+
+    if (agencyParked.length <= 1) return vehiclesWithLocation;
+
+    const agencyParkedMap = new Map<string, { latitude: number; longitude: number }>();
+    agencyParked.forEach((v, index) => {
+      const slot = getAgencyParkingSlot(index, agencyParked.length);
+      agencyParkedMap.set(v.provider_device_id, slot);
+    });
+
+    return vehiclesWithLocation.map(v => {
+      const slot = agencyParkedMap.get(v.provider_device_id);
+      if (slot) {
+        return {
+          ...v,
+          latitude: slot.latitude,
+          longitude: slot.longitude,
+        };
+      }
+      return v;
+    });
+  }, [vehiclesWithLocation, snapAgencyParking]);
+
   // Build today's trajectory data for the selected vehicle when trajectory view is active
   const trajectory: VehicleTrajectoryData | null = useMemo(() => {
     if (!activeTrajectoryDeviceId) return null;
@@ -703,8 +771,44 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
 
   const focusVehicle = (deviceId: string) => {
     setSelectedDeviceId(deviceId);
-    setActiveTrajectoryDeviceId(deviceId);
     setFocusSequence(value => value + 1);
+  };
+
+  const handleShowTrajectory = (deviceId: string) => {
+    setSelectedDeviceId(deviceId);
+    setActiveTrajectoryDeviceId(deviceId);
+    setShowStops(false);
+    const targetVehicle = vehicles.find(v => v.provider_device_id === deviceId);
+    if (targetVehicle && validLocation(targetVehicle)) {
+      const traj = buildVehicleTrajectory(targetVehicle);
+      if (traj && traj.points.length > 0) {
+        const bounds: LatLngBoundsExpression = traj.points.map(p => [p.latitude, p.longitude] as [number, number]);
+        setMapTargetBounds(bounds);
+        setBoundsSequence(s => s + 1);
+      }
+    }
+    setFocusSequence(s => s + 1);
+  };
+
+  const handleShowStops = (deviceId: string) => {
+    setSelectedDeviceId(deviceId);
+    setActiveTrajectoryDeviceId(deviceId);
+    setShowStops(true);
+    setIsStopsDrawerOpen(true);
+    const targetVehicle = vehicles.find(v => v.provider_device_id === deviceId);
+    if (targetVehicle && validLocation(targetVehicle)) {
+      const traj = buildVehicleTrajectory(targetVehicle);
+      if (traj && traj.stops.length > 0) {
+        const bounds: LatLngBoundsExpression = traj.stops.map(s => [s.latitude, s.longitude] as [number, number]);
+        setMapTargetBounds(bounds);
+        setBoundsSequence(s => s + 1);
+      }
+    }
+  };
+
+  const handleOpenReport = (deviceId: string) => {
+    setReportVehicleId(deviceId);
+    setCurrentView('reports');
   };
 
   if (loading && vehicles.length === 0) {
@@ -732,8 +836,34 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
     );
   }
 
+  // Dedicated Telemetry Reports & Filtering view
+  if (currentView === 'reports') {
+    return (
+      <div className="h-full w-full min-h-0 flex-1 overflow-hidden">
+        <VehicleReportsView
+          vehicles={vehicles}
+          initialDeviceId={reportVehicleId || selectedDeviceId}
+          initialVehicleId={reportVehicleId || selectedDeviceId}
+          onBackToMap={() => setCurrentView('map')}
+          onFocusVehicleOnMap={(deviceId) => {
+            setSelectedDeviceId(deviceId);
+            setActiveTrajectoryDeviceId(deviceId);
+            setCurrentView('map');
+            focusVehicle(deviceId);
+          }}
+          onSelectVehicleOnMap={(deviceId) => {
+            setSelectedDeviceId(deviceId);
+            setActiveTrajectoryDeviceId(deviceId);
+            setCurrentView('map');
+            focusVehicle(deviceId);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
-    <section className="flex h-auto min-h-[500px] lg:h-[calc(100vh-150px)] flex-col gap-3 font-sans">
+    <section className="flex min-h-full flex-1 flex-col gap-3 font-sans p-3 sm:p-4">
       {/* Top Header */}
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 dark:border-slate-800">
         <div className="flex items-center gap-2.5 sm:gap-3">
@@ -741,7 +871,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
             <MapIcon className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">Suivi GPS des voitures</h2>
               <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
                 AlloGPS Live
@@ -755,6 +885,56 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          {/* Main View Switcher: Live Map vs Reports */}
+          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setCurrentView('map')}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-bold transition ${
+                currentView === 'map'
+                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              }`}
+            >
+              <MapPin className="h-3.5 w-3.5 text-emerald-500" />
+              <span>Carte Live</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setReportVehicleId(selectedDeviceId);
+                setCurrentView('reports');
+              }}
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 sm:px-3 py-1 text-xs font-bold transition ${
+                currentView === 'reports'
+                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              }`}
+            >
+              <FileText className="h-3.5 w-3.5 text-purple-500" />
+              <span>Rapports & Filtres</span>
+            </button>
+          </div>
+
+          {/* Agency Parking Snapping Toggle */}
+          <button
+            type="button"
+            onClick={() => setSnapAgencyParking(v => !v)}
+            title={snapAgencyParking ? "Désactiver l'alignement ordonné du parking agence (afficher coordonnées GPS brutes)" : "Activer l'alignement ordonné des voitures stationnées au parking de l'agence"}
+            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-bold transition ${
+              snapAgencyParking
+                ? 'border-emerald-500/40 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+            }`}
+          >
+            <span>🅿️ Parking Agence :</span>
+            <span className={`rounded px-1.5 py-0.2 text-[10px] font-black ${
+              snapAgencyParking ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200'
+            }`}>
+              {snapAgencyParking ? 'Aligné' : 'Brut'}
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={() => setIsSidebarCollapsed(v => !v)}
@@ -801,7 +981,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
 
       {/* Interactive Filter & Legend Bar */}
       <div
-        aria-label="Filtres et légende GPS"
+        aria-label="Légende de la map"
         className="flex items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-slate-200/90 bg-white/95 px-3 py-2 text-xs backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 overflow-x-auto whitespace-nowrap custom-scrollbar shadow-sm"
       >
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
@@ -915,7 +1095,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
               aria-hidden="true"
               className="h-2.5 w-2.5 rounded-full bg-slate-500 shadow-sm border border-white"
             />
-            <span>Données anciennes</span>
+            <span>Données GPS anciennes</span>
             <span className={`rounded-full px-1.5 py-0.2 text-[10px] font-black ${
               statusFilter === 'stale' ? 'bg-white/30 text-white' : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200'
             }`}>
@@ -988,13 +1168,13 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
           <p className="text-sm text-slate-500">La liste GPS du fournisseur est vide.</p>
         </div>
       ) : (
-        <div className={`grid min-h-0 flex-1 gap-4 xl:gap-6 transition-all ${
+        <div className={`grid min-h-[580px] lg:min-h-[660px] flex-1 gap-4 xl:gap-6 transition-all ${
           isSidebarCollapsed
             ? 'grid-cols-1'
-            : 'grid-rows-[minmax(180px,0.65fr)_minmax(320px,1fr)] lg:grid-rows-1 lg:grid-cols-[330px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]'
+            : 'grid-rows-[minmax(240px,0.7fr)_minmax(400px,1fr)] lg:grid-rows-1 lg:grid-cols-[330px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]'
         }`}>
           {/* Left Vehicles Sidebar */}
-          <aside className={`min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 ${isSidebarCollapsed ? 'hidden' : 'flex'}`}>
+          <aside className={`min-h-[440px] lg:min-h-[660px] h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 ${isSidebarCollapsed ? 'hidden' : 'flex'}`}>
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 p-3 dark:border-slate-800">
               <label className="relative block flex-1">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -1063,7 +1243,14 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                       <button onClick={() => focusVehicle(vehicle.provider_device_id)} className="w-full text-left">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <h3 className="truncate text-sm font-bold text-slate-900 dark:text-white">{vehicle.vehicle_name}</h3>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h3 className="truncate text-sm font-bold text-slate-900 dark:text-white">{vehicle.vehicle_name}</h3>
+                              {vehicle.plate && (
+                                <span className="inline-flex items-center rounded border border-slate-700/60 bg-slate-900 px-1.5 py-0.2 text-[10px] font-black tracking-wide text-white dark:border-slate-600">
+                                  {formatMoroccanPlate(vehicle.plate)}
+                                </span>
+                              )}
+                            </div>
                             <p className="truncate text-xs text-slate-500">
                               {vehicle.linked
                                 ? `${vehicle.unit_identity} · GPS: ${vehicle.provider_name}`
@@ -1078,25 +1265,32 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                               </p>
                             )}
                           </div>
-                          <span
-                            className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold ${
-                              kind === 'unlinked'
-                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold ${
+                                kind === 'unlinked'
+                                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+                                  : kind === 'stale'
+                                  ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                                  : kind === 'moving'
+                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 animate-pulse'
+                                  : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
+                              }`}
+                            >
+                              {kind === 'unlinked'
+                                ? 'Non associée'
                                 : kind === 'stale'
-                                ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                                ? 'Données anciennes'
                                 : kind === 'moving'
-                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200 animate-pulse'
-                                : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
-                            }`}
-                          >
-                            {kind === 'unlinked'
-                              ? 'Non associée'
-                              : kind === 'stale'
-                              ? 'Données anciennes'
-                              : kind === 'moving'
-                              ? 'En mouvement'
-                              : 'À l’arrêt'}
-                          </span>
+                                ? 'En mouvement'
+                                : 'À l’arrêt'}
+                            </span>
+                            {validLocation(vehicle) && isNearAgencyParking(vehicle.latitude, vehicle.longitude) && !vehicle.is_moving && (
+                              <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 text-[9px] font-black text-emerald-700 dark:text-emerald-300">
+                                🅿️ Agence
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {/* Real-time Parking Address in Sidebar */}
@@ -1126,7 +1320,72 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                             Statut API {vehicle.status ?? 'N/D'}
                           </span>
                         </div>
+
+                        {/* Complete GPS Coordinates & Update Timestamp */}
+                        <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800/60 pt-1.5">
+                          <span className="font-mono text-[10px] text-slate-600 dark:text-slate-400">
+                            GPS : {validLocation(vehicle) ? `${vehicle.latitude.toFixed(4)}, ${vehicle.longitude.toFixed(4)}` : 'Non localisée'}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {vehicle.reported_at ? formatDate(vehicle.reported_at) : 'En attente'}
+                          </span>
+                        </div>
                       </button>
+
+                      {/* Quick Action Toolbar on Sidebar Card */}
+                      <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-1 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShowTrajectory(vehicle.provider_device_id);
+                          }}
+                          title="Afficher le trajet rouge du jour suivant les rues réelles de Tanger"
+                          className="flex items-center gap-1 rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 px-2 py-1 text-[11px] font-bold text-red-700 dark:text-red-300 border border-red-200/60 dark:border-red-900/50 transition"
+                        >
+                          <Navigation className="h-3 w-3 text-red-600" />
+                          <span>Trajet</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShowStops(vehicle.provider_device_id);
+                          }}
+                          title="Afficher les arrêts de stationnement de la journée"
+                          className="flex items-center gap-1 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 px-2 py-1 text-[11px] font-bold text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-900/50 transition"
+                        >
+                          <span className="rounded bg-blue-600 text-white px-1 text-[9px] font-black">P</span>
+                          <span>Arrêts</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenReport(vehicle.provider_device_id);
+                          }}
+                          title="Ouvrir le rapport télémétrique détaillé (vitesse max, distance, arrêts)"
+                          className="flex items-center gap-1 rounded-lg bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 px-2 py-1 text-[11px] font-bold text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-900/50 transition"
+                        >
+                          <FileText className="h-3 w-3 text-purple-600" />
+                          <span>Rapport</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            focusVehicle(vehicle.provider_device_id);
+                          }}
+                          title="Centrer la carte sur ce véhicule"
+                          className="flex items-center gap-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-300 transition"
+                        >
+                          <Crosshair className="h-3 w-3 text-slate-500" />
+                          <span>Centrer</span>
+                        </button>
+                      </div>
 
                       {vehicle.linked &&
                         (vehicle.association_mode === 'matricule' || vehicle.association_mode === 'manual_matricule') && (
@@ -1230,7 +1489,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
             className={
               isFullscreen
                 ? 'fixed inset-0 z-[9999] flex flex-col bg-slate-950 p-2 sm:p-4 text-white overflow-hidden shadow-2xl'
-                : 'relative min-h-[420px] overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-950 shadow-md dark:border-slate-800'
+                : 'relative min-h-[500px] lg:min-h-[660px] h-full overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-950 shadow-md dark:border-slate-800'
             }
           >
             {/* Top Control Bar in Fullscreen mode */}
@@ -1383,8 +1642,38 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                   />
                 )}
 
-                <MapViewport vehicles={vehiclesWithLocation} focusVehicle={selectedVehicle} focusSequence={focusSequence} filterKey={statusFilter} />
+                <MapViewport
+                  vehicles={processedVehiclesWithLocation}
+                  focusVehicle={selectedVehicle}
+                  focusSequence={focusSequence}
+                  filterKey={statusFilter}
+                  targetBounds={mapTargetBounds}
+                  boundsSequence={boundsSequence}
+                />
                 <MapResizeHandler isFullscreen={isFullscreen} isSidebarCollapsed={isSidebarCollapsed} />
+
+                {/* Agency Parking Perimeter Circle */}
+                {CircleComponent && (
+                  <CircleComponent
+                    center={[AGENCY_CONFIG.latitude, AGENCY_CONFIG.longitude]}
+                    radius={AGENCY_CONFIG.parkingRadiusMeters}
+                    pathOptions={{
+                      color: '#10b981',
+                      weight: 2,
+                      dashArray: '6, 6',
+                      fillColor: '#10b981',
+                      fillOpacity: 0.12,
+                    }}
+                  >
+                    <TooltipComponent direction="top" opacity={0.95}>
+                      <div className="text-xs font-bold text-emerald-950 p-1">
+                        🅿️ {AGENCY_CONFIG.name}
+                        <div className="text-[10px] font-normal text-slate-700">{AGENCY_CONFIG.address}</div>
+                        <div className="text-[10px] text-emerald-700">Zone de stationnement agence (Rayon 70m)</div>
+                      </div>
+                    </TooltipComponent>
+                  </CircleComponent>
+                )}
 
               {/* Red Line Trajectory for selected vehicle */}
               {PolylineComponent && trajectoryPositions.length > 1 && (
@@ -1468,7 +1757,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                 ))}
 
               {/* Vehicles Live / Animated Markers */}
-              {vehiclesWithLocation.map(vehicle => {
+              {processedVehiclesWithLocation.map(vehicle => {
                 const isSelected = selectedDeviceId === vehicle.provider_device_id;
                 // If playback is active on this vehicle, position marker at playback scrubber position
                 const isThisPlayback = isSelected && currentPlaybackPoint;
@@ -1561,7 +1850,7 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
             {selectedVehicle && !hudCollapsed && (
               <aside
                 aria-label="Informations véhicule sélectionné"
-                className="absolute right-3 top-3 z-[500] w-72 sm:w-80 max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-700/80 bg-slate-950/95 p-3.5 shadow-2xl backdrop-blur-md text-white transition-all"
+                className="absolute right-3 top-3 z-[500] w-72 sm:w-80 max-h-[calc(100%-24px)] overflow-y-auto custom-scrollbar rounded-2xl border border-slate-700/80 bg-slate-950/95 p-3.5 shadow-2xl backdrop-blur-md text-white transition-all"
               >
                 <div className="flex items-start justify-between gap-2 border-b border-slate-800 pb-2.5">
                   <div className="min-w-0">
@@ -1659,21 +1948,63 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
 
                     {/* Additional metrics */}
                     <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800/80">
-                      <span>Carburant API : {formatNumber(selectedVehicle.fuel)}</span>
-                      <span>Statut API : {selectedVehicle.status ?? '1'}</span>
+                      <span>Carburant API : {formatNumber(selectedVehicle.fuel)} {(selectedVehicle.fuel === 0 || selectedVehicle.fuel === null) ? '(Non équipé)' : ''}</span>
+                      <span>Statut API : {selectedVehicle.status ?? '1'} {selectedVehicle.status === '1' ? '(Contact ON)' : selectedVehicle.status === '0' ? '(Contact OFF)' : ''}</span>
                     </div>
                     <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
                       <span>Arrêts parking : {trajectory.stops.length} (P)</span>
                       <span>Vitesse max : {trajectory.maxSpeedKmH} km/h</span>
                     </div>
+
+                    {/* Quick action buttons in HUD when trajectory is loaded */}
+                    <div className="mt-2.5 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = !showStops;
+                          setShowStops(next);
+                          setIsStopsDrawerOpen(next);
+                          if (next && trajectory.stops.length > 0) {
+                            const bounds: LatLngBoundsExpression = trajectory.stops.map(s => [s.latitude, s.longitude] as [number, number]);
+                            setMapTargetBounds(bounds);
+                            setBoundsSequence(s => s + 1);
+                          }
+                        }}
+                        className={`flex items-center justify-center gap-1.5 rounded-xl border py-1.5 text-xs font-bold transition ${
+                          showStops
+                            ? 'border-blue-500 bg-blue-600 text-white shadow-md'
+                            : 'border-blue-500/40 bg-blue-950/40 hover:bg-blue-900/60 text-blue-300'
+                        }`}
+                        title={showStops ? "Masquer les arrêts sur la carte" : "Afficher tous les arrêts de stationnement sur la carte"}
+                      >
+                        <span className="rounded bg-blue-500 text-white px-1 text-[9px] font-black">P</span>
+                        <span>{showStops ? 'Masquer arrêts' : `Afficher arrêts (${trajectory.stops.length})`}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenReport(selectedVehicle.provider_device_id)}
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-purple-500/40 bg-purple-950/40 hover:bg-purple-900/60 py-1.5 text-xs font-bold text-purple-300 transition"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-purple-400" />
+                        <span>Rapport complet</span>
+                      </button>
+                    </div>
+
                     <div className="mt-2 flex items-center justify-between pt-1 border-t border-slate-800/80">
                       <p className="text-[10px] text-slate-400">
                         Dernière mise à jour : {formatDate(selectedVehicle.reported_at)}
                       </p>
                       <button
                         type="button"
-                        onClick={() => setActiveTrajectoryDeviceId(null)}
+                        onClick={() => {
+                          setActiveTrajectoryDeviceId(null);
+                          setShowStops(false);
+                          setIsStopsDrawerOpen(false);
+                          setPlaybackActive(false);
+                        }}
                         className="text-[10px] text-rose-400 hover:text-rose-300 font-bold"
+                        title="Masquer le trajet et revenir à la vue voiture seule"
                       >
                         Masquer trajet ✕
                       </button>
@@ -1696,21 +2027,43 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                       <div className="rounded-md bg-slate-900/80 border border-slate-800 p-2">
                         <p className="text-[10px] font-bold uppercase text-slate-400">Carburant API</p>
                         <p className="text-sm font-bold text-white">{formatNumber(selectedVehicle.fuel)}</p>
+                        <p className="text-[10px] text-slate-500">{(selectedVehicle.fuel === 0 || selectedVehicle.fuel === null) ? 'Sonde non équipée' : `${selectedVehicle.fuel}%`}</p>
                       </div>
                       <div className="rounded-md bg-slate-900/80 border border-slate-800 p-2">
                         <p className="text-[10px] font-bold uppercase text-slate-400">Statut API</p>
                         <p className="text-sm font-bold text-white">{selectedVehicle.status ?? 'N/D'}</p>
+                        <p className="text-[10px] text-slate-500">{selectedVehicle.status === '1' ? 'Contact allumé' : selectedVehicle.status === '0' ? 'Contact coupé' : 'N/D'}</p>
                       </div>
                     </div>
 
                     <button
                       type="button"
-                      onClick={() => setActiveTrajectoryDeviceId(selectedVehicle.provider_device_id)}
+                      onClick={() => handleShowTrajectory(selectedVehicle.provider_device_id)}
                       className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 py-2.5 text-xs font-black text-white shadow-md shadow-red-600/30 transition hover:brightness-110"
                     >
-                      <span className="inline-block h-2 w-2 rounded-full bg-white animate-ping" />
+                      <Navigation className="h-4 w-4" />
                       <span>Afficher le trajet rouge du jour (Allogps)</span>
                     </button>
+
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleShowStops(selectedVehicle.provider_device_id)}
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-blue-500/40 bg-blue-950/40 hover:bg-blue-900/50 py-1.5 text-xs font-bold text-blue-300 transition"
+                      >
+                        <span className="rounded bg-blue-600 text-white px-1 text-[9px] font-black">P</span>
+                        <span>Voir arrêts</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenReport(selectedVehicle.provider_device_id)}
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-purple-500/40 bg-purple-950/40 hover:bg-purple-900/50 py-1.5 text-xs font-bold text-purple-300 transition"
+                      >
+                        <FileText className="h-3.5 w-3.5 text-purple-400" />
+                        <span>Rapport complet</span>
+                      </button>
+                    </div>
 
                     <p className="mt-2 text-[10px] text-slate-400">
                       État : {markerKind(selectedVehicle) === 'moving' ? 'En mouvement' : markerKind(selectedVehicle) === 'stopped' ? 'À l’arrêt' : markerKind(selectedVehicle) === 'unlinked' ? 'GPS non associé' : 'Données anciennes'}
@@ -1720,6 +2073,70 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                     </p>
                   </>
                 )}
+              </aside>
+            )}
+
+            {/* Interactive Parking Stops Inspector Drawer */}
+            {isStopsDrawerOpen && trajectory && trajectory.stops.length > 0 && (
+              <aside
+                aria-label="Arrêts de stationnement de la journée"
+                className="absolute left-3 bottom-24 z-[500] w-72 sm:w-80 max-h-72 overflow-y-auto rounded-2xl border border-blue-500/40 bg-slate-950/95 p-3 shadow-2xl backdrop-blur-md text-white transition-all custom-scrollbar"
+              >
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded bg-blue-600 px-1.5 py-0.5 text-xs font-black text-white">🅿️</span>
+                    <span className="text-xs font-bold text-blue-300">
+                      Arrêts de la journée ({trajectory.stops.length})
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsStopsDrawerOpen(false)}
+                    className="rounded-lg bg-slate-800/80 hover:bg-slate-700 p-1 text-slate-400 hover:text-white"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {trajectory.stops.map((stop, idx) => {
+                    const isFocused = focusedStopId === stop.id;
+                    return (
+                      <div
+                        key={stop.id}
+                        onClick={() => {
+                          setFocusedStopId(stop.id);
+                          setMapTargetBounds([
+                            [stop.latitude - 0.0015, stop.longitude - 0.0015],
+                            [stop.latitude + 0.0015, stop.longitude + 0.0015],
+                          ]);
+                          setBoundsSequence(s => s + 1);
+                        }}
+                        className={`cursor-pointer rounded-xl border p-2 transition text-xs ${
+                          isFocused
+                            ? 'border-blue-500 bg-blue-950/60 ring-1 ring-blue-500/40'
+                            : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between font-semibold text-slate-200">
+                          <span className="flex items-center gap-1.5">
+                            <span className="rounded-full bg-blue-500/20 px-1.5 py-0.2 text-[10px] font-black text-blue-300">
+                              #{idx + 1}
+                            </span>
+                            <span>{stop.name}</span>
+                          </span>
+                          <span className="font-mono text-cyan-300 font-bold text-[11px]">
+                            {stop.durationFormatted}
+                          </span>
+                        </div>
+                        <div className="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+                          <span>{stop.arrivedAt} → {stop.departedAt}</span>
+                          <span className="text-emerald-400 font-medium hover:underline">Zoomer 🔍</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </aside>
             )}
 
@@ -1761,13 +2178,22 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setShowStops(v => !v)}
+                      onClick={() => {
+                        const next = !showStops;
+                        setShowStops(next);
+                        setIsStopsDrawerOpen(next);
+                        if (next && trajectory.stops.length > 0) {
+                          const bounds: LatLngBoundsExpression = trajectory.stops.map(s => [s.latitude, s.longitude] as [number, number]);
+                          setMapTargetBounds(bounds);
+                          setBoundsSequence(s => s + 1);
+                        }
+                      }}
                       className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold transition ${
-                        showStops ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'
+                        showStops ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-800 text-slate-300 hover:text-white'
                       }`}
-                      title="Afficher/Masquer les arrêts P"
+                      title={showStops ? "Masquer les arrêts sur la carte" : "Afficher les arrêts sur la carte"}
                     >
-                      <span>🅿️ Arrêts ({trajectory.stops.length})</span>
+                      <span>🅿️ {showStops ? 'Masquer arrêts' : `Arrêts (${trajectory.stops.length})`}</span>
                     </button>
 
                     <button
@@ -1777,6 +2203,20 @@ const GPSManagement: React.FC<GPSManagementProps> = ({ canManageMappings }) => {
                       title="Détails du trajet"
                     >
                       <Info className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTrajectoryDeviceId(null);
+                        setShowStops(false);
+                        setIsStopsDrawerOpen(false);
+                        setPlaybackActive(false);
+                      }}
+                      className="rounded-lg bg-slate-800 p-2 text-slate-400 hover:bg-rose-900/60 hover:text-rose-300 transition"
+                      title="Masquer le trajet (afficher uniquement la voiture)"
+                    >
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
                 </div>

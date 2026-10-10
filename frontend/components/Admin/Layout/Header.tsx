@@ -26,7 +26,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, isDark, toggleTheme }) => {
             </button>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-brand-teal/10 rounded-full">
               <div className="w-2 h-2 bg-brand-teal rounded-full animate-pulse"></div>
-              <span className="text-xs font-bold text-brand-teal uppercase">Casablanca HQ</span>
+              <span className="text-xs font-bold text-brand-teal uppercase">Tanger HQ (RLV Rahimi Car)</span>
           </div>
           <div className="w-8 h-8 rounded-full bg-brand-navy dark:bg-white flex items-center justify-center text-white dark:text-brand-navy font-bold text-xs">
               AD

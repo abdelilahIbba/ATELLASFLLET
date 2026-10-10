@@ -11,6 +11,7 @@ export interface GeocodedAddress {
   latitude: number;
   longitude: number;
   googleMapsUrl: string;
+  isAgencyParking?: boolean;
 }
 
 const LOCAL_STORAGE_KEY = 'atellas_geocode_cache_v1';
@@ -58,9 +59,96 @@ const saveToLocalStorage = () => {
 export const getCoordKey = (lat: number, lng: number): string =>
   `${Number(lat).toFixed(4)},${Number(lng).toFixed(4)}`;
 
+export interface AgencyLocationConfig {
+  name: string;
+  shortName: string;
+  address: string;
+  city: string;
+  latitude: number;
+  longitude: number;
+  parkingRadiusMeters: number;
+}
+
+export const AGENCY_CONFIG: AgencyLocationConfig = {
+  name: 'RLV RAHIMI CAR (Tanger HQ)',
+  shortName: 'Parking Agence',
+  address: 'Rue Echahid Zaidi Mohamed Ben Daoud, Charf-Mghogha, Tanger',
+  city: 'Tanger',
+  latitude: 35.75244,
+  longitude: -5.79770,
+  parkingRadiusMeters: 70,
+};
+
+/** Calculate distance between two lat/lon coordinates in meters */
+export const calculateDistanceMeters = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number => {
+  const R = 6371000; // Earth radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+/** Check if given coordinate is within agency parking geofence */
+export const isNearAgencyParking = (
+  lat: number | null | undefined,
+  lng: number | null | undefined,
+  radiusMeters: number = AGENCY_CONFIG.parkingRadiusMeters,
+): boolean => {
+  if (lat == null || lng == null || !Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  return calculateDistanceMeters(lat, lng, AGENCY_CONFIG.latitude, AGENCY_CONFIG.longitude) <= radiusMeters;
+};
+
+/**
+ * Generate neat, organized parking slot coordinates in front of the agency
+ * to prevent stationary GPS drift scattering cars across neighboring roofs.
+ */
+export const getAgencyParkingSlot = (
+  slotIndex: number,
+  totalSlots: number,
+  baseLat: number = AGENCY_CONFIG.latitude,
+  baseLng: number = AGENCY_CONFIG.longitude,
+): { latitude: number; longitude: number } => {
+  if (totalSlots <= 1) return { latitude: baseLat, longitude: baseLng };
+  // Offset along the street frontage in Charf-Mghogha (~5 meters between bays)
+  const spacingMeters = 5.5;
+  const centeredIndex = slotIndex - (totalSlots - 1) / 2;
+  // Bearing along Rue Echahid Zaidi (roughly 120° SE - 300° NW)
+  const deltaLat = (centeredIndex * spacingMeters * 0.0000085);
+  const deltaLng = (centeredIndex * spacingMeters * 0.0000105);
+  return {
+    latitude: Number((baseLat + deltaLat).toFixed(6)),
+    longitude: Number((baseLng + deltaLng).toFixed(6)),
+  };
+};
+
 /** Get cached address synchronously if available (0ms latency) */
 export const getStoredAddress = (lat: number | null | undefined, lng: number | null | undefined): GeocodedAddress | null => {
   if (lat == null || lng == null || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (isNearAgencyParking(lat, lng)) {
+    return {
+      formattedAddress: `🅿️ Parking Agence - ${AGENCY_CONFIG.name}`,
+      road: AGENCY_CONFIG.address,
+      district: 'Charf-Mghogha',
+      city: AGENCY_CONFIG.city,
+      country: 'Maroc',
+      fullDisplayName: `${AGENCY_CONFIG.name}, ${AGENCY_CONFIG.address}, ${AGENCY_CONFIG.city}, Maroc`,
+      latitude: AGENCY_CONFIG.latitude,
+      longitude: AGENCY_CONFIG.longitude,
+      googleMapsUrl: buildGoogleMapsUrl(AGENCY_CONFIG.latitude, AGENCY_CONFIG.longitude),
+      isAgencyParking: true,
+    };
+  }
   const key = getCoordKey(lat, lng);
   return memoryCache.get(key) ?? null;
 };
@@ -71,9 +159,26 @@ export const buildGoogleMapsUrl = (lat: number, lng: number): string =>
 
 /**
  * Fetch human-readable address for given GPS coordinates.
- * Multi-tier strategy: Memory/LocalStorage Cache -> Backend API -> Client BigDataCloud -> Client Nominatim -> Coordinates.
+ * Multi-tier strategy: Agency Geofence -> Memory/LocalStorage Cache -> Backend API -> Client BigDataCloud -> Client Nominatim -> Coordinates.
  */
 export const fetchAddress = async (lat: number, lng: number): Promise<GeocodedAddress> => {
+  // Check if at agency parking first for instant 0ms exact recognition
+  if (isNearAgencyParking(lat, lng)) {
+    const agencyResult: GeocodedAddress = {
+      formattedAddress: `🅿️ Parking Agence - ${AGENCY_CONFIG.name}`,
+      road: AGENCY_CONFIG.address,
+      district: 'Charf-Mghogha',
+      city: AGENCY_CONFIG.city,
+      country: 'Maroc',
+      fullDisplayName: `${AGENCY_CONFIG.name}, ${AGENCY_CONFIG.address}, ${AGENCY_CONFIG.city}, Maroc`,
+      latitude: AGENCY_CONFIG.latitude,
+      longitude: AGENCY_CONFIG.longitude,
+      googleMapsUrl: buildGoogleMapsUrl(AGENCY_CONFIG.latitude, AGENCY_CONFIG.longitude),
+      isAgencyParking: true,
+    };
+    return agencyResult;
+  }
+
   const key = getCoordKey(lat, lng);
 
   // 1. Check memory cache
@@ -99,6 +204,7 @@ export const fetchAddress = async (lat: number, lng: number): Promise<GeocodedAd
           latitude: lat,
           longitude: lng,
           googleMapsUrl: buildGoogleMapsUrl(lat, lng),
+          isAgencyParking: false,
         };
         memoryCache.set(key, result);
         saveToLocalStorage();

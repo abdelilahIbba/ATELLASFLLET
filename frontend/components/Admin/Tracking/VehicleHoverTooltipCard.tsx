@@ -63,15 +63,24 @@ export const VehicleHoverTooltipCard: React.FC<VehicleHoverTooltipCardProps> = (
               {vehicle.vehicle_name}
             </h4>
           </div>
-          <p className="mt-1 truncate text-xs font-bold text-emerald-400">
-            {vehicle.plate ? `Matricule : ${vehicle.plate}` : vehicle.provider_name}
-          </p>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="rounded bg-slate-900 border border-slate-700 px-1.5 py-0.5 text-[11px] font-mono font-black text-white">
+              {vehicle.plate || vehicle.provider_name}
+            </span>
+            {address?.isAgencyParking && (
+              <span className="rounded bg-emerald-500/20 border border-emerald-500/40 px-1.5 py-0.5 text-[9px] font-bold text-emerald-300">
+                🅿️ Parking Agence
+              </span>
+            )}
+          </div>
         </div>
 
         <span
           className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider border ${
             isMoving
               ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 animate-pulse'
+              : address?.isAgencyParking
+              ? 'bg-emerald-600/30 text-emerald-300 border-emerald-400/50'
               : isStopped
               ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
               : isStale
@@ -79,7 +88,15 @@ export const VehicleHoverTooltipCard: React.FC<VehicleHoverTooltipCardProps> = (
               : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
           }`}
         >
-          {isMoving ? '⚡ En mouvement' : isStopped ? '🅿️ À l’arrêt' : isStale ? 'Signal ancien' : 'Non associée'}
+          {isMoving
+            ? '⚡ En mouvement'
+            : address?.isAgencyParking
+            ? '🅿️ Au Parking Agence'
+            : isStopped
+            ? '🅿️ À l’arrêt'
+            : isStale
+            ? 'Signal ancien'
+            : 'Non associée'}
         </span>
       </div>
 

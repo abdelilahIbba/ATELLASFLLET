@@ -1612,7 +1612,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                        </button>
                       <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-brand-teal/10 rounded-full">
                          <div className="w-2 h-2 bg-brand-teal rounded-full animate-pulse"></div>
-                         <span className="text-xs font-bold text-brand-teal uppercase">Casablanca HQ</span>
+                         <span className="text-xs font-bold text-brand-teal uppercase">Tanger HQ (RLV Rahimi Car)</span>
                       </div>
                       <div className="w-8 h-8 rounded-full bg-brand-navy dark:bg-white flex items-center justify-center text-white dark:text-brand-navy font-bold text-xs shrink-0">
                          AD
@@ -1621,7 +1621,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ isDark, toggleTheme, on
                 </div>
 
             {/* Content Body */}
-            <div className={`flex-grow ${activeTab === 'gps' ? 'p-0' : 'p-6 overflow-y-auto custom-scrollbar'} relative`}>
+            <div className={`flex-grow min-h-0 ${activeTab === 'gps' ? 'p-0 flex flex-col overflow-y-auto custom-scrollbar' : 'p-6 overflow-y-auto custom-scrollbar'} relative`}>
                
                {/* --- OVERVIEW TAB --- */}
                {activeTab === 'overview' && (

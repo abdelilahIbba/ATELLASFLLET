@@ -16,8 +16,8 @@ class GpsVehicleMapper
     public function transform(array $device, ?CarGpsTracker $association, ?CarbonImmutable $now = null): array
     {
         $car = $association?->car;
-        $latitude = $this->number($device['lat'] ?? null);
-        $longitude = $this->number($device['lon'] ?? null);
+        $latitude = $this->number($device['lat'] ?? $device['latitude'] ?? null);
+        $longitude = $this->number($device['lon'] ?? $device['lng'] ?? $device['longitude'] ?? null);
         if ($latitude !== null && ($latitude < -90 || $latitude > 90)) {
             $latitude = null;
         }
@@ -25,10 +25,13 @@ class GpsVehicleMapper
             $longitude = null;
         }
 
-        $speed = $this->number($device['speed'] ?? null);
-        $reportedAt = $this->reportedAt($device['timestamp'] ?? null);
+        $speed = $this->number($device['speed'] ?? $device['vitesse'] ?? null);
+        $reportedAt = $this->reportedAt($device['timestamp'] ?? $device['time'] ?? null);
         $now ??= CarbonImmutable::now('UTC');
         $providerName = $this->string($device['name'] ?? null) ?? '';
+        $odometer = $this->number($device['odometer'] ?? $device['mileage'] ?? $device['km'] ?? null);
+        $fuel = $this->number($device['fuel'] ?? $device['fuel_percent'] ?? $device['fuel_level'] ?? null);
+        $status = $this->string($device['status'] ?? $device['acc'] ?? null);
 
         return [
             'provider_device_id' => (string) $device['id'],
@@ -45,10 +48,10 @@ class GpsVehicleMapper
             'latitude' => $latitude,
             'longitude' => $longitude,
             'speed' => $speed,
-            'status' => $this->string($device['status'] ?? null),
+            'status' => $status,
             'is_moving' => $speed !== null && $speed > 0,
-            'odometer' => $this->number($device['odometer'] ?? null),
-            'fuel' => $this->number($device['fuel'] ?? null),
+            'odometer' => $odometer,
+            'fuel' => $fuel,
             'reported_at' => $reportedAt?->toIso8601String(),
             'is_stale' => $reportedAt === null || $reportedAt->lt($now->subSeconds(
                 max(30, (int) config('services.allogps.stale_after_seconds', 300))
@@ -114,12 +117,25 @@ class GpsVehicleMapper
 
     private function reportedAt(mixed $timestamp): ?CarbonImmutable
     {
-        if (!is_numeric($timestamp)) {
+        if ($timestamp === null || $timestamp === '') {
             return null;
         }
 
+        if (is_numeric($timestamp)) {
+            $ts = (float) $timestamp;
+            try {
+                if ($ts < 10000000000) {
+                    return CarbonImmutable::createFromTimestampMs((int) ($ts * 1000), 'UTC');
+                }
+
+                return CarbonImmutable::createFromTimestampMs((int) $ts, 'UTC');
+            } catch (Throwable) {
+                return null;
+            }
+        }
+
         try {
-            return CarbonImmutable::createFromTimestampMs((int) $timestamp, 'UTC');
+            return CarbonImmutable::parse((string) $timestamp, 'UTC');
         } catch (Throwable) {
             return null;
         }
